@@ -99,6 +99,13 @@ class PlaybackService : MediaSessionService() {
             kotlinx.coroutines.CoroutineScope(job + kotlinx.coroutines.Dispatchers.Main).launch {
                 graph.settings.state.map { it.crossfadeSec }.distinctUntilChanged().collect { crossfader?.wake() }
             }
+            // the mixer's knobs as saved (while a knob is turned, its screen sets them directly)
+            kotlinx.coroutines.CoroutineScope(job + kotlinx.coroutines.Dispatchers.Main).launch {
+                graph.settings.state.map { it.mixerOn to it.mixer }.distinctUntilChanged().collect { (on, knobs) ->
+                    Mixer.on = on
+                    Mixer.knobs = knobs
+                }
+            }
         }
         player.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -324,16 +331,8 @@ class PlaybackService : MediaSessionService() {
         )
         .build()
 
-    /** The usual renderers; the decoded sound is also looked at for the visualizer ([Spectrum], no microphone). */
-    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-    private fun sounding(): androidx.media3.exoplayer.RenderersFactory = object : androidx.media3.exoplayer.DefaultRenderersFactory(this) {
-        override fun buildAudioSink(context: android.content.Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean): androidx.media3.exoplayer.audio.AudioSink? =
-            androidx.media3.exoplayer.audio.DefaultAudioSink.Builder(context)
-                .setEnableFloatOutput(enableFloatOutput)
-                .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
-                .setAudioProcessors(arrayOf(androidx.media3.exoplayer.audio.TeeAudioProcessor(Spectrum)))
-                .build()
-    }
+    /** The usual renderers with the DJ mixer in front of the speaker; the mixed sound also feeds the visualizer ([Spectrum], no microphone). */
+    private fun sounding(): androidx.media3.exoplayer.RenderersFactory = Mixer.renderers(this, withSpectrum = true)
 
     /** Play / pause as the buttons show it (see [meantToPlay]); null before the first change. */
     private var shownPlaying: Boolean? = null

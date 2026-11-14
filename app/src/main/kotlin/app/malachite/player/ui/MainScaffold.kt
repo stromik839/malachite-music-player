@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -186,8 +187,35 @@ fun MainScaffold() {
                     androidx.compose.runtime.snapshotFlow { titleOf(nav.current) + if (nav.playerOpen) " + плеер" else "" } // i18n:off
                         .collect { app.malachite.player.data.FrameWatch.screen = it }
                 }
-                kept.SaveableStateProvider(key) {
-                    androidx.compose.runtime.CompositionLocalProvider(app.malachite.player.ui.components.LocalScreenKey provides key) { ScreenContent(nav.current) }
+                // A screen comes in softly: deeper screens glide in from the right, going back the
+                // screen glides away to the right, another tab fades in.
+                androidx.compose.animation.AnimatedContent(
+                    targetState = Place(key, nav.currentTab, nav.stack.size, nav.current),
+                    modifier = Modifier.fillMaxSize(),
+                    contentKey = { it.key },
+                    transitionSpec = {
+                        val sameTab = initialState.tab == targetState.tab
+                        val glide = androidx.compose.animation.core.tween<androidx.compose.ui.unit.IntOffset>(
+                            280, easing = androidx.compose.animation.core.FastOutSlowInEasing,
+                        )
+                        when {
+                            sameTab && targetState.depth > initialState.depth ->
+                                (androidx.compose.animation.slideInHorizontally(glide) { it / 8 } +
+                                    androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220, delayMillis = 30))) togetherWith
+                                    androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(150))
+                            sameTab && targetState.depth < initialState.depth ->
+                                (androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220, delayMillis = 30)) togetherWith
+                                    (androidx.compose.animation.slideOutHorizontally(glide) { it / 8 } +
+                                        androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(200)))).apply { targetContentZIndex = -1f }
+                            else -> androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220, delayMillis = 50)) togetherWith
+                                androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(150))
+                        }
+                    },
+                    label = "screen",
+                ) { place ->
+                    kept.SaveableStateProvider(place.key) {
+                        androidx.compose.runtime.CompositionLocalProvider(app.malachite.player.ui.components.LocalScreenKey provides place.key) { ScreenContent(place.screen) }
+                    }
                 }
             }
         }
@@ -237,6 +265,9 @@ fun MainScaffold() {
     }
     DialogHost()
 }
+
+/** Where the navigation stands: the screen shown, its tab and how deep in the tab it is (for the direction of a transition). */
+private data class Place(val key: String, val tab: Tab, val depth: Int, val screen: Screen)
 
 @Composable
 private fun ScreenContent(screen: Screen) {
@@ -306,7 +337,7 @@ private fun titleOf(s: Screen): String = when (s) {
     Screen.SettingsPlayback -> tr("Воспроизведение")
     Screen.SettingsWidgets -> tr("Виджеты")
     Screen.SettingsBackup -> tr("Экспорт, резервные копии")
-    Screen.Equalizer -> tr("Эквалайзер")
+    Screen.Equalizer -> tr("Эквалайзер и микшер")
     Screen.SettingsAdvanced -> tr("Root и Shizuku")
     Screen.SettingsDiagnostics -> tr("Ошибки и журнал")
     Screen.SettingsSoundId -> tr("Узнавание по звуку")

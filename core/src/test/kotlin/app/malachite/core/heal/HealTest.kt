@@ -367,10 +367,25 @@ class HealTest {
         assertEquals(ImportFilter.Verdict.SYSTEM_SOUND, v("/storage/emulated/0/Notifications/ding.mp3"))
         assertEquals(ImportFilter.Verdict.SYSTEM_SOUND, v("/system/media/audio/ringtones/a.ogg"))
         assertEquals(ImportFilter.Verdict.RECORDING, v("/storage/emulated/0/MIUI/sound_recorder/call_rec/x.mp3"))
-        // music from messengers is off by default (mostly clutter), can be enabled
-        assertEquals(ImportFilter.Verdict.MESSENGER, v("/storage/emulated/0/Telegram/Telegram Audio/Кино - Группа крови.mp3"))
-        assertEquals(ImportFilter.Verdict.MUSIC, ImportFilter.checkPath("/storage/emulated/0/Telegram/Telegram Audio/Кино - Группа крови.mp3",
-            rules.copy(importFromMessengers = true), "/storage/emulated/0/Malachite"))
+        // from messenger folders only songs are taken by default (the rest is mostly clutter), all audio can be enabled
+        val tg = "/storage/emulated/0/Android/media/org.telegram.messenger/Telegram/Telegram Audio/"
+        fun full(path: String, tags: app.malachite.core.audio.TagData?, r: ImportFilter.Rules = rules) =
+            ImportFilter.check(File(path), app.malachite.core.audio.AudioFormat.MP3, tags, r, "/storage/emulated/0/Malachite")
+        val song = app.malachite.core.audio.TagData(title = "Тестостерон", artist = "НАВЕРНОЕ ПОЭТ, ЯКОРЪ, EVEN CUTE", durationMs = 114_000)
+        val clip = app.malachite.core.audio.TagData(durationMs = 114_000)
+        assertEquals(ImportFilter.Verdict.MUSIC, v(tg + "track.mp3")) // the path alone cannot tell
+        assertEquals(ImportFilter.Verdict.MUSIC, full(tg + "track.mp3", song))
+        assertEquals(ImportFilter.Verdict.MUSIC, full("/storage/emulated/0/Telegram/x.mp3", song))
+        assertEquals(ImportFilter.Verdict.MUSIC, full(tg + "Кино - Группа крови.mp3", clip))
+        assertEquals(ImportFilter.Verdict.MUSIC, full(tg + "XIVIVIDE_-_Trolit_Menya_Vova_KH.mp3", clip))
+        assertEquals(ImportFilter.Verdict.MESSENGER, full(tg + "track.mp3", clip))
+        assertEquals(ImportFilter.Verdict.MESSENGER, full(tg + "Кино - Группа крови.mp3", song.copy(durationMs = 45_000)))
+        assertEquals(ImportFilter.Verdict.MUSIC, full(tg + "track.mp3", clip, rules.copy(importFromMessengers = true)))
+        // songs saved from Telegram on purpose ("Сохранить в музыку" / "в загрузки") are music, tags or not
+        assertEquals(ImportFilter.Verdict.MUSIC, full("/storage/emulated/0/Music/Telegram/track.mp3", clip))
+        assertEquals(ImportFilter.Verdict.MUSIC, full("/storage/emulated/0/Download/Telegram/track.mp3", clip))
+        assertEquals(ImportFilter.Verdict.MUSIC, ImportFilter.check(File("/storage/emulated/0/Telegram/Telegram Documents/a.flac"),
+            app.malachite.core.audio.AudioFormat.FLAC, app.malachite.core.audio.TagData(title = "Звезда", artist = "Кино", durationMs = 200_000), rules, null))
         // messenger cache names anywhere
         assertEquals(ImportFilter.Verdict.MESSENGER, v("/storage/emulated/0/Download/4_5913724166165551837@kndved.ogg"))
         assertEquals(ImportFilter.Verdict.MESSENGER, v("/storage/emulated/0/Music/2_5285074063658627085@kemtej.m4a"))

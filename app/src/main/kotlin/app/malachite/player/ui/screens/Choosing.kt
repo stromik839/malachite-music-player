@@ -37,6 +37,8 @@ fun songsActions(nav: Navigator, tracks: List<TrackInfo>, done: () -> Unit, extr
                 nav.toast(if (allDisliked) tr("Снова играют вперемешку: ${paths.size}") else tr("Не нравятся: ${paths.size} — не играют вперемешку и не попадают в умные плейлисты"))
             }
         },
+        // an album of one's own: the same album name written into all chosen songs, the files move into its folder
+        MenuAction(tr("Собрать в свой альбом…"), app.malachite.player.ui.components.ActionIcons.tags) { nav.show(DialogRequest.EditTagsMany(tracks)) },
         MenuAction(tr("Изменить теги у всех…"), app.malachite.player.ui.components.ActionIcons.tags) { nav.show(DialogRequest.EditTagsMany(tracks)) },
         MenuAction(tr("Исцелить выбранные…"), app.malachite.player.ui.components.ActionIcons.heal) { nav.show(DialogRequest.HealSelected(paths)) },
         MenuAction(tr("Одна обложка для всех…"), app.malachite.player.ui.components.ActionIcons.cover) { nav.show(DialogRequest.FindCover(tracks)) },

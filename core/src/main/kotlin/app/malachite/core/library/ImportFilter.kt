@@ -20,7 +20,10 @@ object ImportFilter {
         val excludedFolders: List<String> = emptyList(),
         val importPodcasts: Boolean = false,
         val importAudiobooks: Boolean = false,
-        /** Music that came through messengers (Telegram Audio etc.). Off by default: mostly clutter. */
+        /**
+         * Everything audio that came through messengers. Off by default (mostly clutter): songs saved
+         * on purpose (Music/Telegram) and songs that are tagged or named like one are taken anyway.
+         */
         val importFromMessengers: Boolean = false,
     )
 
@@ -68,10 +71,38 @@ object ImportFilter {
         return MESSENGER_NAME.any { it.containsMatchIn(base) }
     }
 
-    fun isFromMessenger(path: String): Boolean {
+    fun isFromMessenger(path: String): Boolean = MESSENGER_DIRS.any { hasSegments(dirsOf(path), it) }
+
+    /** The folders of a file, lower-case, with slashes around: "/storage/emulated/0/music/telegram/". */
+    private fun dirsOf(path: String): String {
         val norm = "/" + path.replace('\\', '/').lowercase().trimStart('/')
-        val dirs = norm.substringBeforeLast('/') + "/"
-        return MESSENGER_DIRS.any { hasSegments(dirs, it) }
+        return norm.substringBeforeLast('/') + "/"
+    }
+
+    /** Standard folders a file is saved into on purpose ("Music/Telegram" is Telegram's "Save to music"). */
+    private val SAVED_INTO = listOf("music", "download", "downloads", "documents", "audio", "музыка", "загрузки")
+
+    /**
+     * Saved there by the user ("Сохранить в музыку" / "в загрузки" of Telegram puts songs into
+     * Music/Telegram and Download/Telegram): music like any other, not messenger clutter.
+     */
+    fun isDeliberateSave(path: String): Boolean {
+        val dirs = dirsOf(path)
+        if (dirs.contains("/android/")) return false
+        return SAVED_INTO.any { parent -> MESSENGER_DIRS.any { hasSegments(dirs, "$parent/$it") } }
+    }
+
+    private val SONG_NAME = Regex("\\S\\s+[-–—]\\s+\\S")
+
+    /**
+     * A song rather than a meme or a clip (what lies in a messenger's folders: songs from music
+     * channels next to jingles): at least a minute long (or of unknown length) and tagged with its
+     * title and artist, or named "Artist - Title" ("XIVIVIDE_-_Trolit_Menya" too).
+     */
+    fun isSongLike(fileName: String, title: String?, artist: String?, durationMs: Long): Boolean {
+        if (durationMs in 1 until 60_000) return false
+        if (!title.isNullOrBlank() && !artist.isNullOrBlank()) return true
+        return SONG_NAME.containsMatchIn(fileName.substringBeforeLast('.').replace('_', ' '))
     }
 
     private val VOICE_NAME = Regex(
@@ -101,7 +132,8 @@ object ImportFilter {
         }
         val name = norm.substringAfterLast('/')
         if (VOICE_NAME.containsMatchIn(name)) return Verdict.VOICE_MESSAGE
-        if (!rules.importFromMessengers && (MESSENGER_DIRS.any { hasSegments(dirs, it) } || isMessengerName(name))) return Verdict.MESSENGER
+        // cache-like names are never songs; what else lies in a messenger's folders [check] decides by the tags
+        if (!rules.importFromMessengers && isMessengerName(name)) return Verdict.MESSENGER
         return Verdict.MUSIC
     }
 
@@ -123,6 +155,13 @@ object ImportFilter {
             dur < 20 * 60_000
         ) {
             return Verdict.RECORDING
+        }
+        // from a messenger's folders: only the songs (saved on purpose, or tagged / named like one)
+        val path = file.absolutePath
+        if (!rules.importFromMessengers && isFromMessenger(path) && !isDeliberateSave(path) &&
+            !isSongLike(file.name, tags?.title, tags?.let { it.artist.ifBlank { it.albumArtist } }, dur)
+        ) {
+            return Verdict.MESSENGER
         }
         return Verdict.MUSIC
     }

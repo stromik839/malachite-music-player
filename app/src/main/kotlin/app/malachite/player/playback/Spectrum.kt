@@ -8,29 +8,50 @@ import java.nio.ByteOrder
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.ln
+import kotlin.math.log2
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 
 /**
- * The sound being played as a few bands (0…1), for the visualizer on the song screen. It is taken
- * from the player's own decoded sound on its way to the speaker – no microphone, no permission.
- * Nothing is computed unless the visualizer is on the screen ([watching]).
+ * The sound being played as bands (0…1) for the visualizer, and the level of each channel for the
+ * mixer's meter. It is taken from the player's own decoded sound on its way to the speaker – no
+ * microphone, no permission. Nothing is computed unless something on the screen shows it ([watching]).
  *
- * The sound is decoded a little before it is heard; every window of it is stamped with the moment
- * it will be heard (one window after another from now on), and the screen shows the window whose
- * moment has come, so the bars move with the music, not ahead of it.
+ * How a band gets its height (the ideas of good analyzers, written anew here):
+ *  - the energy of the whole band is taken, and higher bands get 3 dB more per octave: music has far
+ *    more energy in the bass, and without this only the first bars ever move;
+ *  - the sensitivity follows the music: the loudest band sets the top at once, and the top comes down
+ *    slowly when the music gets quieter, so a quiet song and a loud one both use the height, with a
+ *    little room left above;
+ *  - a beat – a band suddenly louder than a moment ago – kicks the bar up.
+ *
+ * The sound is decoded a little before it is heard; every window of it is stamped with the moment it
+ * will be heard (one window after another from now on), and the screen shows the window whose moment
+ * has come, so the bars move with the music, not ahead of it.
  */
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 object Spectrum : TeeAudioProcessor.AudioBufferSink {
-    const val BANDS = 24
+    const val BANDS = 32
     /** 2048 samples (about 46 ms) for every picture, a new picture every 1024: bass needs the long window. */
     private const val SIZE = 2048
     private const val HOP = 1024
     private const val KEEP = 64
 
-    /** The screen shows the visualizer (set from the main thread). */
-    @Volatile var watching = false
+    /** How much room is left above the loudest band, and how many dB the height spans. */
+    private const val HEADROOM_DB = 8f
+    private const val RANGE_DB = 36f
+
+    /** How many things on the screen show the sound now (the visualizer, the mixer's meter). */
+    private val watchers = java.util.concurrent.atomic.AtomicInteger()
+
+    /** Something on the screen shows the sound: only then is it computed. */
+    val watching get() = watchers.get() > 0
+
+    /** Call when a view of the sound appears; [stopWatching] when it goes. */
+    fun startWatching() { watchers.incrementAndGet() }
+
+    fun stopWatching() { watchers.updateAndGet { max(0, it - 1) } }
 
     /** The playback speed: at 2x a window is heard in half the time. */
     @Volatile var speed = 1f
@@ -42,22 +63,33 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
     private var filled = 0
     private var mono = 0f
     private var monoCount = 0
+    // the channels' energy and peaks over the newest HOP samples (for the meter)
+    private var sumL = 0.0
+    private var sumR = 0.0
+    private var peakL = 0f
+    private var peakR = 0f
+    private var counted = 0
 
     private val re = FloatArray(SIZE)
     private val im = FloatArray(SIZE)
     private val hann = FloatArray(SIZE) { (0.5 - 0.5 * cos(2 * PI * it / (SIZE - 1))).toFloat() }
 
-    // the bands as bins of the transform (made again when the sample rate changes)
+    // the bands as bins of the transform and their tilt (made again when the sample rate changes)
     private var edgesRate = 0
     private val edges = IntArray(BANDS + 1)
+    private val tilt = FloatArray(BANDS)
     // each band's power, smoothed a little, and its level in the previous picture (for the beats)
     private val smooth = FloatArray(BANDS)
     private val previous = FloatArray(BANDS)
     private var fresh = true
+    /** The level (dB) the top of the picture stands for: follows the music. */
+    private var top = -20f
 
-    // the computed windows: when each is heard (uptime ms) and its bands
+    // the computed windows: when each is heard (uptime ms), its bands and the channel levels
     private val times = LongArray(KEEP)
     private val bands = Array(KEEP) { FloatArray(BANDS) }
+    /** Per window: RMS left, RMS right, peak left, peak right (0…1 of the meter). */
+    private val meters = Array(KEEP) { FloatArray(4) }
     @Volatile private var written = 0L
     private var nextAt = 0L
 
@@ -70,6 +102,7 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
             monoCount = 0
             nextAt = 0L
             fresh = true
+            sumL = 0.0; sumR = 0.0; peakL = 0f; peakR = 0f; counted = 0
         }
     }
 
@@ -86,11 +119,16 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
     }
 
     private fun add(sample: Float) {
+        // the meter: the first channel is left, the second right (mono: both)
+        val a = kotlin.math.abs(sample)
+        if (monoCount == 0) { sumL += sample * sample; if (a > peakL) peakL = a }
+        if (monoCount == 1 || channels == 1) { sumR += sample * sample; if (a > peakR) peakR = a }
         mono += sample
         if (++monoCount < channels) return
         window[filled++] = mono / channels
         mono = 0f
         monoCount = 0
+        counted++
         if (filled == SIZE) {
             compute()
             // the next picture overlaps this one by half
@@ -99,13 +137,13 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
         }
     }
 
-    /** Log-spaced bands from 45 Hz to 14 kHz; each has at least one bin of its own (no doubled bass bars). */
+    /** Log-spaced bands from 40 Hz to 12 kHz; each has at least one bin of its own (no doubled bass bars). */
     private fun makeEdges() {
         if (edgesRate == rate) return
         edgesRate = rate
         val binHz = rate.toDouble() / SIZE
-        val lo = 45.0 / binHz
-        val hi = min(14_000.0, rate / 2.0 - binHz) / binHz
+        val lo = 40.0 / binHz
+        val hi = min(12_000.0, rate / 2.0 - binHz) / binHz
         var prev = 0
         for (k in 0..BANDS) {
             var b = Math.round(lo * Math.pow(hi / lo, k.toDouble() / BANDS)).toInt()
@@ -113,13 +151,14 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
             edges[k] = min(b, SIZE / 2)
             prev = edges[k]
         }
+        for (k in 0 until BANDS) {
+            val centre = (edges[k] + max(edges[k] + 1, edges[k + 1])) / 2.0 * binHz
+            tilt[k] = (3.0 * log2(max(centre, 40.0) / 1000.0)).toFloat()
+        }
     }
 
-    /**
-     * The height of a band is mostly how loud it is (a quiet song stays low, a loud one high), and
-     * a beat – the band suddenly louder than a moment ago – kicks it up: drums and bass make the
-     * bars jump, long calm notes do not.
-     */
+    private fun db(power: Float): Float = 10f * ln(power.coerceAtLeast(1e-12f)) / ln(10f)
+
     private fun compute() {
         makeEdges()
         for (i in 0 until SIZE) { re[i] = window[i] * hann[i]; im[i] = 0f }
@@ -128,20 +167,40 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
         val out = bands[slot]
         // the power of a full-scale sine in one bin
         val ref = (SIZE / 4f) * (SIZE / 4f)
+        val level = FloatArray(BANDS)
+        var loudest = -120f
         for (k in 0 until BANDS) {
             val from = edges[k]
             val to = max(from + 1, edges[k + 1])
             var sum = 0f
             for (i in from until to) sum += re[i] * re[i] + im[i] * im[i]
-            val power = sum / (to - from) / ref
+            val power = sum / ref
             smooth[k] = if (fresh) power else 0.5f * power + 0.5f * smooth[k]
-            val db = 10f * ln(smooth[k].coerceAtLeast(1e-9f)) / ln(10f)
-            val loud = ((db + 48f) / 36f).coerceIn(0f, 1f)
-            val beat = if (fresh) 0f else ((db - previous[k] - 2f) / 8f).coerceAtLeast(0f)
-            previous[k] = db
-            out[k] = if (db < -65f) 0f else (0.8f * Math.pow(loud.toDouble(), 1.8).toFloat() + beat).coerceIn(0f, 1f)
+            level[k] = db(smooth[k]) + tilt[k]
+            if (level[k] > loudest) loudest = level[k]
+        }
+        // the top follows the loudest band up at once and comes down about 6 dB in 3 s
+        val secs = HOP.toFloat() / rate
+        top = if (loudest > top) loudest else top - 6f * secs / 3f
+        top = max(top, -45f)
+        val floor = top + HEADROOM_DB - RANGE_DB
+        for (k in 0 until BANDS) {
+            val v = ((level[k] - floor) / RANGE_DB).coerceIn(0f, 1f)
+            val beat = if (fresh) 0f else ((level[k] - previous[k] - 2f) / 10f).coerceAtLeast(0f)
+            previous[k] = level[k]
+            out[k] = if (level[k] < -70f) 0f else (Math.pow(v.toDouble(), 1.6).toFloat() + beat).coerceIn(0f, 1f)
         }
         fresh = false
+        // the meter: -48 dB … 0 dB as 0 … 1, the RMS and the peak of each channel
+        val m = meters[slot]
+        val n = counted.coerceAtLeast(1)
+        fun meter(x: Float) = ((x + 48f) / 48f).coerceIn(0f, 1f)
+        m[0] = meter(db((sumL / n).toFloat()))
+        m[1] = meter(db((sumR / n).toFloat()))
+        m[2] = meter(db(peakL * peakL))
+        m[3] = meter(db(peakR * peakR))
+        sumL = 0.0; sumR = 0.0; peakL = 0f; peakR = 0f; counted = 0
+
         val now = SystemClock.uptimeMillis()
         val length = (HOP * 1000L / rate / speed.coerceAtLeast(0.25f)).toLong()
         nextAt = if (nextAt < now) now else nextAt
@@ -150,11 +209,11 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
         written++
     }
 
-    /** The bands heard now (into [into]); false when there is nothing fresh. */
-    fun now(into: FloatArray): Boolean = synchronized(this) {
+    /** The window heard now; -1 when there is nothing fresh. Call inside synchronized(this). */
+    private fun heardNow(): Int {
         val now = SystemClock.uptimeMillis()
         val n = written
-        if (n == 0L) return false
+        if (n == 0L) return -1
         var best = -1
         var bestTime = Long.MIN_VALUE
         val from = max(0L, n - KEEP)
@@ -163,8 +222,22 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
             val t = times[s]
             if (t <= now && t > bestTime) { bestTime = t; best = s }
         }
-        if (best < 0 || now - bestTime > 400) return false
+        return if (best < 0 || now - bestTime > 400) -1 else best
+    }
+
+    /** The bands heard now (into [into]); false when there is nothing fresh. */
+    fun now(into: FloatArray): Boolean = synchronized(this) {
+        val best = heardNow()
+        if (best < 0) return false
         bands[best].copyInto(into)
+        true
+    }
+
+    /** The channel levels heard now (RMS left, RMS right, peak left, peak right; 0…1); false when nothing plays. */
+    fun meter(into: FloatArray): Boolean = synchronized(this) {
+        val best = heardNow()
+        if (best < 0) return false
+        meters[best].copyInto(into)
         true
     }
 

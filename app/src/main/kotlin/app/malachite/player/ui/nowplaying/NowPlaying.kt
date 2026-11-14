@@ -238,7 +238,7 @@ private fun NowPlayingContent(t: TrackInfo, st: PlayerUiState) {
                             nav.toast(if (disliked) tr("Песня снова играет вперемешку") else tr("Не нравится: песня не играет вперемешку и не попадает в умные плейлисты"))
                         })
                     }
-                    DropdownMenuItem(text = { Text(tr("Эквалайзер")) }, onClick = { menu = false; nav.push(Screen.Equalizer) })
+                    DropdownMenuItem(text = { Text(tr("Эквалайзер и микшер")) }, onClick = { menu = false; nav.push(Screen.Equalizer) })
                     DropdownMenuItem(text = { Text(tr("Таймер сна")) }, onClick = { menu = false; sleepDialog = true })
                     if (online == null) {
                         DropdownMenuItem(text = { Text(tr("К исполнителю")) }, onClick = { menu = false; nav.push(Screen.ArtistDetail(TextFold.strictKey(t.groupArtist))) })
@@ -262,10 +262,12 @@ private fun NowPlayingContent(t: TrackInfo, st: PlayerUiState) {
     // while the music is paused too, so the cover does not jump when it starts; the bars fade.
     val barsShown by androidx.compose.animation.core.animateFloatAsState(if (st.isPlaying) 1f else 0f, label = "bars")
     val bars: @Composable () -> Unit = {
-        if (settings.visualizer && !showLyrics) SoundBars(
-            Modifier.fillMaxWidth().height(56.dp).padding(top = 8.dp),
+        if (settings.visualizer && !showLyrics) Visualizer(
+            settings.visualizerStyle,
+            Modifier.fillMaxWidth().height(96.dp).padding(top = 8.dp),
             low = MaterialTheme.colorScheme.primary,
-            high = androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onSurface, 0.45f),
+            high = MaterialTheme.colorScheme.tertiary,
+            tip = androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onSurface, 0.7f),
             alpha = { barsShown },
         )
     }

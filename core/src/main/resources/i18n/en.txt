@@ -280,9 +280,6 @@ Widgets
 Экспорт, резервные копии
 Export and backups
 
-Эквалайзер
-Equalizer
-
 Root и Shizuku
 Root and Shizuku
 
@@ -1822,11 +1819,11 @@ Minimum duration
 Голосовые сообщения (Telegram, WhatsApp, Viber, VK…), видео, записи звонков и диктофона, рингтоны, будильники и звуки уведомлений не добавляются никогда.
 Voice messages (Telegram, WhatsApp, Viber, VK…), videos, call and voice recorder recordings, ringtones, alarms and notification sounds are never added.
 
-Музыка из мессенджеров
-Music from messengers
+Всё аудио из мессенджеров
+All audio from messengers
 
-Telegram Audio, WhatsApp, VK и др. По умолчанию выключено: там в основном кэш и пересланные файлы. Видео и файлы-кэш вроде 4_591…@kndved.ogg не берутся никогда
-Telegram Audio, WhatsApp, VK and others. Off by default: it is mostly cache and forwarded files there. Videos and cache files like 4_591…@kndved.ogg are never taken
+Telegram, WhatsApp, VK и др. Выключено — берутся только песни: сохранённые вами («Сохранить в музыку», «в загрузки»), с названием и исполнителем или с именем «Исполнитель - Название», не короче минуты. Остальное там — в основном кэш, мемы и пересланные файлы
+Telegram, WhatsApp, VK and others. Off: only songs are taken — the ones you saved ("Save to Music", "to Downloads") and the ones with a title and an artist or named "Artist - Title", at least a minute long. The rest there is mostly cache, memes and forwarded files
 
 Добавлять подкасты и аудиокниги
 Add podcasts and audiobooks
@@ -1959,12 +1956,6 @@ Cover colours in the notification
 
 Там, где это умеет система. Изменение видно со следующей песни
 Where the system can do it. The change shows from the next song
-
-Системный эквалайзер для плеера
-System equalizer for the player
-
-Откройте после начала воспроизведения
-Open it after playback has started
 
 Эквалайзер станет доступен, когда начнёт играть песня (на некоторых прошивках его нет вовсе).
 The equalizer becomes available once a song starts playing (some firmware has none at all).
@@ -4597,6 +4588,120 @@ It is the best moment of the song. If the song has synced lyrics, the player fin
 Черта на полосе перемотки: припев, найденный по синхронизированному тексту, или своя отметка (меню ⋮ на экране песни → «Отметить лучший момент здесь»). Ведите ползунок к черте — он сам встанет точно на неё.
 A notch on the seek bar: the chorus found in the synced lyrics, or your own mark (⋮ menu on the song screen → «Mark the best moment here»). Move the thumb to the notch — it snaps exactly onto it.
 
-Полоски под обложкой на экране песни: высота — громкость, скачки — удары. Видны, когда песня играет и открыта обложка, а не текст.
-Bars under the cover on the song screen: their height is the loudness, the jumps are the beats. Seen while a song plays and the cover, not the lyrics, is shown.
+Почему ничего не нашлось
+Why nothing was found
+
+У плеера нет «Доступа ко всем файлам», поэтому он видит не всю музыку.
+The player has no "All files access", so it does not see all the music.
+
+В папках Telegram, WhatsApp и других мессенджеров лежит аудиофайлов: {}. Сами они не берутся: там обычно много лишнего — мемы, отрывки, звуки.
+Audio files in the folders of Telegram, WhatsApp and other messengers: {}. They are not taken by themselves: there is usually a lot of clutter there — memes, snippets, sounds.
+
+Взять музыку и из мессенджеров
+Take music from messengers too
+
+Короче {} секунд: {} — это обычно звуки и отрывки. Порог меняется в «Настройки → Библиотека».
+Shorter than {} seconds: {} — usually sounds and snippets. The limit is in "Settings → Library".
+
+На телефоне не нашлось ни одного аудиофайла. Песни из Яндекс Музыки, VK Музыки, Spotify, Звука и других сервисов хранятся внутри их приложений в зашифрованном виде — их не может играть ни один другой плеер. Malachite играет обычные файлы: mp3, flac, m4a, ogg, opus, wav и другие.
+Not a single audio file was found on the phone. Songs of Yandex Music, VK Music, Spotify, Zvuk and other services are kept inside their apps, encrypted — no other player can play them. Malachite plays ordinary files: mp3, flac, m4a, ogg, opus, wav and more.
+
+Песни из Telegram: откройте песню в чате → ⋮ → «Сохранить в музыку» (или «в загрузки») — тогда плеер её найдёт. То, что Telegram только скачал для прослушивания, может лежать в его закрытой папке, куда без root или Shizuku не попасть.
+Songs from Telegram: open the song in the chat → ⋮ → "Save to Music" (or "to Downloads") — then the player finds it. What Telegram only downloaded for listening may lie in its private folder, which cannot be reached without root or Shizuku.
+
+Полосы
+Bars
+
+Светодиоды
+LEDs
+
+Волна
+Wave
+
+Эквалайзер и микшер
+Equalizer and mixer
+
+Эквалайзер и DJ-микшер
+Equalizer and DJ mixer
+
+DJ-микшер
+DJ mixer
+
+Ручки как у канала диджейского пульта. Когда все ручки посередине, звук не меняется ни на бит
+Knobs like a channel of a DJ mixer. With every knob in the middle the sound does not change by a single bit
+
+TRIM — громкость, HI — высокие, MID — средние, LOW — басы. Ведите по ручке пальцем вверх или вправо — больше, вниз или влево — меньше; двойное нажатие возвращает её в середину. До упора влево HI, MID и LOW убирают свою часть звука целиком (KILL). FILTER: влево остаются только басы, вправо — только высокие. BAL — левый и правый канал.
+TRIM is the level, HI the highs, MID the mids, LOW the bass. Slide a finger over a knob up or to the right for more, down or to the left for less; a double tap brings it back to the middle. Turned all the way to the left, HI, MID and LOW take their part of the sound away completely (KILL). FILTER: to the left only the bass stays, to the right only the highs. BAL is the left and the right channel.
+
+Поворот ручки слышен через долю секунды: плеер готовит звук немного заранее. Красные огоньки индикатора — звук упирается в потолок, убавьте TRIM.
+A turn of a knob is heard a fraction of a second later: the player prepares the sound a little ahead. Red lights of the meter mean the sound hits the ceiling — turn TRIM down.
+
+Все ручки в середину
+All knobs to the middle
+
+выкл
+off
+
+%.1f кГц
+%.1f kHz
+
+%.0f Гц
+%.0f Hz
+
+центр
+centre
+
+Полосы — со свечением, отражением и «шапочками», которые ненадолго задерживаются на самой высокой точке. Светодиоды — как индикатор на пульте. Волна — плавная, отражённая от середины.
+Bars — with a glow, a reflection and caps that stay at the highest point for a moment. LEDs — like the meter of a mixing desk. Wave — smooth, mirrored around its middle.
+
+Ручки TRIM, HI, MID, LOW с KILL, фильтр, баланс и эквалайзер телефона
+TRIM, HI, MID, LOW knobs with KILL, a filter, balance and the phone's equalizer
+
+Эквалайзер телефона
+Phone equalizer
+
+В «Эквалайзер и микшер» (меню ⋮ на экране песни): ручки TRIM, HI, MID и LOW — до упора влево они убирают басы, середину или верх целиком (KILL), FILTER, BAL и индикатор уровня L/R.
+In "Equalizer and mixer" (⋮ menu on the song screen): TRIM, HI, MID and LOW knobs — turned all the way to the left they take the bass, the mids or the highs away completely (KILL), FILTER, BAL and an L/R level meter.
+
+Открыть микшер
+Open the mixer
+
+Новый визуализатор
+New visualizer
+
+Двигаются все полосы, а не только басы: чувствительность подстраивается под песню. Свечение, отражение и «шапочки» пиков; три вида — полосы, светодиоды и волна (Настройки → «Воспроизведение и звук» → «Визуализатор»).
+All the bars move, not only the bass: the sensitivity follows the song. A glow, a reflection and peak caps; three looks — bars, LEDs and a wave (Settings → "Playback and sound" → "Visualizer").
+
+Выбрать вид
+Choose the look
+
+Песни из Telegram находятся сами
+Songs from Telegram are found by themselves
+
+Песни из папок Telegram и других мессенджеров — с названием и исполнителем или с именем «Исполнитель - Название», а также сохранённые в «Музыку» и «Загрузки» — теперь добавляются как обычная музыка. Если поиск ничего не нашёл, он объясняет почему и что сделать; «Готово» после добавления ведёт к песням.
+Songs from the folders of Telegram and other messengers — with a title and an artist or named "Artist - Title", and the ones saved to "Music" and "Downloads" — are now added like any other music. If the search finds nothing, it explains why and what to do; after adding, the button leads to the songs.
+
+Найти музыку
+Find music
+
+Как создать свой альбом?
+How do I make an album of my own?
+
+Альбомы собираются из тегов песен. Во вкладке «Песни» удерживайте песню и проведите пальцем по остальным (или «Выбрать несколько»), затем «Что сделать с выбранным» → «Собрать в свой альбом…» и впишите название альбома (и, если хотите, исполнителя). Название запишется в сами файлы, и они переедут в папку этого альбома.
+Albums are made from the tags of the songs. In the "Songs" tab hold a song and slide your finger over the others (or "Choose several"), then "What to do with the chosen" → "Make an album of them…" and type the album's name (and the artist, if you like). The name is written into the files themselves, and they move into the album's folder.
+
+Собрать в свой альбом…
+Make an album of them…
+
+Уже в библиотеке: {} — они на вкладке «Песни» и не предлагаются снова.
+Already in the library: {} — they are in the "Songs" tab and are not offered again.
+
+К песням
+To the songs
+
+Свой альбом и плавные экраны
+An album of your own and soft screens
+
+Выберите песни → «Собрать в свой альбом…» — и они станут альбомом. Экраны теперь сменяются плавно: следующий мягко выезжает, предыдущий уходит вправо.
+Choose songs → "Make an album of them…" — and they become an album. Screens now change softly: the next one glides in, the previous one slides away to the right.
 

@@ -205,7 +205,7 @@ fun OnboardingScreen() {
 
 /** Searches the device for music and copies it into the main folder. */
 @Composable
-fun ImportPanel(onFinished: () -> Unit = {}) {
+fun ImportPanel(doneLabel: String = tr("Готово"), onFinished: () -> Unit = {}) {
     val g = MalachiteApp.graph
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -220,6 +220,17 @@ fun ImportPanel(onFinished: () -> Unit = {}) {
     val skippedFolders = remember { mutableStateOf(setOf<String>()) }
     var showFolders by remember { mutableStateOf(false) }
 
+    fun search() {
+        busy = true
+        found = null
+        scope.launch {
+            found = withContext(Dispatchers.IO) {
+                g.deviceScanner.find { d, t -> progress = (if (t > 0) d.toFloat() / t else 0f) to tr("Проверено файлов: $d из $t") }
+            }
+            busy = false
+        }
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (busy) {
             LinearProgressIndicator(progress = { progress.first }, modifier = Modifier.fillMaxWidth())
@@ -228,18 +239,18 @@ fun ImportPanel(onFinished: () -> Unit = {}) {
         val f = found
         if (f == null && !busy) {
             Text(tr("Плеер просмотрит телефон (и SD-карту) и найдёт музыку."))
-            Button(onClick = {
-                busy = true
-                scope.launch {
-                    found = withContext(Dispatchers.IO) {
-                        g.deviceScanner.find { d, t -> progress = (if (t > 0) d.toFloat() / t else 0f) to tr("Проверено файлов: $d из $t") }
-                    }
-                    busy = false
-                }
-            }) { Text(tr("Найти музыку на устройстве")) }
+            Button(onClick = { search() }) { Text(tr("Найти музыку на устройстве")) }
         }
         if (f != null && result == null) {
             Text(tr("Найдено песен: ${f.music.size}"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            if (f.already > 0) Text(
+                tr("Уже в библиотеке: ${f.already} — они на вкладке «Песни» и не предлагаются снова."),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (f.music.isEmpty()) NothingFound(f, settings.importRules.minDurationSec, onAllowMessengers = {
+                g.settings.update { st -> st.copy(importRules = st.importRules.copy(importFromMessengers = true)) }
+                search()
+            }, onRetry = { search() })
             // Review by folder: uncheck what is not music, or exclude a folder for good.
             val byFolder = remember(f) {
                 f.music.groupBy { it.file.parent ?: "" }.toList().sortedByDescending { it.second.size }
@@ -328,7 +339,39 @@ fun ImportPanel(onFinished: () -> Unit = {}) {
             r.errors.take(5).forEach { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
             Text(tr("Совет: откройте раздел «Исцеление», чтобы исправить названия, найти обложки и удалить клоны."),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Button(onClick = onFinished) { Text(tr("Готово")) }
+            Button(onClick = onFinished) { Text(doneLabel) }
+        }
+    }
+}
+
+/**
+ * A search that found no music says why and what helps: a missing permission, music that lies in
+ * messenger folders, or no audio files at all (songs of streaming apps are not files other players can play).
+ */
+@Composable
+private fun NothingFound(f: DeviceScanner.Found, minSec: Int, onAllowMessengers: () -> Unit, onRetry: () -> Unit) {
+    val context = LocalContext.current
+    val reasons = f.rejectedByReason
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
+        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(tr("Почему ничего не нашлось"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            if (!Storage.hasAllFilesAccess(context)) {
+                Text(tr("У плеера нет «Доступа ко всем файлам», поэтому он видит не всю музыку."))
+                StoragePermissionButton()
+            }
+            val messenger = reasons[ImportFilter.Verdict.MESSENGER] ?: 0
+            if (messenger > 0) {
+                Text(tr("В папках Telegram, WhatsApp и других мессенджеров лежит аудиофайлов: $messenger. Сами они не берутся: там обычно много лишнего — мемы, отрывки, звуки."))
+                Button(onClick = onAllowMessengers) { Text(tr("Взять музыку и из мессенджеров")) }
+            }
+            val short = reasons[ImportFilter.Verdict.TOO_SHORT] ?: 0
+            if (short > 0) Text(tr("Короче $minSec секунд: $short — это обычно звуки и отрывки. Порог меняется в «Настройки → Библиотека»."))
+            if (f.rejected.isEmpty() && f.already == 0) {
+                Text(tr("На телефоне не нашлось ни одного аудиофайла. Песни из Яндекс Музыки, VK Музыки, Spotify, Звука и других сервисов хранятся внутри их приложений в зашифрованном виде — их не может играть ни один другой плеер. Malachite играет обычные файлы: mp3, flac, m4a, ogg, opus, wav и другие."))
+            }
+            Text(tr("Песни из Telegram: откройте песню в чате → ⋮ → «Сохранить в музыку» (или «в загрузки») — тогда плеер её найдёт. То, что Telegram только скачал для прослушивания, может лежать в его закрытой папке, куда без root или Shizuku не попасть."),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            OutlinedButton(onClick = onRetry) { Text(tr("Искать ещё раз")) }
         }
     }
 }
@@ -348,8 +391,13 @@ fun verdictTitle(v: ImportFilter.Verdict) = when (v) {
 
 @Composable
 fun ImportScreen() {
+    val nav = app.malachite.player.ui.LocalNavigator.current
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-        ImportPanel(onFinished = { })
+        // after adding: to the songs (the screen of the search closes)
+        ImportPanel(doneLabel = tr("К песням"), onFinished = {
+            nav.back()
+            nav.openTab(app.malachite.player.data.Tab.SONGS)
+        })
     }
 }
 

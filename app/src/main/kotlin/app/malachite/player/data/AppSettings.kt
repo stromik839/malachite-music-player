@@ -86,6 +86,16 @@ enum class LyricsPass(val title: String) {
     BLUR(tr("Размывается")),
 }
 
+/** How the visualizer on the song screen looks. */
+enum class VisualizerStyle(val title: String) {
+    /** Bars with a glow, a falling cap over each and a reflection. */
+    BARS(tr("Полосы")),
+    /** Lit segments like the meter of a mixing desk. */
+    LEDS(tr("Светодиоды")),
+    /** A smooth wave mirrored around its middle. */
+    WAVE(tr("Волна")),
+}
+
 /** Speed of scrolling and of the current-line highlight. */
 enum class LyricsAnim(val title: String, val ms: Int) { OFF(tr("Без анимации"), 0), FAST(tr("Быстро"), 280), NORMAL(tr("Обычно"), 600), SLOW(tr("Медленно"), 1000) }
 
@@ -305,6 +315,10 @@ data class AppSettings(
     val crossfadeSec: Int = 0,
     /** Bars that move with the music on the song screen. */
     val visualizer: Boolean = true,
+    val visualizerStyle: VisualizerStyle = VisualizerStyle.BARS,
+    /** The DJ mixer in front of the speaker (Equalizer screen) and where its knobs stand. */
+    val mixerOn: Boolean = true,
+    val mixer: app.malachite.player.playback.MixerKnobs = app.malachite.player.playback.MixerKnobs(),
     /** Songs from the online section that were heard are kept up to this size for playing offline (MB; 0: not kept). */
     val onlineCacheMb: Int = 1024,
     /** Protected data: the password is asked at every start instead of the key being kept on this phone. */

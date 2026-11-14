@@ -32,7 +32,8 @@ class DeviceScanner(
      */
     data class Candidate(val file: File, val track: TrackInfo, val verdict: ImportFilter.Verdict, val privilegedSource: String? = null)
 
-    data class Found(val music: List<Candidate>, val rejected: List<Candidate>) {
+    /** [already]: songs on the device that are in the library already (they are not offered again). */
+    data class Found(val music: List<Candidate>, val rejected: List<Candidate>, val already: Int = 0) {
         val rejectedByReason get() = rejected.groupingBy { it.verdict }.eachCount()
     }
 
@@ -88,11 +89,17 @@ class DeviceScanner(
 
     @Volatile private var index: Map<String, IndexInfo> = emptyMap()
 
+    /** How the last list was made (for the log): files from the media index, more from the folder walk, a problem. */
+    private var listedFromIndex = 0
+    private var listedFromWalk = 0
+    private var listProblem: String? = null
+
     /** Paths of audio files outside the main folder. */
     fun listDeviceAudio(deep: Boolean = settings.value.deepScan): List<File> {
         val root = library.root ?: return emptyList()
         val mainCanon = root.canonicalPath
         val out = LinkedHashMap<String, File>()
+        listProblem = null
         // 1) MediaStore
         runCatching {
             val cols = mutableListOf(
@@ -123,7 +130,11 @@ class DeviceScanner(
                 }
             }
             index = info
+        }.onFailure { e ->
+            listProblem = "индекс музыки Android недоступен (${e.javaClass.simpleName})" // i18n:off
+            AppLog.w("scan", "Индекс музыки Android недоступен", e)
         }
+        listedFromIndex = out.size
         // 2) File system walk (finds misnamed files and folders MediaStore skips)
         if (deep && Storage.hasAllFilesAccess(context)) {
             for (r in Storage.roots(context)) {
@@ -139,6 +150,7 @@ class DeviceScanner(
                     .forEach { out.putIfAbsent(it.absolutePath, it) }
             }
         }
+        listedFromWalk = out.size - listedFromIndex
         return out.values.toList()
     }
 
@@ -150,12 +162,14 @@ class DeviceScanner(
     fun tryFind(deep: Boolean): Found? = exclusive(wait = false) { findLocked(deep) { _, _ -> } }
 
     private fun findLocked(deep: Boolean, onProgress: (Int, Int) -> Unit): Found {
-        val root = library.root ?: return Found(emptyList(), emptyList())
+        val root = library.root ?: return Found(emptyList(), emptyList()).also { AppLog.w("scan", "Поиск музыки: главная папка не открыта") } // i18n:off
         val data = library.store?.loadLibrary() ?: library.data.value
         val rules = settings.value.importRules
         val rulesHash = rules.hashCode()
         val seenMap = seenMap()
-        val files = listDeviceAudio(deep).filter { f ->
+        val all = listDeviceAudio(deep)
+        val already = all.count { sourceKey(it) in data.importedSources }
+        val files = all.filter { f ->
             val key = sourceKey(f)
             key !in data.importedSources && f.absolutePath !in data.ignoredSources
         }
@@ -198,7 +212,40 @@ class DeviceScanner(
         onProgress(files.size, files.size)
         saveSeen()
         findPrivileged(root, data, rules, music, rejected)
-        return Found(music, rejected)
+        logSearch(deep, files.size, music, rejected)
+        return Found(music, rejected, already)
+    }
+
+    /**
+     * What a search saw, in the log: without it "no songs on a friend's phone" cannot be told apart
+     * from no permission, an unreadable media index or music that was rejected as clutter.
+     */
+    private fun logSearch(deep: Boolean, fresh: Int, music: List<Candidate>, rejected: List<Candidate>) {
+        val base = Storage.primaryRoot().absolutePath
+        val audioPermission = if (Build.VERSION.SDK_INT >= 33) {
+            androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_MEDIA_AUDIO) ==
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+        } else null
+        val lines = ArrayList<String>()
+        lines += "Поиск музыки на устройстве: аудиофайлов ${listedFromIndex + listedFromWalk} " + // i18n:off
+            "(индекс Android $listedFromIndex, обход папок ${if (deep) listedFromWalk.toString() else "выключен"}), " + // i18n:off
+            "новых $fresh, музыка ${music.size}, пропущено ${rejected.size}" // i18n:off
+        lines += "    доступ ко всем файлам: ${if (Storage.hasAllFilesAccess(context)) "есть" else "НЕТ"}" + // i18n:off
+            (audioPermission?.let { ", разрешение «Музыка и аудио»: ${if (it) "есть" else "нет"}" } ?: "") + // i18n:off
+            ", главная папка: ${library.root?.absolutePath ?: "нет"}" + (listProblem?.let { ", $it" } ?: "") // i18n:off
+        if (rejected.isNotEmpty()) {
+            lines += "    пропущено: " + rejected.groupingBy { it.verdict }.eachCount().entries // i18n:off
+                .sortedByDescending { it.value }.joinToString(", ") { "${it.key.name.lowercase()} ${it.value}" }
+            rejected.groupingBy { (it.privilegedSource ?: it.file.parent ?: "").removePrefix(base) to it.verdict }.eachCount().entries
+                .sortedByDescending { it.value }.take(12)
+                .forEach { (k, n) -> lines += "      ${k.first.ifEmpty { "/" }} — ${k.second.name.lowercase()}: $n" }
+        }
+        if (music.isNotEmpty()) {
+            music.groupingBy { (it.privilegedSource?.substringBeforeLast('/') ?: it.file.parent ?: "").removePrefix(base) }.eachCount().entries
+                .sortedByDescending { it.value }.take(8)
+                .forEach { (k, n) -> lines += "      музыка: ${k.ifEmpty { "/" }} — $n" } // i18n:off
+        }
+        AppLog.i("scan", lines.joinToString("\n"))
     }
 
     /** A real video (more than a cover frame), checked without reading the whole file. */

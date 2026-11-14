@@ -103,6 +103,11 @@ fun helpItems(): List<HelpItem> = listOf(
         tab(Tab.ALBUMS), tr("Открыть альбомы"),
     ),
     HelpItem(
+        tr("Как создать свой альбом?"),
+        tr("Альбомы собираются из тегов песен. Во вкладке «Песни» удерживайте песню и проведите пальцем по остальным (или «Выбрать несколько»), затем «Что сделать с выбранным» → «Собрать в свой альбом…» и впишите название альбома (и, если хотите, исполнителя). Название запишется в сами файлы, и они переедут в папку этого альбома."),
+        tab(Tab.SONGS), tr("Открыть песни"),
+    ),
+    HelpItem(
         tr("Где песни без альбома?"),
         tr("Во вкладке «Альбомы» первая плитка «Без альбома». Если у таких песен на самом деле есть альбом, его поможет найти «Исцеление» → «Пустые альбомы и исполнители»."),
         screen(Screen.NoAlbum), tr("Открыть «Без альбома»"),
@@ -298,7 +303,7 @@ fun settingEntries(): List<SettingEntry> {
         SettingEntry(tr("Поиск текстов"), lyrics, screen(Screen.SettingsLyrics), "lyrics search lrclib"),
         SettingEntry(tr("Ручная синхронизация"), lyrics, screen(Screen.SettingsLyrics), "sync задержка автосохранение"),
         SettingEntry(tr("Скорость и питч по умолчанию"), play, screen(Screen.SettingsPlayback), "speed pitch nightcore slowed"),
-        SettingEntry(tr("Эквалайзер"), play, screen(Screen.SettingsPlayback), "equalizer eq басы"),
+        SettingEntry(tr("Эквалайзер и DJ-микшер"), play, screen(Screen.Equalizer), "equalizer eq басы mixer микшер dj kill trim filter фильтр баланс balance пульт"), // i18n:off
         SettingEntry(tr("Пропускать тишину"), play, screen(Screen.SettingsPlayback), "silence"),
         SettingEntry(tr("Одинаковая громкость"), play, screen(Screen.SettingsPlayback), "громкость loudness replaygain выравнивать"),
         SettingEntry(tr("Цвета обложки в уведомлении"), play, screen(Screen.SettingsPlayback), "notification уведомление"),

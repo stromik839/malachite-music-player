@@ -580,7 +580,9 @@ object HealPlanner {
                 src != null && app.malachite.core.library.ImportFilter.checkPath(src, rules, null) ==
                     app.malachite.core.library.ImportFilter.Verdict.VOICE_MESSAGE -> JunkItem(t.path, tr("голосовое сообщение"), src, true)
                 t.durationMs in 1 until rules.minDurationSec * 1000L -> JunkItem(t.path, tr("короче ${rules.minDurationSec} с"), src, false)
-                src != null && !rules.importFromMessengers && app.malachite.core.library.ImportFilter.isFromMessenger(src) ->
+                src != null && !rules.importFromMessengers && app.malachite.core.library.ImportFilter.isFromMessenger(src) &&
+                    !app.malachite.core.library.ImportFilter.isDeliberateSave(src) &&
+                    !app.malachite.core.library.ImportFilter.isSongLike(srcName, t.title, t.artist.ifBlank { t.albumArtist }, t.durationMs) ->
                     JunkItem(t.path, tr("из мессенджера: ${src.substringBeforeLast('/').substringAfterLast('/')}"), src, false)
                 else -> null
             }

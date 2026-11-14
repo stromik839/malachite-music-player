@@ -460,6 +460,31 @@ if step("Settings", "Настройки", desc=True, optional=True):
         back()
     if step("Settings: playback", "Воспроизведение и звук", optional=True, scroll=3):
         screen("settings playback")
+        # the DJ mixer: turn LOW all the way down (KILL) and let the music play through it
+        if step("Equalizer and DJ mixer", "Эквалайзер и DJ-микшер", optional=True, scroll=6):
+            time.sleep(1)
+            nodes = screen("equalizer and mixer")
+            knob = find(nodes, regex=r"^LOW: ", desc=True)
+            if not knob:
+                print(f"MISS the LOW knob — on the screen: {words(nodes)}")
+                missing.append("mixer knob LOW")
+            else:
+                x1, y1, x2, y2 = knob["box"]
+                cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+                adb("shell", "input", "swipe", str(cx), str(cy), str(cx - 380), str(cy + 380), "700")
+                time.sleep(1)
+                killed = find(dump(), regex=r"^KILL$") is not None
+                print(f"  LOW turned all the way down: {'KILL shown' if killed else 'no KILL on the screen'}")
+                if not killed:
+                    missing.append("mixer KILL")
+                adb("shell", "input", "keyevent", "126")  # play: the sound goes through the mixer
+                time.sleep(5)
+                screen("mixer playing with the bass killed")
+                adb("shell", "input", "keyevent", "127")
+                time.sleep(1)
+                if not alive():
+                    print(f"::error::Android API {API}: the app is gone while the mixer played")
+            back()
         back()
     if step("Settings: recognition by sound", "Узнавание песен по звуку", optional=True, scroll=4):
         screen("settings sound recognition")

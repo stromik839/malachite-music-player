@@ -414,8 +414,8 @@ fun SettingsLibraryScreen() {
             }
             Hint(tr("Голосовые сообщения (Telegram, WhatsApp, Viber, VK…), видео, записи звонков и диктофона, рингтоны, будильники и звуки уведомлений не добавляются никогда."))
             SwitchRow(
-                tr("Музыка из мессенджеров"), s.importRules.importFromMessengers,
-                tr("Telegram Audio, WhatsApp, VK и др. По умолчанию выключено: там в основном кэш и пересланные файлы. Видео и файлы-кэш вроде 4_591…@kndved.ogg не берутся никогда"),
+                tr("Всё аудио из мессенджеров"), s.importRules.importFromMessengers,
+                tr("Telegram, WhatsApp, VK и др. Выключено — берутся только песни: сохранённые вами («Сохранить в музыку», «в загрузки»), с названием и исполнителем или с именем «Исполнитель - Название», не короче минуты. Остальное там — в основном кэш, мемы и пересланные файлы"),
             ) { v -> up { it.copy(importRules = it.importRules.copy(importFromMessengers = v)) } }
             SwitchRow(tr("Добавлять подкасты и аудиокниги"), s.importRules.importPodcasts) { v -> up { it.copy(importRules = it.importRules.copy(importPodcasts = v, importAudiobooks = v)) } }
             OutlinedTextField(excluded, { excluded = it }, Modifier.fillMaxWidth(), label = { Text(tr("Исключённые папки (по одной в строке)")) })
@@ -566,6 +566,14 @@ fun SettingsPlaybackScreen() {
                 tr("Полоски под обложкой"), s.visualizer,
                 tr("Двигаются вместе с музыкой: слева басы, справа высокие. Берутся из самого звука плеера — микрофон и разрешения не нужны"),
             ) { v -> up { it.copy(visualizer = v) } }
+            if (s.visualizer) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    app.malachite.player.data.VisualizerStyle.entries.forEach { v ->
+                        FilterChip(s.visualizerStyle == v, { up { it.copy(visualizerStyle = v) } }, label = { Text(v.title) })
+                    }
+                }
+                Hint(tr("Полосы — со свечением, отражением и «шапочками», которые ненадолго задерживаются на самой высокой точке. Светодиоды — как индикатор на пульте. Волна — плавная, отражённая от середины."))
+            }
         }
         DislikedGroup()
         Group(tr("Прочее")) {
@@ -575,7 +583,7 @@ fun SettingsPlaybackScreen() {
                 tr("Цвета обложки в уведомлении"), s.notificationCoverColors,
                 tr("Там, где это умеет система. Изменение видно со следующей песни"),
             ) { v -> up { it.copy(notificationCoverColors = v) } }
-            NavRow(tr("Эквалайзер"), if (AudioEffects.available) tr("Системный эквалайзер для плеера") else tr("Откройте после начала воспроизведения")) { nav.push(Screen.Equalizer) }
+            NavRow(tr("Эквалайзер и DJ-микшер"), tr("Ручки TRIM, HI, MID, LOW с KILL, фильтр, баланс и эквалайзер телефона")) { nav.push(Screen.Equalizer) }
         }
     }
 }
@@ -643,11 +651,12 @@ fun EqualizerScreen() {
     var bands by remember { mutableStateOf(AudioEffects.bands()) }
     val (min, max) = AudioEffects.range()
     SettingsPage {
+        MixerGroup()
         if (!AudioEffects.available) {
-            Group(tr("Эквалайзер")) { Hint(tr("Эквалайзер станет доступен, когда начнёт играть песня (на некоторых прошивках его нет вовсе).")) }
+            Group(tr("Эквалайзер телефона")) { Hint(tr("Эквалайзер станет доступен, когда начнёт играть песня (на некоторых прошивках его нет вовсе).")) }
             return@SettingsPage
         }
-        Group(tr("Эквалайзер")) {
+        Group(tr("Эквалайзер телефона")) {
             SwitchRow(tr("Включён"), enabled) { v -> AudioEffects.enabled = v; enabled = v }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 AudioEffects.presets().forEachIndexed { i, p ->

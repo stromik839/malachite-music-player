@@ -389,8 +389,10 @@ else:
 if step("Song screen menu", "Ещё", desc=True, optional=True):
     time.sleep(1)
     nodes = screen("song screen menu")
-    for word in ("Отметить лучший момент здесь", "Не нравится"):
-        en = EN.get(word, word)
+    # a menu item may carry a value ("… здесь (0:05)"): its words before the brackets are enough
+    for key in ("Отметить лучший момент здесь ({})", "Не нравится"):
+        word = key.split(" (")[0]
+        en = EN.get(key, word).split(" (")[0]
         if not any(n["text"].startswith(en) or n["text"].startswith(word) for n in nodes):
             print(f"MISS «{en}» in the song's menu")
             missing.append(f"song menu: {en}")
@@ -456,6 +458,9 @@ if step("Settings", "Настройки", desc=True, optional=True):
     if step("Settings: lyrics", "Тексты песен", optional=True, scroll=3):
         screen("settings lyrics")
         back()
+    if step("Settings: playback", "Воспроизведение и звук", optional=True, scroll=3):
+        screen("settings playback")
+        back()
     if step("Settings: recognition by sound", "Узнавание песен по звуку", optional=True, scroll=4):
         screen("settings sound recognition")
         back()
@@ -465,9 +470,6 @@ if step("Settings", "Настройки", desc=True, optional=True):
         screen("what's new")
         if not step("What's new: got it", "Понятно", optional=True):
             back()
-    if step("Settings: playback", "Воспроизведение и звук", optional=True, scroll=3):
-        screen("settings playback")
-        back()
     back()
 if step("Questions and answers", "Вопросы и ответы", desc=True, optional=True):
     screen("help")

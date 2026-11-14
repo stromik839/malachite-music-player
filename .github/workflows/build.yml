@@ -1,0 +1,179 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: No keys, passwords or tokens in the repository
+        run: python3 tools/check_no_secrets.py
+
+      - name: Regex patterns are valid on Android (ICU)
+        run: python3 tools/check_android_regex.py core/src/main app/src/main
+
+      - name: Every interface text has an English translation
+        run: python3 tools/i18n.py check
+
+      - name: Core unit tests (healing, lyrics, tags)
+        run: ./gradlew --no-daemon :core:test
+
+      - name: Private signing key (only when the repository keeps one in its Secrets)
+        env:
+          KEYSTORE_B64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "MALACHITE_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            echo "Signing with the private key from Secrets"
+          else
+            echo "::warning::No release key in Secrets (SIGNING_KEYSTORE_BASE64): this APK is signed with a temporary key and will not update an installed Malachite. See docs/PUBLISHING.md."
+          fi
+
+      - name: Build APK
+        env:
+          MALACHITE_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          MALACHITE_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          MALACHITE_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          ./gradlew --no-daemon :app:assembleRelease
+          rm -f "$RUNNER_TEMP/release.jks"
+
+      - name: Rename APK
+        run: |
+          mkdir -p out
+          cp app/build/outputs/apk/release/app-release.apk out/Malachite-${GITHUB_SHA::7}.apk
+          ls -la out
+
+      - name: The English texts are inside the APK
+        run: unzip -l out/*.apk | grep -E " i18n/en\.txt$"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Malachite-apk
+          path: out/*.apk
+
+      - name: Live check of lyrics / album / cover services (informational)
+        continue-on-error: true
+        timeout-minutes: 10
+        run: |
+          touch core/live-probe.on
+          ./gradlew --no-daemon :core:test --tests 'app.malachite.core.LiveProbeTest' --rerun || true
+          cat core/build/live-probe.txt || true
+
+      - name: Publish rolling pre-release with the APK
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SIGNED: ${{ secrets.SIGNING_KEYSTORE_BASE64 != '' }}
+        run: |
+          TAG="build-${GITHUB_REF_NAME//\//-}"
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          {
+            echo "Свежая сборка из \`${GITHUB_SHA::7}\` — скачайте APK ниже и установите поверх прежней версии: музыка и настройки сохранятся."
+            echo
+            echo "*Fresh build of \`${GITHUB_SHA::7}\` — download the APK below and install it over the previous version; your music and settings stay.*"
+            echo
+            if [ "$SIGNED" != "true" ]; then
+              echo "> ⚠️ Эта сборка подписана временным ключом и не встанет поверх установленного Malachite."
+            fi
+            echo
+            echo "Что изменилось — в самом приложении: Настройки → «Что нового»."
+          } > release-notes.md
+          gh release create "$TAG" out/*.apk \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Malachite — свежая сборка" \
+            --notes-file release-notes.md
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: core/build/reports/tests/
+
+  # The APK just built, on Android 8, 9, 10, 11, 13 and 15 emulators: the first run, importing
+  # test songs, the songs list, the song screen, every tab, healing, settings, help and search
+  # are walked through (tools/device_walk.py), then random taps. A crash fails the build; the
+  # words on every screen are printed to the log.
+  devices:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [ 26, 28, 29, 30, 33, 35 ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: Malachite-apk
+          path: apk
+
+      - name: Test songs with tags (for the walk through the app)
+        run: |
+          sudo apt-get update -qq > /dev/null && sudo apt-get install -y -qq ffmpeg > /dev/null
+          mkdir -p device-songs
+          song() { ffmpeg -loglevel error -f lavfi -i "sine=frequency=$1:duration=45" -metadata artist="$2" -metadata album="$3" -metadata title="$4" -metadata track="$5" -b:a 64k "device-songs/$2 - $4.mp3"; }
+          song 440 "Test Artist" "Test Album" "First Song" 1
+          song 523 "Test Artist" "Test Album" "Second Song" 2
+          song 659 "Another Artist" "Other Album" "Third Song" 1
+          ls -la device-songs
+
+      - name: Free disk space for the emulator (a newer Android needs several GB)
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /usr/local/lib/node_modules /opt/hostedtoolcache/CodeQL /usr/share/swift || true
+          df -h / | tail -1
+
+      - name: Enable KVM (hardware acceleration for the emulator)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Start the app on Android API ${{ matrix.api }}
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          cores: 2
+          ram-size: 3072M
+          disk-size: 3072M
+          emulator-boot-timeout: 900
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash tools/device_smoke.sh ${{ matrix.api }}
+
+      - name: Screenshots and log of this Android version
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-api-${{ matrix.api }}
+          path: device-report/
+

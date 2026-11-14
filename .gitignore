@@ -1,0 +1,27 @@
+.gradle/
+build/
+/local.properties
+.idea/
+*.iml
+.DS_Store
+/captures
+.externalNativeBuild
+.cxx
+*.keystore
+__pycache__/
+
+# Private things that must never be committed (the repository is public)
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
+keystore.properties
+*signing-secrets*
+secrets*
+.env
+.env.*
+
+# CI leftovers
+release-notes.md
+core/live-probe.on

@@ -1,0 +1,7 @@
+• First run: who made the app, and the user agreement
+• Your own picture as the cover of a song, album or playlist
+• Filters and sorting in search and in the song list
+• Repeat and shuffle buttons in the notification
+• Smooth lyric changes in the widget; lines arrive on time in the player
+• More cover sources
+• "About" section, error log (off by default)

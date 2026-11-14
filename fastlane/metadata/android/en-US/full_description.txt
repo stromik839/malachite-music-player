@@ -1,0 +1,21 @@
+<b>Malachite</b> is an offline music player with no ads, no accounts and no tracking. It does not only play music, it puts the library in order. The interface is in English and Russian.
+
+<b>One main folder.</b> All music is collected into a single folder laid out as "Artist / Album (year) / Song". Playlists, lyrics, favourites and settings live there too, so the folder can be zipped and moved to another phone.
+
+<b>Healing.</b> The player repairs what spoils a library:
+• names with typos, transliteration, "fancy" Unicode letters and site watermarks;
+• garbled tags from old encodings;
+• files with a wrong extension;
+• empty albums, artists and years;
+• meaningless file names;
+• duplicates;
+• missing covers (embedded into the file itself).
+Every change is made on a copy, and the player verifies that the audio stayed identical byte for byte.
+
+<b>Lyrics.</b> Synced lyrics are searched first, plain text second. Lyrics can also be synced by hand with one button, even while the song is slowed down.
+
+<b>Also:</b> speed and pitch independent of each other, equalizer, sleep timer, themes and custom colours, custom fonts, a resizable widget whose lyric lines look exactly like in the player, an icon in the colour of your theme, your own picture as the cover of a song, album or playlist. An optional online section (off by default) searches open catalogues.
+
+<b>Privacy.</b> The player works without the internet. It goes online only when you start a search for lyrics, a cover or an album; then the artist, title and album are sent to third-party services. The error log is off until you turn it on.
+
+Idea: Krysmed. The code was written by the AI assistant Claude. Future updates are not guaranteed.

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only encrypted connections (HTTPS), on every Android version. Android 9+ already refuses
+     plain HTTP for this app; Android 8 would allow it without this file. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

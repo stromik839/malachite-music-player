@@ -1,0 +1,52 @@
+name: Ошибка / Bug
+description: Что-то работает не так
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо, что пишете! Чем точнее описание, тем быстрее получится исправить.
+        Проверьте, что в тексте и файлах нет личных данных, которые вы не хотите показывать: сообщение видно всем.
+  - type: textarea
+    id: what
+    attributes:
+      label: Что произошло
+      description: Что вы делали и что получилось не так
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Как повторить
+      placeholder: |
+        1. Открыл …
+        2. Нажал …
+        3. Увидел …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Версия плеера
+      description: Настройки → О приложении
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Телефон и версия Android
+      placeholder: "Например: Xiaomi 13T, HyperOS 2, Android 15"
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Журнал или отчёт о сбое
+      description: |
+        Настройки → Ошибки и журнал → «Вести журнал в файл», повторите ошибку и приложите файл
+        `Download/Malachite-log.txt` (перетащите его сюда) или вставьте отчёт о сбое.
+      render: text
+  - type: textarea
+    id: extra
+    attributes:
+      label: Скриншоты или запись экрана

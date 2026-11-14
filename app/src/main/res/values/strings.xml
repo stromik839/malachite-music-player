@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Malachite</string>
+    <string name="widget_description">Player: cover, buttons, lyrics and seeking — stretch to the size you need</string>
+</resources>

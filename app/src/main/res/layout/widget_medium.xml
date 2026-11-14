@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated layout; the colours are set from the app's theme at runtime. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <ImageView android:id="@+id/widget_bg" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:src="@drawable/widget_bg" android:scaleType="fitXY" android:importantForAccessibility="no" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="10dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+        <ImageView android:id="@+id/widget_cover" android:layout_width="44dp" android:layout_height="44dp"
+            android:scaleType="centerCrop" android:src="@drawable/cover_placeholder" android:importantForAccessibility="no" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:orientation="vertical" android:paddingStart="12dp" android:paddingEnd="6dp">
+            <TextView android:id="@+id/widget_title" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:singleLine="true" android:ellipsize="end" android:textSize="15sp" android:textStyle="bold" android:textColor="#FFFFFFFF" />
+            <TextView android:id="@+id/widget_artist" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:singleLine="true" android:ellipsize="end" android:textSize="13sp" android:textColor="#B3FFFFFF" android:paddingTop="1dp" />
+        </LinearLayout>
+    </LinearLayout>
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center" android:paddingTop="4dp">
+        <ImageView android:id="@+id/widget_fav" android:layout_width="44dp" android:layout_height="44dp"
+            android:padding="11dp" android:src="@drawable/ic_favorite_border" android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="widget_fav" />
+        <FrameLayout android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
+        <ImageView android:id="@+id/widget_prev" android:layout_width="48dp" android:layout_height="48dp"
+            android:padding="9dp" android:src="@drawable/ic_prev" android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="widget_prev" />
+        <FrameLayout android:layout_width="54dp" android:layout_height="54dp" android:layout_marginStart="6dp" android:layout_marginEnd="6dp">
+            <ImageView android:id="@+id/widget_play_bg" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:src="@drawable/widget_circle" android:importantForAccessibility="no" />
+            <ImageView android:id="@+id/widget_play" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:padding="13dp" android:src="@drawable/ic_play" android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="widget_play" />
+        </FrameLayout>
+        <ImageView android:id="@+id/widget_next" android:layout_width="48dp" android:layout_height="48dp"
+            android:padding="9dp" android:src="@drawable/ic_next" android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="widget_next" />
+        <FrameLayout android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
+        <FrameLayout android:id="@+id/widget_fav_balance" android:layout_width="44dp" android:layout_height="1dp" />
+    </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

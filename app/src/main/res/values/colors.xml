@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="malachite_background">#FF0F1012</color>
+    <color name="malachite_primary">#FF4FBF86</color>
+    <color name="malachite_dark">#FF123222</color>
+    <color name="icon_background">#FF0B1A12</color>
+</resources>

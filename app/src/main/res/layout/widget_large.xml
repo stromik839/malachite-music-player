@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated layout; the colours are set from the app's theme at runtime. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <ImageView android:id="@+id/widget_bg" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:src="@drawable/widget_bg" android:scaleType="fitXY" android:importantForAccessibility="no" />
+    <LinearLayout android:id="@+id/widget_content" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="14dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+        <ImageView android:id="@+id/widget_cover" android:layout_width="56dp" android:layout_height="56dp"
+            android:scaleType="centerCrop" android:src="@drawable/cover_placeholder" android:importantForAccessibility="no" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:orientation="vertical" android:paddingStart="12dp" android:paddingEnd="6dp">
+            <TextView android:id="@+id/widget_title" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:singleLine="true" android:ellipsize="end" android:textSize="15sp" android:textStyle="bold" android:textColor="#FFFFFFFF" />
+            <TextView android:id="@+id/widget_artist" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:singleLine="true" android:ellipsize="end" android:textSize="13sp" android:textColor="#B3FFFFFF" android:paddingTop="1dp" />
+        </LinearLayout>
+    </LinearLayout>
+    <!-- Each line exists twice: as text, and as a picture drawn by the app with the player's own
+         typeface (the launcher cannot use a font from a file). Only one of the two kinds is shown.
+         Two pages of lyric lines. A line change shows the other page: the old one fades out, the new
+         one fades in (the standard layout transition). Showing a page that is already shown does
+         nothing, so launchers that re-apply every update cannot replay the animation. -->
+    <FrameLayout android:id="@+id/widget_lyrics" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:paddingTop="6dp" android:paddingBottom="2dp">
+        <!-- a song without lyrics: its cover fills the room, the buttons stay at the bottom -->
+        <ImageView android:id="@+id/widget_big_cover" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:scaleType="fitCenter" android:paddingTop="4dp" android:paddingBottom="6dp" android:visibility="gone" android:importantForAccessibility="no" />
+        <!-- its own parent, so that the fade of one page never cuts the fade of the other short -->
+        <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:animateLayoutChanges="true">
+            <LinearLayout android:id="@+id/widget_page0" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:orientation="vertical" android:gravity="center_vertical">
+                <TextView android:id="@+id/widget_l0_p2" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:gravity="center" android:maxLines="1" android:ellipsize="end" android:textSize="14sp" android:textColor="#59FFFFFF" android:visibility="gone" />
+                <ImageView android:id="@+id/widget_i0_p2" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:adjustViewBounds="true" android:scaleType="fitCenter" android:visibility="gone" android:importantForAccessibility="no" />
+                <TextView android:id="@+id/widget_l0_p1" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:gravity="center" android:maxLines="2" android:ellipsize="end" android:textSize="14sp" android:textColor="#80FFFFFF" android:paddingTop="2dp" />
+                <ImageView android:id="@+id/widget_i0_p1" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:adjustViewBounds="true" android:scaleType="fitCenter" android:paddingTop="2dp" android:visibility="gone" android:importantForAccessibility="no" />
+                <TextView android:id="@+id/widget_l0_cur" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:gravity="center" android:maxLines="3" android:ellipsize="end" android:textSize="19sp"
+                    android:textColor="#FFFFFFFF" android:paddingTop="6dp" android:paddingBottom="6dp" />
+                <ImageView android:id="@+id/widget_i0_cur" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:adjustViewBounds="true" android:scaleType="fitCenter" android:paddingTop="6dp" android:paddingBottom="6dp" android:visibility="gone" android:importantForAccessibility="no" />
+                <TextView android:id="@+id/widget_l0_n1" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:gravity="center" android:maxLines="2" android:ellipsize="end" android:textSize="14sp" android:textColor="#80FFFFFF" android:paddingBottom="2dp" />
+                <ImageView android:id="@+id/widget_i0_n1" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:adjustViewBounds="true" android:scaleType="fitCenter" android:paddingBottom="2dp" android:visibility="gone" android:importantForAccessibility="no" />
+                <TextView android:id="@+id/widget_l0_n2" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:gravity="center" android:maxLines="1" android:ellipsize="end" android:textSize="14sp" android:textColor="#59FFFFFF" android:visibility="gone" />
+                <ImageView android:id="@+id/widget_i0_n2" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:adjustViewBounds="true" android:scaleType="fitCenter" android:visibility="gone" android:importantForAccessibility="no" />
+            </LinearLayout>
+        </FrameLayout>
+        <!-- its own parent, so that the fade of one page never cuts the fade of the other short -->
+        <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:animateLayoutChanges="true">
+            <LinearLayout android:id="@+id/widget_page1" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:orientation="vertical" android:gravity="center_vertical" android:visibility="invisible">
+                <TextView android:id="@+id/widget_l1_p2" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:gravity="center" android:maxLines="1" android:ellipsize="end" android:textSize="14sp" android:textColor="#59FFFFFF" android:visibility="gone" />
+                <ImageView android:id="@+id/widget_i1_p2" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:adjustViewBounds="true" android:scaleType="fitCenter" android:visibility="gone" android:importantForAccessibility="no" />
+                <TextView android:id="@+id/widget_l1_p1" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:gravity="center" android:maxLines="2" android:ellipsize="end" android:textSize="14sp" android:textColor="#80FFFFFF" android:paddingTop="2dp" />
+                <ImageView android:id="@+id/widget_i1_p1" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:adjustViewBounds="true" android:scaleType="fitCenter" android:paddingTop="2dp" android:visibility="gone" android:importantForAccessibility="no" />
+                <TextView android:id="@+id/widget_l1_cur" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:gravity="center" android:maxLines="3" android:ellipsize="end" android:textSize="19sp"
+                    android:textColor="#FFFFFFFF" android:paddingTop="6dp" android:paddingBottom="6dp" />
+                <ImageView android:id="@+id/widget_i1_cur" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:adjustViewBounds="true" android:scaleType="fitCenter" android:paddingTop="6dp" android:paddingBottom="6dp" android:visibility="gone" android:importantForAccessibility="no" />
+                <TextView android:id="@+id/widget_l1_n1" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:gravity="center" android:maxLines="2" android:ellipsize="end" android:textSize="14sp" android:textColor="#80FFFFFF" android:paddingBottom="2dp" />
+                <ImageView android:id="@+id/widget_i1_n1" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:adjustViewBounds="true" android:scaleType="fitCenter" android:paddingBottom="2dp" android:visibility="gone" android:importantForAccessibility="no" />
+                <TextView android:id="@+id/widget_l1_n2" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:gravity="center" android:maxLines="1" android:ellipsize="end" android:textSize="14sp" android:textColor="#59FFFFFF" android:visibility="gone" />
+                <ImageView android:id="@+id/widget_i1_n2" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:adjustViewBounds="true" android:scaleType="fitCenter" android:visibility="gone" android:importantForAccessibility="no" />
+            </LinearLayout>
+        </FrameLayout>
+    </FrameLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center" android:paddingTop="4dp">
+        <ImageView android:id="@+id/widget_fav" android:layout_width="44dp" android:layout_height="44dp"
+            android:padding="11dp" android:src="@drawable/ic_favorite_border" android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="widget_fav" />
+        <FrameLayout android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
+        <ImageView android:id="@+id/widget_prev" android:layout_width="48dp" android:layout_height="48dp"
+            android:padding="9dp" android:src="@drawable/ic_prev" android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="widget_prev" />
+        <FrameLayout android:layout_width="56dp" android:layout_height="56dp" android:layout_marginStart="6dp" android:layout_marginEnd="6dp">
+            <ImageView android:id="@+id/widget_play_bg" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:src="@drawable/widget_circle" android:importantForAccessibility="no" />
+            <ImageView android:id="@+id/widget_play" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:padding="14dp" android:src="@drawable/ic_play" android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="widget_play" />
+        </FrameLayout>
+        <ImageView android:id="@+id/widget_next" android:layout_width="48dp" android:layout_height="48dp"
+            android:padding="9dp" android:src="@drawable/ic_next" android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="widget_next" />
+        <FrameLayout android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
+        <FrameLayout android:id="@+id/widget_fav_balance" android:layout_width="44dp" android:layout_height="1dp" />
+    </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

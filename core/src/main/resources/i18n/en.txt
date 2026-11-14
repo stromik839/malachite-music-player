@@ -1,0 +1,4602 @@
+# English texts of the interface. The Russian text (as written in the code) is the key.
+# Two lines per entry: Russian, English; an empty line between entries.
+# {} is a value put into the text; \n is a line break. Checked by: python3 tools/i18n.py check
+Исцеление и импорт
+Healing and import
+
+Новые песни
+New songs
+
+Малахит (по умолчанию)
+Malachite (default)
+
+Красный
+Red
+
+Оранжевый
+Orange
+
+Жёлтый
+Yellow
+
+Зелёный
+Green
+
+Голубой
+Light blue
+
+Синий
+Blue
+
+Фиолетовый
+Violet
+
+Свой цвет
+Custom colour
+
+Малахит (обычный)
+Malachite (default)
+
+Как цвет акцента плеера
+Same as the player's accent colour
+
+Как цвета телефона
+Same as the phone's colours
+
+Системный
+System
+
+Без засечек
+Sans serif
+
+С засечками
+Serif
+
+Моноширинный
+Monospace
+
+Рукописный
+Handwritten
+
+Свой файл шрифта
+Font from a file
+
+Снизу
+Bottom
+
+Сверху
+Top
+
+Слева
+Left
+
+Справа
+Right
+
+По центру
+Centre
+
+Сразу
+At once
+
+Быстро
+Fast
+
+Плавно, пока слово поётся
+Smoothly, while the word is sung
+
+По буквам, с мягким краем
+Letter by letter, with a soft edge
+
+Без анимации
+No animation
+
+Обычно
+Normal
+
+Медленно
+Slow
+
+Песни
+Songs
+
+Альбомы
+Albums
+
+Исполнители
+Artists
+
+Плейлисты
+Playlists
+
+Избранное
+Favourites
+
+Папки
+Folders
+
+Исцеление
+Healing
+
+Поиск
+Search
+
+Онлайн
+Online
+
+Нет главной папки
+No main folder
+
+{}: не удалось скопировать из закрытой папки
+{}: could not copy from a protected folder
+
+Не удалось удалить оригинал {}
+Could not delete the original {}
+
+Чтение главной папки…
+Reading the main folder…
+
+Чтение тегов {} из {}
+Reading tags: {} of {}
+
+Плейлист
+Playlist
+
+Автор не разрешил скачивание
+The author has not allowed downloading
+
+Загрузка оборвалась
+The download was interrupted
+
+Это не музыкальный файл
+This is not a music file
+
+Выключено
+Off
+
+Папка доступна
+The folder is available
+
+Папка не найдена
+Folder not found
+
+Это не папка
+This is not a folder
+
+Нет разрешения читать эту папку — выдайте плееру «Доступ ко всем файлам»
+No permission to read this folder — grant the player "All files access"
+
+Папку можно читать, но нельзя изменять (защищённое место или SD-карта без доступа)
+The folder can be read but not changed (a protected place or an SD card without access)
+
+Исцеление: {}
+Healing: {}
+
+Главная папка не открыта
+The main folder is not open
+
+Ошибка: {}
+Error: {}
+
+{}: исправлено {}, пропущено {}, ошибок {}
+{}: fixed {}, skipped {}, errors {}
+
+. Для {} песен по найденной обложке известен альбом — смотрите «Пустые альбомы»
+. For {} songs the album is known from the cover that was found — see "Empty albums"
+
+Анализ не удался: {}
+Analysis failed: {}
+
+Ищу альбом: {}
+Looking for the album: {}
+
+интернет ({}
+internet ({}
+
+ и ещё {}
+ and {} more
+
+, совпадение {}%)
+, match {}%)
+
+Альбом найден в интернете для {} из {} песен — проверьте и отметьте
+An album was found on the internet for {} of {} songs — check and tick them
+
+форматы файлов
+file formats
+
+не музыка
+not music
+
+пустые альбомы и исполнители
+empty albums and artists
+
+названия
+names
+
+имена файлов
+file names
+
+клоны
+duplicates
+
+обложки
+covers
+
+раскладка по папкам
+folder layout
+
+тексты
+lyrics
+
+Повтор одной песни
+Repeat one song
+
+Повтор очереди
+Repeat the queue
+
+Без повтора
+No repeat
+
+Вперемешку
+Shuffle
+
+По порядку
+In order
+
+Работаю…
+Working…
+
+Исполнитель
+Artist
+
+Альбом
+Album
+
+Синхронизация текста
+Lyrics sync
+
+Настройки
+Settings
+
+Оформление
+Appearance
+
+Меню и панели
+Menu and panels
+
+Библиотека и главная папка
+Library and main folder
+
+Тексты песен
+Lyrics
+
+Воспроизведение
+Playback
+
+Виджеты
+Widgets
+
+Экспорт, резервные копии
+Export and backups
+
+Эквалайзер
+Equalizer
+
+Root и Shizuku
+Root and Shizuku
+
+Ошибки и журнал
+Errors and log
+
+О приложении
+About
+
+Соглашение
+Agreement
+
+Поддержать автора
+Support the author
+
+Новые песни на устройстве
+New songs on the device
+
+Назад
+Back
+
+Дальше
+Next
+
+Часто слушаю
+Most played
+
+Недавно добавленные
+Recently added
+
+Недавно играли
+Recently played
+
+Неизвестно
+Unknown
+
+Ещё
+More
+
+Добавить в плейлист
+Add to playlist
+
+Добавлено в «{}»
+Added to "{}"
+
+Новый плейлист
+New playlist
+
+Создан «{}»
+Created "{}"
+
+Создать
+Create
+
+Отмена
+Cancel
+
+Теги файла
+File tags
+
+Формат {} не поддерживает безопасную запись тегов.
+The {} format does not support safe tag writing.
+
+Название
+Title
+
+Исполнитель альбома
+Album artist
+
+Год
+Year
+
+Жанр
+Genre
+
+Номер трека
+Track number
+
+Изменения пишутся в сам файл через проверенную копию. Файл переместится в папку нового исполнителя/альбома.
+Changes are written into the file itself through a verified copy. The file will move to the folder of the new artist/album.
+
+Теги сохранены
+Tags saved
+
+Не сохранено: {}
+Not saved: {}
+
+Сохранить
+Save
+
+Ничего не найдено. Попробуйте исправить исполнителя, альбом или название (можно латиницей или кириллицей) — или выберите свою картинку.
+Nothing found. Try correcting the artist, album or title (Latin or Cyrillic letters both work) — or choose your own picture.
+
+Не удалось прочитать картинку
+Could not read the picture
+
+Вшиваю вашу картинку…
+Embedding your picture…
+
+Этот файл не читается как картинка
+This file cannot be read as a picture
+
+своя картинка
+own picture
+
+Обложка вшита в файлов: {} из {}
+Cover embedded into {} of {} files
+
+Обложка для {} песен
+Cover for {} songs
+
+Обложка
+Cover
+
+Выбрать свою картинку
+Choose your own picture
+
+Или найдите в интернете:
+Or find one on the internet:
+
+Альбом (пусто — искать по песне)
+Album (empty — search by song)
+
+Название песни
+Song title
+
+Искать снова
+Search again
+
+Нажмите на подходящую — она будет вшита в сам файл
+Tap the one that fits — it will be embedded into the file itself
+
+Загружаю и вшиваю…
+Downloading and embedding…
+
+Не удалось загрузить картинку
+Could not download the picture
+
+Закрыть
+Close
+
+Свой текст
+Own lyrics
+
+Текст песни
+Lyrics
+
+Вставьте текст или LRC
+Paste the lyrics or LRC
+
+Пометки вроде [Припев] или (Куплет 1) будут убраны автоматически.
+Marks like [Chorus] or (Verse 1) will be removed automatically.
+
+Искать
+Search
+
+Вставить свой
+Paste my own
+
+Не найдено. Можно вставить текст вручную и синхронизировать его кнопкой.
+Not found. You can paste the lyrics by hand and sync them with the button.
+
+Текст сохранён
+Lyrics saved
+
+синхронизированный
+synced
+
+без времени
+no timing
+
+ • совпадение {}%
+ • match {}%
+
+вручную
+by hand
+
+Сохранён синхронизированный текст
+Synced lyrics saved
+
+Текст сохранён — его можно синхронизировать
+Lyrics saved — you can sync them
+
+Удалить «{}»?
+Delete "{}"?
+
+Файл перемещается в корзину плеера (.malachite/trash) — его можно вернуть, пока корзина не очищена.
+The file moves to the player's trash (.malachite/trash) — it can be restored until the trash is emptied.
+
+Перемещено в корзину
+Moved to trash
+
+Не удалось удалить
+Could not delete
+
+Удалить
+Delete
+
+Сведения
+Details
+
+Путь
+Path
+
+Формат
+Format
+
+Длительность
+Duration
+
+Битрейт
+Bitrate
+
+{} кбит/с
+{} kbps
+
+Частота
+Sample rate
+
+{} Гц
+{} Hz
+
+Размер
+Size
+
+%.1f МБ
+%.1f MB
+
+Обложка в файле
+Cover in the file
+
+есть
+yes
+
+нет
+no
+
+Прослушиваний
+Plays
+
+Текст
+Lyrics
+
+нет слов
+no words
+
+Импортирован из
+Imported from
+
+Обложка взята из
+Cover taken from
+
+Не музыка в главной папке
+Not music in the main folder
+
+Видео (клипы из Telegram, записи экрана), файлы-кэш мессенджеров вроде 4_5913724166165551837@kndved.ogg, голосовые и слишком короткие файлы. Убираются в корзину (можно вернуть) и больше не подхватываются при поиске.
+Videos (clips from Telegram, screen recordings), messenger cache files like 4_5913724166165551837@kndved.ogg, voice messages and files that are too short. They go to the trash (can be restored) and are no longer picked up by the search.
+
+Форматы файлов
+File formats
+
+Находит файлы, у которых расширение не совпадает с настоящим форматом (mp3, переименованный в .wav и т.п.), и даёт им правильное расширение.
+Finds files whose extension does not match the real format (an mp3 renamed to .wav and the like) and gives them the right extension.
+
+Пустые альбомы и исполнители
+Empty albums and artists
+
+Песни, у которых в самом файле нет альбома или исполнителя (из-за этого они попадают в «Без альбома»). Альбом берётся из тегов, прочитанных Android, из папки в главной папке или из папок, где песня лежала раньше («Boris_Kuzmin/Время выткало нить/…»), записывается в файл, и песня переезжает в папку своего альбома. Уверенные варианты отмечены, остальные — проверьте.
+Songs whose file has no album or artist inside (that is why they end up in "No album"). The album is taken from the tags read by Android, from the folder inside the main folder or from the folders where the song used to be ("Boris_Kuzmin/Время выткало нить/…"), written into the file, and the song moves to the folder of its album. Confident suggestions are ticked, check the others.
+
+Названия: исполнители, альбомы, песни
+Names: artists, albums, songs
+
+Объединяет «Всем смертям назло» и «Всемсмертямназло», кириллицу и латиницу, опечатки в букву, «𝗹𝗮𝘁𝗲𝘅 𝗳𝗿𝘂𝗶𝘁»-украшения, водяные знаки сайтов. Записывает исправления в файлы и раскладывает их по папкам.
+Merges "Всем смертям назло" and "Всемсмертямназло", Cyrillic and Latin spellings, one-letter typos, "𝗹𝗮𝘁𝗲𝘅 𝗳𝗿𝘂𝗶𝘁" decorations, website watermarks. Writes the corrections into the files and sorts them into folders.
+
+Имена файлов
+File names
+
+Файлы с непонятными именами (2_3049492992.mp3, AUD-20240101-WA0003.mp3, Track 01.mp3) получают название песни, записанное внутри файла. Папки исполнителя и альбома исправляются как обычно — «Названиями» и «Раскладкой». Если наоборот, внутри файла мусор, а имя файла нормальное, «Названия» предложат взять название из имени файла.
+Files with meaningless names (2_3049492992.mp3, AUD-20240101-WA0003.mp3, Track 01.mp3) get the song title stored inside the file. Artist and album folders are fixed as usual — by "Names" and "Folder layout". If it is the other way round — rubbish inside the file but a good file name — "Names" will offer to take the title from the file name.
+
+Клоны песен
+Duplicate songs
+
+Находит копии одной песни: с одинаковым звуком (100% клоны) и одинаковые песни в разном качестве. Лучшая копия остаётся, остальные — в корзину (можно вернуть).
+Finds copies of the same song: with identical sound (100% duplicates) and the same song in different quality. The best copy stays, the others go to the trash (can be restored).
+
+Обложки
+Covers
+
+Вшивает обложки в сами файлы: сначала берёт обложку из других песен того же альбома, потом ищет в интернете (iTunes, Deezer, MusicBrainz), пробуя перестановку исполнителя/альбома и транслит.
+Embeds covers into the files themselves: first it takes the cover from other songs of the same album, then searches the internet (iTunes, Deezer, MusicBrainz), also trying artist/album swapped and transliterated.
+
+Раскладка по папкам
+Folder layout
+
+Перемещает файлы в «Главная папка / Исполнитель / Альбом / Песня».
+Moves files to "Main folder / Artist / Album / Song".
+
+Тексты и синхронизация
+Lyrics and sync
+
+Исцеление библиотеки
+Healing the library
+
+Каждое изменение делается на копии файла, проверяется (звук должен остаться байт-в-байт тем же) и только потом заменяет оригинал. Задачи выполняются строго по очереди — два исцеления никогда не пишут в один файл одновременно.
+Every change is made on a copy of the file, verified (the sound must stay the same byte for byte) and only then replaces the original. Tasks run strictly one after another — two healings never write to the same file at once.
+
+ Оригиналы сохраняются в .malachite/backup.
+ Originals are kept in .malachite/backup.
+
+Сомнительные случаи (возможные опечатки, неодинаковые клоны, неточные обложки) не трогаются — их можно разобрать ниже вручную.
+Doubtful cases (possible typos, non-identical duplicates, inexact covers) are left alone — you can go through them by hand below.
+
+Выполняется: {}
+Running: {}
+
+В очереди: 
+In the queue: 
+
+Остановить после текущего файла
+Stop after the current file
+
+Журнал
+Log
+
+… и ещё {}
+… and {} more
+
+Анализ…
+Analysing…
+
+Проверить
+Check
+
+Проблем не найдено ✓
+No problems found ✓
+
+Файлов с неверным расширением: {}
+Files with a wrong extension: {}
+
+Исправить расширения ({})
+Fix extensions ({})
+
+Найдено групп: {}. Отмечено: {}. «Возможные» совпадения (опечатки) по умолчанию не отмечены.
+Groups found: {}. Ticked: {}. "Possible" matches (typos) are not ticked by default.
+
+Отметить все
+Tick all
+
+Только уверенные
+Confident only
+
+точно
+exact
+
+транслит
+transliteration
+
+возможно (проверьте)
+possible (check)
+
+{} • {} • файлов: {}
+{} • {} • files: {}
+
+(пусто)
+(empty)
+
+Правильное написание
+Correct spelling
+
+Изменить
+Change
+
+взять «{}»
+take "{}"
+
+Показаны первые 300 групп. Остальные применятся при выборе «Отметить все».
+The first 300 groups are shown. The rest will be applied if you choose "Tick all".
+
+Исправить отмеченные ({})
+Fix the ticked ({})
+
+В главной папке только музыка ✓
+Only music in the main folder ✓
+
+Найдено: {}. Отмечено: {} (видео, кэш мессенджеров, голосовые). Короткие и музыка из мессенджеров с нормальными названиями — проверьте сами.
+Found: {}. Ticked: {} (videos, messenger cache, voice messages). Short files and music from messengers with normal titles — check yourself.
+
+Снять все
+Untick all
+
+Показаны первые 400.
+The first 400 are shown.
+
+Убрать в корзину ({})
+Move to trash ({})
+
+Найти альбомы в интернете ещё для {} песен
+Find albums on the internet for {} more songs
+
+Deezer и iTunes по исполнителю и названию. Найденное не применяется само — отметьте то, что верно.
+Deezer and iTunes by artist and title. What is found is not applied by itself — tick what is right.
+
+У всех песен в файлах есть альбом и исполнитель ✓
+All songs have an album and an artist in their files ✓
+
+Найдено: {}. Уверенных: {}. Отмечено: {}.
+Found: {}. Confident: {}. Ticked: {}.
+
+исполнитель → «{}»
+artist → "{}"
+
+альбом → «{}»
+album → "{}"
+
+год → {}
+year → {}
+
+уверенно
+confident
+
+проверьте
+check
+
+Показаны первые 300.
+The first 300 are shown.
+
+Записать в файлы и разложить ({})
+Write into files and sort ({})
+
+Все файлы названы так же, как песни внутри них ✓
+All files are named after the songs inside them ✓
+
+Файлов с непонятным именем: {}
+Files with a meaningless name: {}
+
+Переименовать ({})
+Rename ({})
+
+Клонов не найдено ✓
+No duplicates found ✓
+
+Групп: {}. 100% клоны (одинаковый звук) отмечены сразу; одинаковые песни в разном качестве — проверьте сами.
+Groups: {}. 100% duplicates (identical sound) are ticked right away; the same song in different quality — check yourself.
+
+Одинаковый звук
+Identical sound
+
+Похоже на ту же песню
+Looks like the same song
+
+Оставить: {}
+Keep: {}
+
+В корзину: {}
+To trash: {}
+
+Убрать клоны ({} групп)
+Remove duplicates ({} groups)
+
+У всех песен есть обложки ✓
+All songs have covers ✓
+
+Альбомов/песен без обложки: {} (из них {} можно взять у соседних песен альбома без интернета).
+Albums/songs without a cover: {} ({} of them can be taken from other songs of the album without the internet).
+
+Найти и вшить
+Find and embed
+
+Только без интернета
+Without the internet only
+
+Обложки для ручного выбора: {}
+Covers to choose by hand: {}
+
+Для них не нашлось уверенного совпадения. Нажмите, чтобы посмотреть варианты.
+No confident match was found for them. Tap to see the options.
+
+Все файлы лежат на своих местах ✓
+All files are in their places ✓
+
+Файлов не на своём месте: {}
+Files out of place: {}
+
+Разложить ({})
+Sort ({})
+
+У всех песен есть тексты ✓
+All songs have lyrics ✓
+
+Песен без текста: {}. Поиск идёт по одной песне, это может занять время.
+Songs without lyrics: {}. The search goes song by song and may take a while.
+
+Найти тексты ({})
+Find lyrics ({})
+
+Ищу текст «{}»…
+Looking for the lyrics of "{}"…
+
+Текст не найден автоматически
+Lyrics were not found automatically
+
+Отмечено: без текста
+Marked: no lyrics
+
+Текста пока нет
+No lyrics yet
+
+Найти текст
+Find lyrics
+
+Выбрать вариант / вставить свой
+Choose a version / paste my own
+
+В песне нет слов
+The song has no words
+
+Текст без времени — синхронизировать
+Lyrics without timing — sync them
+
+−0.1 с
+−0.1 s
+
+сдвиг 0
+offset 0
+
+сдвиг %+.1f с
+offset %+.1f s
+
++0.1 с
++0.1 s
+
+Вид текста
+Lyrics look
+
+Свернуть
+Collapse
+
+Сейчас играет
+Now playing
+
+Скачать в главную папку
+Download to the main folder
+
+Это отрывок 30 секунд
+This is a 30-second excerpt
+
+Автор не открыл скачивание
+The author has not opened downloading
+
+Синхронизировать текст вручную
+Sync lyrics by hand
+
+Заменить обложку
+Replace cover
+
+Найти обложку
+Find cover
+
+Изменить теги
+Edit tags
+
+В плейлист…
+To playlist…
+
+Таймер сна
+Sleep timer
+
+К исполнителю
+Go to artist
+
+Сведения о файле
+File details
+
+Перемешать
+Shuffle
+
+Повтор
+Repeat
+
+Очередь
+Queue
+
+В файле нет обложки
+The file has no cover
+
+Найти обложку?
+Find a cover?
+
+Найти и вшить в файл
+Find and embed into the file
+
+Показать текст
+Show lyrics
+
+Скорость: %.2fx
+Speed: %.2fx
+
+Питч следует за скоростью
+Pitch follows speed
+
+Питч: %+.1f полутона
+Pitch: %+.1f semitones
+
+Связать питч со скоростью (эффект «nightcore» / «slowed»)
+Link pitch to speed (the "nightcore" / "slowed" effect)
+
+Запоминать скорость и питч для каждой песни
+Remember speed and pitch for each song
+
+Сбросить (1x, без питча)
+Reset (1x, no pitch)
+
+Очередь • {}
+Queue • {}
+
+Выше
+Up
+
+Ниже
+Down
+
+Убрать
+Remove
+
+Остановка через ~{} мин
+Stops in ~{} min
+
+Остановка после текущей песни
+Stops after the current song
+
+Через {} минут
+In {} minutes
+
+После этой песни
+After this song
+
+Выключить таймер
+Turn the timer off
+
+1. Вы пользуетесь приложением по своему желанию и на свой риск
+1. You use the app by your own choice and at your own risk
+
+Плеер бесплатный. Вы устанавливаете его и пользуетесь им только по собственному желанию и на собственный риск. Приложение даётся «как есть», без каких-либо гарантий: никто не обещает, что оно подойдёт для ваших целей, будет работать без ошибок или вообще продолжит работать.\n\nАвтор идеи и создатели кода не несут никакой ответственности за использование приложения и за любые его последствия: сбои, потерю или порчу файлов и данных, любой прямой или косвенный ущерб. Всю ответственность за то, как вы используете приложение и что из этого выйдет, несёте вы сами.\n\nКод написан искусственным интеллектом и может содержать ошибки. Обновления и исправления не гарантируются.
+The player is free. You install and use it solely by your own choice and at your own risk. The app is provided "as is", without warranties of any kind: nobody promises that it will suit your purposes, work without errors or keep working at all.\n\nThe author of the idea and the creators of the code bear no responsibility whatsoever for the use of the app or for any of its consequences: failures, loss of or damage to files and data, any direct or indirect damage. All responsibility for how you use the app and for what comes of it lies with you.\n\nThe code was written by artificial intelligence and may contain errors. Updates and fixes are not guaranteed.
+
+2. Что плеер делает с вашими файлами
+2. What the player does with your files
+
+Плеер создан, чтобы наводить порядок в музыке. Поэтому по вашей команде он копирует песни в главную папку, переименовывает и перемещает файлы внутри неё, записывает в сами файлы теги, обложки и тексты, исправляет расширения, а клоны и «не музыку» отправляет в корзину главной папки.\n\nОригиналы вне главной папки удаляются, только если вы сами включили «Удалять песни вне главной папки».\n\nПеред каждым изменением делается копия и проверяется, что звук остался прежним. Но ни одна программа не застрахована от ошибок, севшей батареи или сбоя накопителя. Храните резервную копию важной музыки: за сохранность своих файлов отвечаете вы.
+The player was made to put music in order. So, at your command, it copies songs into the main folder, renames and moves files inside it, writes tags, covers and lyrics into the files themselves, fixes extensions, and sends duplicates and "not music" to the trash of the main folder.\n\nOriginals outside the main folder are deleted only if you yourself switched on "Delete songs outside the main folder".\n\nBefore every change a copy is made and the sound is checked to be unchanged. But no program is safe from errors, an empty battery or a storage failure. Keep a backup of the music that matters to you: you are responsible for the safety of your files.
+
+3. Интернет
+3. Internet
+
+Плеер полностью работает без интернета. В сеть он выходит, только когда вы сами запускаете поиск текста песни, обложки или альбома (в том числе через «Исцеление»).\n\nЧтобы найти совпадение, на сторонние сервисы отправляются исполнитель, название песни, альбом и длительность. Сервисы: LRCLIB, NetEase Cloud Music, Genius, lyrics.ovh, iTunes (Apple), Deezer, MusicBrainz и Cover Art Archive, Яндекс Музыка, Bandcamp, а также YouTube — только картинка по ссылке, которая уже записана в вашем файле.\n\nОтдельно есть онлайн-раздел. Он выключен, пока вы сами не включите его в настройках. В нём можно искать музыку в открытых каталогах Audius и Internet Archive, слушать её и скачивать в главную папку, а также слушать 30-секундные отрывки песен из каталога Deezer (их скачать нельзя); этим каталогам отправляется только ваш поисковый запрос.\n\nКак и любой сайт, эти сервисы видят ваш IP-адрес и действуют по собственным правилам. Сами музыкальные файлы и список вашей библиотеки никуда не отправляются.
+The player works fully without the internet. It goes online only when you yourself start a search for lyrics, a cover or an album (including through "Healing").\n\nTo find a match, the artist, song title, album and duration are sent to third-party services. The services are: LRCLIB, NetEase Cloud Music, Genius, lyrics.ovh, iTunes (Apple), Deezer, MusicBrainz and Cover Art Archive, Yandex Music, Bandcamp, and also YouTube — only the picture at a link that is already stored in your file.\n\nSeparately, there is an online section. It is off until you switch it on in the settings. There you can search for music in the open catalogues Audius and Internet Archive, listen to it and download it into the main folder, and also listen to 30-second excerpts of songs from the Deezer catalogue (they cannot be downloaded); only your search query is sent to these catalogues.\n\nLike any website, these services see your IP address and follow their own rules. The music files themselves and the list of your library are not sent anywhere.
+
+4. Ваши данные
+4. Your data
+
+В приложении нет аккаунтов, рекламы, аналитики и трекеров. Список песен, избранное, плейлисты, тексты и настройки хранятся только на вашем устройстве — в главной папке и в памяти приложения. Автору ничего не передаётся автоматически. По желанию эти данные можно защитить паролем (раздел «Процессы»).
+The app has no accounts, ads, analytics or trackers. The list of songs, favourites, playlists, lyrics and settings are stored only on your device — in the main folder and in the app's storage. Nothing is sent to the author automatically. If you wish, this data can be protected with a password (the "Processes" section).
+
+5. Журнал и отчёты об ошибках
+5. Log and error reports
+
+Журнал работы выключен. Если вы включите его в настройках, плеер начнёт записывать свои действия и ошибки в текстовый файл в папке Download.\n\nОтчёт о сбое сохраняется, только если вы это разрешили. При следующем запуске плеер покажет его и спросит, что с ним сделать.\n\nВ журнале и отчётах могут встречаться названия ваших файлов и папок. Отправлять ли их кому-нибудь, решаете только вы: сам плеер этого не делает.
+The log is off. If you switch it on in the settings, the player starts writing its actions and errors to a text file in the Download folder.\n\nA crash report is saved only if you allowed it. At the next start the player shows it and asks what to do with it.\n\nThe log and the reports may contain the names of your files and folders. Whether to send them to anyone is for you alone to decide: the player itself never does.
+
+6. Музыка, тексты и обложки
+6. Music, lyrics and covers
+
+Плеер не содержит и не распространяет музыку. За то, что файлы на вашем устройстве получены законно, отвечаете вы. Тексты песен и обложки принадлежат их правообладателям; плеер лишь помогает найти их для личного использования.\n\nОнлайн-раздел показывает только то, что открытые каталоги сами предлагают слушать и скачивать. Права на эти записи принадлежат их авторам; как вы используете скачанное, решаете и отвечаете вы.
+The player neither contains nor distributes music. You are responsible for the files on your device having been obtained lawfully. Lyrics and covers belong to their rights holders; the player only helps to find them for personal use.\n\nThe online section shows only what the open catalogues themselves offer for listening and downloading. The rights to these recordings belong to their authors; how you use what you download is your decision and your responsibility.
+
+7. Root и Shizuku
+7. Root and Shizuku
+
+Дополнительные возможности с root или Shizuku необязательны и включаются только вами. Они дают приложению расширенный доступ к системе; пользуйтесь ими на свой риск.
+The extra features with root or Shizuku are optional and are switched on only by you. They give the app extended access to the system; use them at your own risk.
+
+8. Исходный код и авторство
+8. Source code and authorship
+
+Идея и замысел приложения: {}. Код написан {}.\n\nИсходный код открыт по лицензии GNU GPL версии 3 (или более поздней) с дополнительными условиями. Код можно изучать, изменять и распространять, но изменённые версии должны оставаться открытыми на тех же условиях, быть явно помечены как изменённые и сохранять сведения о создателе в разделе «О приложении». Выдавать приложение или его код за собственную разработку нельзя. Полный текст — в файлах LICENSE и NOTICE.md в репозитории проекта.
+The idea and concept of the app: {}. The code was written by {}.\n\nThe source code is open under the GNU GPL version 3 (or later) with additional terms. The code may be studied, changed and distributed, but modified versions must stay open on the same terms, be clearly marked as modified and keep the information about the creator in the "About" section. Passing the app or its code off as your own work is not allowed. The full text is in the LICENSE and NOTICE.md files in the project's repository.
+
+9. Изменение условий
+9. Changes to the terms
+
+Если условия изменятся, приложение покажет их снова и попросит вашего согласия.
+If the terms change, the app will show them again and ask for your consent.
+
+10. Связь
+10. Contact
+
+Вопросы и сообщения об ошибках — в разделе Issues репозитория проекта. Ссылка есть в настройках, в разделе «О приложении».
+Questions and bug reports go to the Issues section of the project's repository. The link is in the settings, in the "About" section.
+
+Логотип создателя
+The creator's logo
+
+Офлайн-плеер, который приводит музыку в порядок
+An offline player that puts music in order
+
+Код полностью создан ИИ Claude.
+The code was created entirely by the AI Claude.
+
+Все идеи: {}.
+All ideas: {}.
+
+Дальнейшие обновления могут оказаться невозможными в будущем.
+Further updates may turn out to be impossible in the future.
+
+Далее — пользовательское соглашение
+Next — the user agreement
+
+Версия {} от {}. Прочитайте до конца: кнопки «Отклонить» и «Принять» — в самом низу.
+Version {} of {}. Read to the end: the "Decline" and "Accept" buttons are at the very bottom.
+
+Помогать находить ошибки
+Help find errors
+
+Необязательно. Если плеер закроется из-за ошибки, он сохранит её описание у себя и при следующем запуске спросит, отправить ли его. Сам он ничего не отправляет. Можно изменить в настройках.
+Optional. If the player closes because of an error, it keeps the description of the error on the device and asks at the next start whether to send it. It never sends anything by itself. Can be changed in the settings.
+
+Отклонить
+Decline
+
+Принять
+Accept
+
+Версия {} от {}. Вы приняли эти условия при первом запуске.
+Version {} of {}. You accepted these terms at the first start.
+
+Создатель
+Creator
+
+Главный создатель этого плеера
+The main creator of this player
+
+Все идеи: {}. Код полностью создан {}.
+All ideas: {}. The code was created entirely by {}.
+
+Изменили код / модифицировали
+Changed / modified the code
+
+Это оригинальная версия — её никто не изменял.
+This is the original version — nobody has changed it.
+
+Без рекламы, без аккаунтов, без слежки. Все данные — в главной папке. Обновления могут оказаться невозможными в будущем.
+No ads, no accounts, no tracking. All data is in the main folder. Updates may turn out to be impossible in the future.
+
+Пользовательское соглашение
+User agreement
+
+Условия и конфиденциальность, версия {}
+Terms and privacy, version {}
+
+Лицензия
+Licence
+
+Исходный код
+Source code
+
+Сообщить об ошибке
+Report a bug
+
+Откроется раздел Issues проекта
+Opens the Issues section of the project
+
+Журнал в файл, отчёт о сбое
+Log to a file, crash report
+
+Только по желанию — спасибо!
+Only if you wish — thank you!
+
+Плеер бесплатный и таким останется. Если он вам пригодился, автора можно поблагодарить — только по желанию.
+The player is free and will stay free. If it has been useful to you, you can thank the author — only if you wish.
+
+Открыть страницу для пожертвований
+Open the donation page
+
+Важно: на каждый адрес отправляйте только указанную монету и только через указанную сеть. Перевод другой монетой или через другую сеть будет потерян безвозвратно.
+Important: send to each address only the coin named and only through the network named. A transfer in another coin or through another network will be lost for good.
+
+{} — сеть {}
+{} — {} network
+
+Минимальная сумма: {}. Меньший перевод может не дойти.
+Minimum amount: {}. A smaller transfer may not arrive.
+
+Адрес {} ({}) скопирован
+Address {} ({}) copied
+
+Скопировать адрес
+Copy address
+
+Журнал работы
+Activity log
+
+Вести журнал в файл
+Keep a log in a file
+
+Выключено по умолчанию. Файл: {}
+Off by default. File: {}
+
+В журнал попадает, что делал плеер и что не получилось: поиск песен, исцеление, поиск текстов и обложек, ошибки воспроизведения. В нём могут быть названия ваших файлов. Плеер никуда его не отправляет — вы сами прикладываете файл к сообщению об ошибке.
+The log records what the player did and what went wrong: finding songs, healing, searching for lyrics and covers, playback errors. It may contain the names of your files. The player sends it nowhere — you attach the file to a bug report yourself.
+
+Журнала пока нет
+No log yet
+
+Журнал Malachite
+Malachite log
+
+Поделиться концом журнала
+Share the end of the log
+
+Сбои
+Crashes
+
+Сохранять отчёт о сбое
+Keep a crash report
+
+Если плеер закроется из-за ошибки, при следующем запуске он покажет отчёт и спросит, что с ним сделать
+If the player closes because of an error, at the next start it shows the report and asks what to do with it
+
+Отчёт хранится только в памяти приложения, пока вы не решите его отправить или удалить.
+The report is kept only in the app's storage until you decide to send or delete it.
+
+Лучше всего: включите журнал, повторите ошибку, затем создайте сообщение и приложите файл журнала.
+Best of all: switch the log on, repeat the error, then create a report and attach the log file.
+
+Создать сообщение на GitHub
+Create a report on GitHub
+
+В прошлый раз плеер закрылся из-за ошибки
+Last time the player closed because of an error
+
+Вот что сохранилось. Здесь могут быть названия ваших файлов — посмотрите, прежде чем отправлять.
+This is what was saved. It may contain the names of your files — have a look before sending.
+
+Отправить на GitHub
+Send to GitHub
+
+Отчёт о сбое Malachite
+Malachite crash report
+
+Поделиться
+Share
+
+Играть следующей
+Play next
+
+Добавить в очередь
+Add to queue
+
+Убрать из избранного
+Remove from favourites
+
+В избранное
+Add to favourites
+
+К альбому
+Go to album
+
+Удалить (в корзину)
+Delete (to trash)
+
+Слушать
+Play
+
+По названию
+By title
+
+По исполнителю
+By artist
+
+По альбому
+By album
+
+По длительности
+By duration
+
+С текстом
+With lyrics
+
+Без текста
+Without lyrics
+
+Без обложки
+Without cover
+
+Без альбома
+No album
+
+Сортировка
+Sorting
+
+Всё
+All
+
+Главная папка пуста
+The main folder is empty
+
+Песни появятся после импорта с устройства.
+Songs will appear after importing from the device.
+
+Найти песни на устройстве
+Find songs on the device
+
+{} песен • {}
+{} songs • {}
+
+ (из {})
+ (of {})
+
+Нет альбомов
+No albums
+
+Добавьте песни в главную папку.
+Add songs to the main folder.
+
+Нет исполнителей
+No artists
+
+Альбомов: {} • песен: {}
+Albums: {} • songs: {}
+
+Исполнитель не найден
+Artist not found
+
+Возможно, его переименовали при исцелении.
+It may have been renamed during healing.
+
+{} песен
+{} songs
+
+Альбом не найден
+Album not found
+
+Найти и вшить обложку в файлы альбома
+Find a cover and embed it into the album's files
+
+Умные плейлисты
+Smart playlists
+
+Мои плейлисты
+My playlists
+
+Плейлистов пока нет. Каждый плейлист — это файл в папке _Playlists главной папки (песни не копируются).
+No playlists yet. Each playlist is a file in the _Playlists folder of the main folder (songs are not copied).
+
+{} песен • создан {}
+{} songs • created {}
+
+Готово
+Done
+
+Плейлист не найден
+Playlist not found
+
+Обложка плейлиста сохранена
+Playlist cover saved
+
+Выбрать другую картинку
+Choose another picture
+
+Убрать свою обложку
+Remove own cover
+
+Не найдено в главной папке: {}
+Not found in the main folder: {}
+
+Нажмите на картинку, чтобы поставить свою обложку
+Tap the picture to set your own cover
+
+Переименовать
+Rename
+
+Убрать из плейлиста
+Remove from playlist
+
+Поднять выше
+Move up
+
+Опустить ниже
+Move down
+
+Удалить плейлист «{}»?
+Delete the playlist "{}"?
+
+Удаляется только файл плейлиста. Сами песни остаются в главной папке.
+Only the playlist file is deleted. The songs themselves stay in the main folder.
+
+Отмечайте песни сердечком — они появятся здесь.
+Mark songs with a heart — they will appear here.
+
+Пока пусто.
+Nothing here yet.
+
+Песня, исполнитель, альбом… (можно латиницей)
+Song, artist, album… (Latin letters work too)
+
+Песни: {}
+Songs: {}
+
+Ничего не найдено
+Nothing found
+
+Искать «{}» в интернете
+Search for "{}" on the internet
+
+Выдать доступ к файлам
+Grant access to files
+
+Офлайн-плеер без рекламы и лишнего
+An offline player with no ads and nothing extra
+
+Одна главная папка для всей музыки
+One main folder for all the music
+
+Плеер соберёт все песни с телефона в одну главную папку и разложит их так:\n\nГлавная папка → Исполнитель → Альбом → песни\n\nЭто нужно для точного анализа, «исцеления» названий и обложек и для простого переноса на другой телефон (папку можно запаковать в ZIP). В плеере показываются только песни из главной папки.\n\nГолосовые сообщения мессенджеров, записи диктофона, рингтоны и звуки уведомлений в плеер не попадают.
+The player will gather all songs from the phone into one main folder and arrange them like this:\n\nMain folder → Artist → Album → songs\n\nThis is needed for accurate analysis, for "healing" names and covers, and for moving to another phone easily (the folder can be packed into a ZIP). The player shows only songs from the main folder.\n\nMessenger voice messages, voice recorder files, ringtones and notification sounds do not get into the player.
+
+Это предупреждение показывается один раз.
+This warning is shown once.
+
+Понятно
+Got it
+
+Разрешения
+Permissions
+
+Чтобы находить музыку по всему телефону, переносить её в главную папку и вшивать в файлы обложки и теги, нужен «Доступ ко всем файлам».
+To find music all over the phone, move it to the main folder and embed covers and tags into files, "All files access" is needed.
+
+Доступ к файлам выдан
+Access to files granted
+
+Разрешить уведомления (плеер и прогресс)
+Allow notifications (player and progress)
+
+Где будет главная папка
+Where the main folder will be
+
+Найдена существующая главная папка Malachite (например, перенесённая с другого телефона):\n{}
+An existing Malachite main folder was found (for example, one moved from another phone):\n{}
+
+Использовать её
+Use it
+
+Путь к главной папке
+Path to the main folder
+
+Можно указать полный путь (/storage/emulated/0/Music/Моя музыка) или только имя папки во внутренней памяти.
+You can give a full path (/storage/emulated/0/Music/My music) or just a folder name in the internal storage.
+
+Не удалось создать папку: {}
+Could not create the folder: {}
+
+Полный переход на Malachite?
+Switch to Malachite completely?
+
+Удалять ли все другие копии песен (вне главной папки) после того, как они скопированы и проверены?
+Delete all other copies of the songs (outside the main folder) after they have been copied and verified?
+
+Да — оставить музыку только в главной папке
+Yes — keep music only in the main folder
+
+Нет — только копировать, оригиналы не трогать
+No — only copy, leave the originals alone
+
+Оригинал удаляется только после того, как копия сверена байт-в-байт. Разрешение можно отозвать в любой момент: Настройки → «Удалять песни вне главной папки».
+An original is deleted only after the copy has been verified byte for byte. The permission can be withdrawn at any time: Settings → "Delete songs outside the main folder".
+
+Сбор музыки
+Gathering music
+
+Пропустить — сделаю позже
+Skip — I will do it later
+
+Плеер просмотрит телефон (и SD-карту) и найдёт музыку.
+The player will look through the phone (and the SD card) and find the music.
+
+Проверено файлов: {} из {}
+Files checked: {} of {}
+
+Найти музыку на устройстве
+Find music on the device
+
+Найдено песен: {}
+Songs found: {}
+
+Скрыть папки
+Hide folders
+
+Проверить по папкам ({}) — снять лишнее
+Check by folders ({}) — untick what is not needed
+
+{} файлов
+{} files
+
+Никогда
+Never
+
+«Никогда» — папка добавляется в исключённые и больше не просматривается (изменить: Настройки → Библиотека).
+"Never" — the folder is added to the excluded ones and is not looked through any more (change: Settings → Library).
+
+Не музыка (пропущено): 
+Not music (skipped): 
+
+Скрыть пропущенные
+Hide the skipped
+
+Показать пропущенные (можно добавить вручную)
+Show the skipped (can be added by hand)
+
+Сбор музыки в главную папку
+Gathering music into the main folder
+
+Копирую {} из {}: {}
+Copying {} of {}: {}
+
+Добавить {} в главную папку
+Add {} to the main folder
+
+Добавлено: {}. Пропущено: {}. Ошибок: {}.
+Added: {}. Skipped: {}. Errors: {}.
+
+ Удалено оригиналов: {}.
+ Originals deleted: {}.
+
+Совет: откройте раздел «Исцеление», чтобы исправить названия, найти обложки и удалить клоны.
+Tip: open the "Healing" section to fix names, find covers and remove duplicates.
+
+музыка
+music
+
+голосовые
+voice messages
+
+записи
+recordings
+
+звуки системы
+system sounds
+
+слишком короткие
+too short
+
+исключённые папки
+excluded folders
+
+не аудио
+not audio
+
+подкасты/книги
+podcasts/books
+
+видео
+video
+
+из мессенджеров / кэш
+from messengers / cache
+
+Главная папка не найдена
+Main folder not found
+
+У плеера нет разрешения читать файлы. Без него он не может найти главную папку.
+The player has no permission to read files. Without it the main folder cannot be found.
+
+Плеер искал папку по сохранённому пути, по пути по умолчанию и во внутренней памяти/на SD-карте. Если вы перенесли папку (например, распаковали ZIP с другого телефона), укажите путь к ней — полный или неполный.
+The player looked for the folder at the saved path, at the default path and in the internal storage / on the SD card. If you moved the folder (for example, unpacked a ZIP from another phone), give the path to it — full or partial.
+
+В этой папке нет данных Malachite. Нажмите «Создать здесь новую главную папку», если хотите начать с неё.
+There is no Malachite data in this folder. Tap "Create a new main folder here" if you want to start with it.
+
+Открыть эту папку
+Open this folder
+
+Не удалось создать {}
+Could not create {}
+
+Создать здесь новую главную папку
+Create a new main folder here
+
+Не нашлось папки с данными Malachite.
+No folder with Malachite data was found.
+
+Искать ещё раз
+Search again
+
+Эту песню автор не открыл для скачивания
+The author has not opened this song for downloading
+
+Скачано в главную папку: {}
+Downloaded to the main folder: {}
+
+Не скачалось: {}
+Not downloaded: {}
+
+ошибка
+error
+
+Онлайн-раздел выключен
+The online section is off
+
+Плеер работает без интернета. Если включить раздел, здесь можно будет искать музыку в открытых каталогах Audius и Internet Archive, слушать её и скачивать в главную папку, а остальные песни находить по 30-секундным отрывкам. В сеть плеер выходит только когда вы сами ищете, слушаете или скачиваете.
+The player works without the internet. If you switch the section on, here you will be able to search for music in the open catalogues Audius and Internet Archive, listen to it and download it into the main folder, and find other songs by 30-second excerpts. The player goes online only when you yourself search, listen or download.
+
+Включить онлайн-раздел
+Switch the online section on
+
+Не удалось выполнить поиск: проверьте интернет
+The search failed: check the internet connection
+
+Ничего не найдено. В открытых каталогах есть не всё: в основном независимые музыканты, свободные релизы и записи концертов.
+Nothing found. Open catalogues do not have everything: mostly independent musicians, free releases and concert recordings.
+
+Не удалось открыть релиз
+Could not open the release
+
+В этом релизе нет песен в поддерживаемом формате
+This release has no songs in a supported format
+
+Найти
+Find
+
+Назад к результатам
+Back to results
+
+Целиком песни есть в открытых каталогах: Audius (музыканты сами выкладывают свои треки; скачать можно то, что автор разрешил) и Internet Archive (открытая библиотека: свободные релизы, записи концертов). Почти любую выпущенную песню найдёт каталог Deezer, но у него можно слушать только отрывок в 30 секунд: целиком такие песни бесплатно и открыто никто не раздаёт. Права на записи принадлежат их авторам.
+Whole songs are in the open catalogues: Audius (musicians upload their own tracks; you can download what the author allowed) and Internet Archive (an open library: free releases, concert recordings). The Deezer catalogue finds nearly every released song, but only a 30-second excerpt can be played there: nobody gives such songs away whole, freely and openly. The rights to the recordings belong to their authors.
+
+Можно слушать целиком
+Can be played in full
+
+ — релиз
+ — release
+
+Только слушать: автор не открыл скачивание
+Listen only: the author has not opened downloading
+
+Пауза
+Pause
+
+Скачано
+Downloaded
+
+как в теме
+as in the theme
+
+свой цвет
+custom colour
+
+Цвет
+Colour
+
+Оттенок
+Hue
+
+Насыщенность
+Saturation
+
+Яркость
+Brightness
+
+Светлый цвет
+Light colour
+
+Очень тёмный цвет
+Very dark colour
+
+Выбрать
+Choose
+
+Как в теме
+As in the theme
+
+Закрытые папки приложений, защита от выгрузки, разрешения
+Protected app folders, protection from being killed, permissions
+
+Журнал в файл (выключен), отчёт о сбое, сообщить об ошибке
+Log to a file (off), crash report, report a bug
+
+Автор, лицензия, соглашение, исходный код
+Author, licence, agreement, source code
+
+Онлайн-раздел
+Online section
+
+Поиск и скачивание музыки в интернете
+Searching for and downloading music on the internet
+
+Выключено — плеер полностью офлайн. Включите, и появится раздел «Онлайн»: открытые каталоги Audius и Internet Archive, а для остальных песен — отрывки по 30 секунд
+Off — the player is fully offline. Switch it on and the "Online" section appears: the open catalogues Audius and Internet Archive, and 30-second excerpts for other songs
+
+Открыть раздел «Онлайн»
+Open the "Online" section
+
+Malachite • без рекламы, без аккаунтов, без слежки. Все данные — в главной папке.
+Malachite • no ads, no accounts, no tracking. All data is in the main folder.
+
+Тема меню
+Menu theme
+
+Тёмная (по умолчанию)
+Dark (default)
+
+Тёмная AMOLED (чёрный фон)
+Dark AMOLED (black background)
+
+Светлая
+Light
+
+Как в системе
+Same as the system
+
+Цвет акцента
+Accent colour
+
+Выбрано: {}
+Selected: {}
+
+Свой цвет акцента
+Custom accent colour
+
+Свой цвет фона
+Custom background colour
+
+Свой цвет поверхностей
+Custom surface colour
+
+Тема применяется к меню плеера. Экран открытой песни может брать цвета из обложки.
+The theme applies to the player's menu. The screen of the open song can take its colours from the cover.
+
+фон меню
+menu background
+
+поверхности
+surfaces
+
+панель вкладок
+tab panel
+
+мини-плеер
+mini player
+
+верхняя строка
+top bar
+
+виджет
+widget
+
+текст песни
+lyrics
+
+Своим цветом закреплены: {}. Эти части не меняются, когда вы меняете тему.
+Pinned to a custom colour: {}. These parts do not change when you change the theme.
+
+Сбросить свои цвета — пусть всё следует теме
+Reset custom colours — let everything follow the theme
+
+Значок приложения
+App icon
+
+Значок есть в восьми цветах — как готовые цвета акцента; для своего цвета берётся ближайший. Сейчас: {}. Значок меняется, когда вы сворачиваете плеер. Некоторые рабочие столы при этом переставляют его в конец экрана или убирают плеер из списка недавних — так устроена смена значка в Android.
+The icon comes in eight colours — the same as the ready-made accent colours; for a custom colour the nearest one is taken. Now: {}. The icon changes when you leave the player. Some home screens then move it to the end of the screen or drop the player from the recent apps — that is how changing an icon works in Android.
+
+Отдельно от этого: на Android 13 и новее при включённых «тематических значках» в настройках рабочего стола значок сам окрашивается в цвета обоев — для этого у него есть одноцветный вариант.
+Apart from that: on Android 13 and newer, with "themed icons" switched on in the home screen settings, the icon takes the colours of the wallpaper by itself — it has a one-colour version for that.
+
+Экран открытой песни
+Screen of the open song
+
+Цвета из обложки
+Colours from the cover
+
+Выключите, чтобы и там была тема из настроек
+Switch off to use the theme from the settings there as well
+
+Шрифт меню
+Menu font
+
+Размер текста меню
+Menu text size
+
+Шрифт текстов песен
+Lyrics font
+
+Жирный текст
+Bold text
+
+Вид текста песни
+Lyrics look
+
+Строки
+Lines
+
+Выделение слов в такт песне
+Highlighting words in time with the song
+
+Прокрутка и смена строки
+Scrolling and line change
+
+Увеличивать текущую строку
+Enlarge the current line
+
+Яркость остальных строк
+Brightness of the other lines
+
+Цвет спетых слов (по умолчанию — акцент)
+Colour of sung words (default — accent)
+
+Цвет текущей строки (по умолчанию — цвет текста)
+Colour of the current line (default — text colour)
+
+Положение панели вкладок
+Position of the tab panel
+
+Подписи под значками
+Labels under icons
+
+Мини-плеер над содержимым
+Mini player above the content
+
+Иначе — под содержимым, рядом с панелью
+Otherwise — under the content, next to the panel
+
+На широком экране — сбоку сама
+On a wide screen — to the side by itself
+
+Планшет, ноутбук или телефон на боку: панель встаёт слева, чтобы не отнимать высоту
+A tablet, a laptop or a phone on its side: the panel goes to the left so as not to take up height
+
+Вкладки и их порядок
+Tabs and their order
+
+Панель вкладок
+Tab panel
+
+Мини-плеер
+Mini player
+
+Верхняя строка
+Top bar
+
+Колонок в сетке
+Columns in the grid
+
+Непрозрачность
+Opacity
+
+Размытие (обложка за панелью)
+Blur (the cover behind the panel)
+
+Матовое стекло из обложки текущей песни; Android 12+
+Frosted glass made of the current song's cover; Android 12+
+
+Главная папка
+Main folder
+
+Все песни плеера живут только здесь: Исполнитель / Альбом / Песня. Плейлисты — в _Playlists, данные (тексты, избранное, синхронизация) — в .malachite.
+All the player's songs live only here: Artist / Album / Song. Playlists are in _Playlists, data (lyrics, favourites, sync) — in .malachite.
+
+Другая папка (полный или неполный путь)
+Another folder (full or partial path)
+
+Это не главная папка Malachite. Используйте «Перенести сюда».
+This is not a Malachite main folder. Use "Move here".
+
+Открыта {}
+Opened {}
+
+Открыть
+Open
+
+Нет текущей папки
+No current folder
+
+Папка {} не пуста
+The folder {} is not empty
+
+Главная папка перенесена в {}
+The main folder was moved to {}
+
+Перенос возможен только в пределах одного носителя. Для переноса на другой — используйте экспорт ZIP.
+Moving is possible only within one storage. To move to another one, use the ZIP export.
+
+Перенести сюда
+Move here
+
+Проверять каждые
+Check every
+
+{} мин
+{} min
+
+Когда плеер закрыт, Android разрешает фоновую проверку не чаще раза в 15 минут. Пока плеер открыт или играет — как указано, плюс мгновенно при появлении новых файлов.
+When the player is closed, Android allows a background check no more often than once in 15 minutes. While the player is open or playing — as set, plus at once when new files appear.
+
+Сразу добавлять найденное в главную папку
+Add what is found to the main folder right away
+
+Иначе — только уведомление
+Otherwise — only a notification
+
+Глубокий поиск по файлам
+Deep search through files
+
+Находит и песни с неправильным расширением, и в папках, скрытых от медиатеки
+Also finds songs with a wrong extension and in folders hidden from the media library
+
+Найти сейчас
+Find now
+
+Проверить в фоне
+Check in the background
+
+Последняя проверка: {}
+Last check: {}
+
+Что не считать музыкой
+What not to count as music
+
+Минимальная длительность
+Minimum duration
+
+{} с
+{} s
+
+Голосовые сообщения (Telegram, WhatsApp, Viber, VK…), видео, записи звонков и диктофона, рингтоны, будильники и звуки уведомлений не добавляются никогда.
+Voice messages (Telegram, WhatsApp, Viber, VK…), videos, call and voice recorder recordings, ringtones, alarms and notification sounds are never added.
+
+Музыка из мессенджеров
+Music from messengers
+
+Telegram Audio, WhatsApp, VK и др. По умолчанию выключено: там в основном кэш и пересланные файлы. Видео и файлы-кэш вроде 4_591…@kndved.ogg не берутся никогда
+Telegram Audio, WhatsApp, VK and others. Off by default: it is mostly cache and forwarded files there. Videos and cache files like 4_591…@kndved.ogg are never taken
+
+Добавлять подкасты и аудиокниги
+Add podcasts and audiobooks
+
+Исключённые папки (по одной в строке)
+Excluded folders (one per line)
+
+Сохранить список
+Save the list
+
+Полный переход
+Complete switch
+
+Файлы
+Files
+
+Альбом из названия папки
+Album from the folder name
+
+Если в файле нет альбома — взять его из папки, где песня лежит (как делают Mi Music и медиатека Android). В сам файл альбом записывается только через «Исцеление»
+If the file has no album — take it from the folder where the song is (as Mi Music and the Android media library do). The album is written into the file itself only through "Healing"
+
+Год в названии папки альбома
+Year in the album folder name
+
+«Безнадёжность (2022)». Год берётся из тегов; даты скачивания с YouTube (20260813) не считаются годом выпуска
+"Безнадёжность (2022)". The year is taken from the tags; YouTube download dates (20260813) do not count as the release year
+
+Папка для синглов и песен без альбома
+Folder for singles and songs without an album
+
+Сохранить имя папки
+Save the folder name
+
+Новые правила применяются к новым песням сразу, а к уже собранным — через Исцеление → «Раскладка по папкам».
+New rules apply to new songs at once, and to those already gathered — through Healing → "Folder layout".
+
+Номер трека в имени файла
+Track number in the file name
+
+«01 - Песня.mp3» вместо «Песня.mp3»
+"01 - Song.mp3" instead of "Song.mp3"
+
+Хранить копии изменённых файлов
+Keep copies of changed files
+
+При исцелении оригинал уходит в .malachite/backup до очистки
+During healing the original goes to .malachite/backup until cleaned
+
+Перечитать главную папку
+Reread the main folder
+
+Поиск текстов
+Lyrics search
+
+Искать при открытии текста
+Search when lyrics are opened
+
+Только когда вы нажали на «текст» — не в фоне
+Only when you tapped "lyrics" — not in the background
+
+Сначала ищется синхронизированный текст (LRCLIB, NetEase), и только если его нет — обычный (LRCLIB, Genius, lyrics.ovh). Поиск учитывает длительность песни, чтобы не взять текст от другой версии.
+Synced lyrics are looked for first (LRCLIB, NetEase), and only if there are none — plain ones (LRCLIB, Genius, lyrics.ovh). The search takes the song's duration into account so as not to take the lyrics of another version.
+
+Очистка
+Cleaning
+
+Квадратные, фигурные и угловые скобки ([Куплет 1], {Bridge}, <Аутро>) и заголовки вроде «Текст песни «…»» убираются всегда.
+Square, curly and angle brackets ([Verse 1], {Bridge}, <Outro>) and headings like "Lyrics of «…»" are always removed.
+
+Убирать любой текст в круглых скобках
+Remove any text in round brackets
+
+Иначе убираются только пометки «(Припев)», «(x2)»; подпевки остаются
+Otherwise only marks like "(Chorus)", "(x2)" are removed; backing vocals stay
+
+Хранение
+Storage
+
+Тексты сохраняются в главной папке (.malachite/lyrics) в формате LRC и с точными отметками в JSON.
+Lyrics are saved in the main folder (.malachite/lyrics) in the LRC format and with exact marks in JSON.
+
+Также вшивать текст в файл песни
+Also embed the lyrics into the song file
+
+Тогда текст увидят и другие плееры
+Then other players will see the lyrics too
+
+Ручная синхронизация
+Syncing by hand
+
+Задержка реакции
+Reaction delay
+
+{} мс
+{} ms
+
+Вычитается из каждой отметки с поправкой на скорость, с которой вы записывали.
+Subtracted from every mark, adjusted for the speed at which you were recording.
+
+Скорость и питч по умолчанию
+Default speed and pitch
+
+Скорость
+Speed
+
+Питч
+Pitch
+
+%+.1f полутона
+%+.1f semitones
+
+Как пластинка: быстрее — выше («nightcore»), медленнее — ниже («slowed»)
+Like a record: faster — higher ("nightcore"), slower — lower ("slowed")
+
+Запоминать скорость/питч для каждой песни
+Remember speed/pitch for each song
+
+Прочее
+Other
+
+Пропускать тишину
+Skip silence
+
+Продолжать с того же места после перезапуска
+Continue from the same place after a restart
+
+Цвета обложки в уведомлении
+Cover colours in the notification
+
+Там, где это умеет система. Изменение видно со следующей песни
+Where the system can do it. The change shows from the next song
+
+Системный эквалайзер для плеера
+System equalizer for the player
+
+Откройте после начала воспроизведения
+Open it after playback has started
+
+Эквалайзер станет доступен, когда начнёт играть песня (на некоторых прошивках его нет вовсе).
+The equalizer becomes available once a song starts playing (some firmware has none at all).
+
+Включён
+On
+
+{} кГц
+{} kHz
+
+%+.1f дБ
+%+.1f dB
+
+Сбросить
+Reset
+
+Виджет Malachite
+Malachite widget
+
+Один виджет любого размера: растяните его на рабочем столе. Маленький — обложка и кнопка, средний — кнопки, большой — строки синхронизированного текста, самый большой — ещё и полоса перемотки (нажмите в нужное место).
+One widget of any size: stretch it on the home screen. Small — cover and button, medium — buttons, large — lines of synced lyrics, the largest — also a seek bar (tap the place you need).
+
+Цвета из обложки (как в плеере)
+Colours from the cover (as in the player)
+
+Цвет фона
+Background colour
+
+Непрозрачность фона
+Background opacity
+
+Цвета виджета берутся из темы приложения (или из обложки, как в плеере); цвет текста подбирается сам.
+The widget's colours come from the app's theme (or from the cover, as in the player); the text colour is chosen by itself.
+
+Показывать обложку
+Show the cover
+
+Полоса перемотки (самые большие)
+Seek bar (the largest ones)
+
+Текст песни в виджете
+Lyrics in the widget
+
+Строки текста песни (большие виджеты)
+Lines of lyrics (large widgets)
+
+Точно как в плеере
+Exactly as in the player
+
+Строки рисуются тем же шрифтом, что и в плеере, — подходит и шрифт из файла. Выключите, если на вашем рабочем столе строки выглядят размыто: тогда текст покажет сам рабочий стол, но только системными шрифтами
+The lines are drawn in the same font as in the player — a font from a file works too. Switch off if the lines look blurry on your home screen: then the home screen shows the text itself, but only in system fonts
+
+Закрашивать слова по мере пения
+Colour words as they are sung
+
+Как в плеере; нужен текст с отметками слов
+As in the player; needs lyrics with word marks
+
+Текущая строка цветом акцента
+Current line in the accent colour
+
+Для текстов без отметок слов. Выключено — как в плеере: обычным цветом текста
+For lyrics without word marks. Off — as in the player: the usual text colour
+
+Свой вид для виджета
+Own look for the widget
+
+Выключено — виджет повторяет плеер: шрифт, жирность, размер, выравнивание, цвета, яркость строк, закрашивание слов и анимацию
+Off — the widget repeats the player: font, weight, size, alignment, colours, line brightness, word colouring and animation
+
+Изменить вид текста песни
+Change the lyrics look
+
+Общий для плеера и виджета: «Оформление» → шрифт и вид текста песни
+Shared by the player and the widget: "Appearance" → lyrics font and look
+
+Шрифт
+Font
+
+Шрифт из файла виден только при включённом «Точно как в плеере».
+A font from a file shows only with "Exactly as in the player" switched on.
+
+Размер строк
+Line size
+
+Плавная смена строки
+Smooth line change
+
+Старая строка гаснет, новая проявляется
+The old line fades out, the new one fades in
+
+Взять вид из плеера
+Take the look from the player
+
+Чего виджет не может: рабочий стол сам рисует виджеты и не даёт прокручивать строки, как в плеере, — поэтому строка сменяется проявлением, а плавная заливка слова идёт шагами, несколько раз в секунду.
+What the widget cannot do: the home screen draws widgets itself and does not let the lines scroll as in the player — so a line changes by fading, and the smooth fill of a word goes in steps, a few times a second.
+
+Экспорт главной папки в ZIP
+Exporting the main folder to ZIP
+
+Экспорт
+Export
+
+не удалось открыть файл
+could not open the file
+
+Готово. Перенесите ZIP на другой телефон и распакуйте (или используйте «Импорт ZIP»).
+Done. Move the ZIP to another phone and unpack it (or use "Import ZIP").
+
+Импорт ZIP
+Import ZIP
+
+Распаковано и открыто: {}
+Unpacked and opened: {}
+
+Не получилось: {}
+It did not work: {}
+
+в архиве нет главной папки Malachite
+the archive has no Malachite main folder
+
+Перенос на другое устройство
+Moving to another device
+
+Главная папка упаковывается в ZIP без сжатия: файлы внутри не меняются. Внутри — все песни, плейлисты, тексты, синхронизация, избранное и настройки.
+The main folder is packed into a ZIP without compression: the files inside do not change. Inside are all songs, playlists, lyrics, sync, favourites and settings.
+
+Экспорт в ZIP
+Export to ZIP
+
+Импорт ZIP (распаковать во внутреннюю память)
+Import ZIP (unpack into the internal storage)
+
+Резервные копии и корзина
+Backups and trash
+
+Копии оригиналов после исцеления: %.1f МБ
+Copies of originals after healing: %.1f MB
+
+Корзина (удалённые клоны и песни): %.1f МБ
+Trash (deleted duplicates and songs): %.1f MB
+
+Очистить копии
+Clear copies
+
+Очистить корзину
+Empty the trash
+
+Пока не очищено, любой изменённый или удалённый файл можно вернуть из .malachite/backup или .malachite/trash.
+Until cleared, any changed or deleted file can be restored from .malachite/backup or .malachite/trash.
+
+Режим
+Mode
+
+Дополнительные возможности для телефонов с root или Shizuku. Плеер работает только со своими файлами и музыкой — ничего другого не трогает.
+Extra features for phones with root or Shizuku. The player works only with its own files and music — it touches nothing else.
+
+Root доступен
+Root is available
+
+Root недоступен (или запрос отклонён)
+Root is not available (or the request was declined)
+
+Проверить root
+Check root
+
+Shizuku не запущен
+Shizuku is not running
+
+Shizuku: разрешение есть
+Shizuku: permission granted
+
+Подтвердите запрос Shizuku
+Confirm the Shizuku request
+
+Возможности
+Features
+
+Искать музыку в закрытых папках приложений
+Look for music in protected app folders
+
+Android/data, например «Telegram Audio» в новом Telegram (без root/Shizuku туда не попасть). Голосовые всё равно отсеиваются.
+Android/data, for example "Telegram Audio" in the new Telegram (cannot be reached without root/Shizuku). Voice messages are filtered out anyway.
+
+Плеер добавлен в исключения энергосбережения
+The player was added to the battery saving exceptions
+
+Не удалось: {}
+Failed: {}
+
+Не давать системе выгружать плеер
+Do not let the system kill the player
+
+Разрешения выданы
+Permissions granted
+
+ (часть команд не поддерживается этой версией Android — это нормально)
+ (some commands are not supported by this Android version — that is normal)
+
+Выдать плееру разрешения автоматически
+Grant the player permissions automatically
+
+Удалять песни вне главной папки
+Delete songs outside the main folder
+
+ВКЛЮЧЕНО: после проверенного копирования в главную папку оригинал удаляется — и при каждой автоматической проверке новых песен
+ON: after a verified copy into the main folder the original is deleted — also at every automatic check for new songs
+
+ВЫКЛЮЧЕНО: плеер только копирует музыку и ничего вне главной папки не удаляет
+OFF: the player only copies music and deletes nothing outside the main folder
+
+Удаление отключено. Вне главной папки больше ничего не удаляется.
+Deleting is off. Nothing outside the main folder is deleted any more.
+
+Разрешение на удаление можно выдать и отозвать в любой момент. Оригинал удаляется только после того, как копия в главной папке сверена байт-в-байт. Голосовые, записи и рингтоны плеер не трогает никогда.
+The permission to delete can be given and withdrawn at any time. An original is deleted only after the copy in the main folder has been verified byte for byte. The player never touches voice messages, recordings and ringtones.
+
+Разрешить удаление песен вне главной папки?
+Allow deleting songs outside the main folder?
+
+Каждая песня, которая скопирована в главную папку и проверена, будет удаляться из старого места. Это касается и новых песен, которые плеер находит сам каждые {} мин.
+Every song that has been copied into the main folder and verified will be deleted from its old place. This also applies to new songs the player finds by itself every {} min.
+
+Отозвать разрешение можно в любой момент этим же переключателем — удаление прекратится сразу.
+You can withdraw the permission at any time with this same switch — deleting stops at once.
+
+Также удалить оригиналы уже добавленных песен ({})
+Also delete the originals of songs already added ({})
+
+Удаляю оригиналы…
+Deleting originals…
+
+Удалено оригиналов: {}
+Originals deleted: {}
+
+Удаление включено для новых песен.
+Deleting is on for new songs.
+
+Разрешить
+Allow
+
+Песня не найдена
+Song not found
+
+1. Текст песни (по одной строке). Пометки [Припев], (Куплет), «Текст песни…» удаляются автоматически.
+1. The lyrics (one line at a time). Marks like [Chorus], (Verse), "Lyrics of…" are removed automatically.
+
+Убирать любой текст в круглых скобках (подпевки)
+Remove any text in round brackets (backing vocals)
+
+2. Что отмечать нажатием
+2. What to mark with a tap
+
+Каждое слово
+Every word
+
+3. Скорость во время записи: %.2fx
+3. Speed while recording: %.2fx
+
+Время всё равно сохраняется для обычной скорости 1x.
+The time is still saved for the normal speed, 1x.
+
+4. Ваша задержка реакции: {} мс
+4. Your reaction delay: {} ms
+
+Если отметки получаются чуть позже слов — увеличьте. Пересчитывается с учётом выбранной скорости.
+If the marks come a little later than the words — increase it. It is recalculated for the chosen speed.
+
+Начать ({} строк)
+Start ({} lines)
+
+Слово: «{}»
+Word: "{}"
+
+Отпустите,\nкогда закончится
+Release\nwhen it ends
+
+Держите,\nпока поётся
+Hold\nwhile it is sung
+
+Отменить
+Undo
+
+Пропустить
+Skip
+
+Играть
+Play
+
+Проверка: включите песню и посмотрите, совпадает ли текст
+Check: play the song and see whether the lyrics match
+
+С начала
+From the start
+
+Заново
+Start over
+
+синхронизировано вручную
+synced by hand
+
+Синхронизация сохранена
+Sync saved
+
+Файл не читается как шрифт
+The file cannot be read as a font
+
+В шрифте нет ни русских, ни латинских букв — текст останется системным шрифтом
+The font has neither Russian nor Latin letters — the text will stay in the system font
+
+В шрифте нет русских букв: русский текст будет системным шрифтом, а латиница — выбранным, строки могут выглядеть неровно
+The font has no Russian letters: Russian text will be in the system font and Latin text in the chosen one, lines may look uneven
+
+Нажмите ▶, чтобы продолжить
+Press ▶ to continue
+
+Добавлено новых песен: {}
+New songs added: {}
+
+Они уже разложены по папкам исполнителей и альбомов
+They are already sorted into artist and album folders
+
+Найдено новых песен: {}
+New songs found: {}
+
+Откройте Malachite, чтобы добавить их в главную папку
+Open Malachite to add them to the main folder
+
+Яндекс Музыка
+Yandex Music
+
+Остановлено пользователем
+Stopped by the user
+
+{}: ошибка {}
+{}: error {}
+
+{}: формат изменился, пропущено
+{}: the format has changed, skipped
+
+ (убран лишний ID3-заголовок)
+ (an extra ID3 header was removed)
+
+{}: не читаются теги
+{}: tags cannot be read
+
+исполнитель «{}» → «{}»
+artist "{}" → "{}"
+
+исполнитель альбома → «{}»
+album artist → "{}"
+
+альбом «{}» → «{}»
+album "{}" → "{}"
+
+название «{}» → «{}»
+title "{}" → "{}"
+
+{} → корзина ({})
+{} → trash ({})
+
+исполнитель «{}»
+artist "{}"
+
+альбом «{}»
+album "{}"
+
+год {}
+year {}
+
+ вместо {}
+ instead of {}
+
+{}: {} — файл будет только перемещён
+{}: {} — the file will only be moved
+
+{}: внутри файла нет нормального названия
+{}: there is no proper title inside the file
+
+{}: оригинал не найден, ничего не удалено
+{}: the original was not found, nothing was deleted
+
+{} → корзина (оставлен {})
+{} → trash (kept {})
+
+{} — {}: нет уверенного совпадения, нужен ручной выбор
+{} — {}: no confident match, choose by hand
+
+{}: не удалось загрузить картинку
+{}: could not download the picture
+
+альбом той записи, с которой взята обложка ({}, совпадение {}%)
+the album of the recording the cover was taken from ({}, match {}%)
+
+{}: обложка вшита в файл
+{}: cover embedded into the file
+
+{}: текст не найден
+{}: lyrics not found
+
+{}: инструментал
+{}: instrumental
+
+{}: {} текст ({})
+{}: {} lyrics ({})
+
+обычный
+plain
+
+файл-кэш мессенджера ({})
+messenger cache file ({})
+
+голосовая запись ({})
+voice recording ({})
+
+голосовое сообщение
+voice message
+
+короче {} с
+shorter than {} s
+
+из мессенджера: {}
+from a messenger: {}
+
+дата выхода из описания YouTube
+release date from the YouTube description
+
+год альбома по другим его песням
+the album's year from its other songs
+
+ваша прежняя папка «{}», а в теге «{}» ({})
+your former folder "{}", but the tag says "{}" ({})
+
+теги, прочитанные Android
+tags read by Android
+
+папка альбома в главной папке
+the album folder in the main folder
+
+папка исполнителя в главной папке
+the artist folder in the main folder
+
+имя файла
+file name
+
+разные
+different
+
+одинаковые (отличаются пробелами, регистром, украшениями или алфавитом)
+the same (differ in spaces, case, decorations or alphabet)
+
+одинаковые (разная транслитерация)
+the same (different transliteration)
+
+похожие (опечатка в 1–3 буквах), сходство {}%
+similar (a typo in 1–3 letters), similarity {}%
+
+общественное достояние
+public domain
+
+Telegram-канал
+Telegram channel
+
+ИИ Claude (Anthropic)
+the AI Claude (Anthropic)
+
+GNU GPL 3.0 или новее, с дополнительными условиями об авторстве
+GNU GPL 3.0 or later, with additional terms about authorship
+
+Пользовательское соглашение и конфиденциальность
+User agreement and privacy
+
+Malachite — бесплатный офлайн-плеер с открытым исходным кодом. Пользуясь им, вы соглашаетесь с условиями ниже. Если вы с ними не согласны, нажмите «Отклонить» в конце текста — приложение закроется.
+Malachite is a free offline player with open source code. By using it you agree to the terms below. If you do not agree with them, tap "Decline" at the end of the text — the app will close.
+
+Нажимая «Принять», вы подтверждаете, что прочитали эти условия, согласны с ними и пользуетесь приложением по собственному желанию и на свой риск.
+By tapping "Accept" you confirm that you have read these terms, agree with them and use the app by your own choice and at your own risk.
+
+Язык интерфейса
+Interface language
+
+Авто: русский, если язык телефона русский, иначе английский. После смены языка плеер перезапустится (музыка остановится).
+Auto: Russian if the phone's language is Russian, English otherwise. After the language is changed the player restarts (the music stops).
+
+Процессы
+Processes
+
+Открыть исцеление
+Open healing
+
+Сейчас ничего не исцеляется.
+Nothing is being healed right now.
+
+Синхронизация текстов
+Lyric syncs
+
+Незаконченных синхронизаций нет. Если уйти с экрана синхронизации, не закончив, работа появится здесь.
+There are no unfinished syncs. If you leave the sync screen before finishing, the work will appear here.
+
+Поиск и добавление музыки
+Finding and adding music
+
+Главная папка сейчас не перечитывается.
+The main folder is not being reread right now.
+
+Скачивание из онлайн-раздела
+Downloads from the online section
+
+Сейчас ничего не скачивается.
+Nothing is being downloaded right now.
+
+Всё отмечено — осталось проверить и сохранить
+Everything is marked — what is left is to check and save
+
+Отмечено слов: {} из {}
+Words marked: {} of {}
+
+Отмечено строк: {} из {}
+Lines marked: {} of {}
+
+Продолжить
+Continue
+
+Песня не найдена в главной папке.
+The song was not found in the main folder.
+
+Сохранять незаконченную синхронизацию каждые
+Save an unfinished sync every
+
+Кроме того, она сохраняется, когда вы уходите с экрана или сворачиваете плеер. Продолжить можно в разделе «Процессы».
+It is also saved when you leave the screen or put the player in the background. You can continue in the "Processes" section.
+
+Сохранённые отметки не подходят к этому тексту — начните заново
+The saved marks do not fit this text — start over
+
+Есть незаконченная синхронизация
+There is an unfinished sync
+
+Нет интернета — начну сам, как только появится связь
+No internet — it will start by itself as soon as the connection is back
+
+Не воспроизводится, пропущена: {}
+Cannot be played, skipped: {}
+
+Не воспроизводится: {}
+Cannot be played: {}
+
+или создайте новый:
+or create a new one:
+
+Нет интернета. Поиск начнётся сам, как только появится связь.
+No internet. The search will start by itself as soon as the connection is back.
+
+По году
+By year
+
+По числу песен
+By number of songs
+
+По дате создания
+By creation date
+
+Недавно изменённые
+Recently changed
+
+Обрезка обложки
+Cropping the cover
+
+Двигайте картинку пальцем, сводите и разводите два пальца, чтобы приблизить. В обложку попадёт то, что видно в квадрате.
+Drag the picture with a finger, pinch with two fingers to zoom. What you see in the square becomes the cover.
+
+Без обрезки
+Without cropping
+
+Обрезать текущую обложку
+Crop the current cover
+
+Избранные
+Favourites
+
+Избранных альбомов пока нет. Удерживайте альбом, чтобы добавить его в избранное или закрепить.
+No favourite albums yet. Press and hold an album to add it to favourites or pin it.
+
+Закреплён
+Pinned
+
+В избранном
+In favourites
+
+Открепить
+Unpin
+
+Закрепить вверху
+Pin to the top
+
+Заменить или обрезать обложку
+Replace or crop the cover
+
+Название альбома
+Album name
+
+Название записывается в каждый файл альбома, файлы переедут в папку с новым именем.
+The name is written into every file of the album; the files will move to a folder with the new name.
+
+Альбом переименован
+Album renamed
+
+Переименовано, не получилось для файлов: {}
+Renamed; it did not work for {} file(s)
+
+Песен без альбома нет
+There are no songs without an album
+
+У каждой песни в главной папке есть свой альбом.
+Every song in the main folder has an album of its own.
+
+Обрезать эту картинку
+Crop this picture
+
+Статистика
+Statistics
+
+{} ч {} мин
+{} h {} min
+
+Сегодня
+Today
+
+За 7 дней
+Last 7 days
+
+Всего
+In total
+
+Время прослушивания, 14 дней
+Listening time, 14 days
+
+В среднем {} в день
+On average {} a day
+
+сегодня
+today
+
+Когда вы слушаете
+When you listen
+
+Чаще всего — около %02d:00
+Most often — around %02d:00
+
+Пока нечего показать
+Nothing to show yet
+
+Чаще всего: песни
+Most played: songs
+
+Послушайте что-нибудь — здесь появятся любимые песни.
+Listen to something — your favourite songs will appear here.
+
+Чаще всего: альбомы
+Most played: albums
+
+Чаще всего: исполнители
+Most played: artists
+
+Исцеление за всё время
+Healing, all time
+
+Исправлено: {}
+Fixed: {}
+
+Здесь будет видно, сколько исправило исцеление.
+This is where you will see how much healing has fixed.
+
+Библиотека
+Library
+
+Песен: {} • альбомов: {} • исполнителей: {}
+Songs: {} • albums: {} • artists: {}
+
+С обложкой
+With a cover
+
+С альбомом
+With an album
+
+Время прослушивания считается с {}.%02d.{}. Статистика хранится только на этом устройстве, в главной папке.
+Listening time is counted since {}.%02d.{}. The statistics are kept only on this device, in the main folder.
+
+Подчёркивание
+Underline
+
+Маркер
+Highlighter
+
+Маркер и подчёркивание
+Highlighter and underline
+
+Строка отмечена как любимая
+The line is marked as a favourite
+
+Отметка снята
+Mark removed
+
+Любимые строки
+Favourite lines
+
+Удерживайте строку в тексте песни, чтобы отметить её как любимую; ещё раз — чтобы снять отметку. Отметка видна и в виджете.
+Press and hold a line of the lyrics to mark it as a favourite; do it again to remove the mark. The mark shows in the widget too.
+
+Толщина линии
+Line thickness
+
+{} dp
+{} dp
+
+Цвет отметки (по умолчанию — акцент)
+Mark colour (default — accent)
+
+Правка текста
+Editing lyrics
+
+Исправить строки текста
+Fix lines of the lyrics
+
+У этой песни пока нет сохранённого текста.
+This song has no saved lyrics yet.
+
+исправлено вручную
+fixed by hand
+
+Нажмите на строку, чтобы исправить в ней слова. Если число слов не меняется, время каждого слова остаётся прежним. Через меню строки её можно удалить, добавить новую или синхронизировать заново только с этого места.
+Tap a line to fix its words. If the number of words stays the same, every word keeps its time. Through the line's menu you can delete it, add a new one, or sync again only from that place.
+
+Исправить слова
+Fix the words
+
+Добавить строку после
+Add a line after
+
+Добавить строку перед
+Add a line before
+
+Удалить строку
+Delete the line
+
+Синхронизировать заново с этой строки
+Sync again from this line
+
+Перейти сюда в песне
+Go to this place in the song
+
+Отменить изменения
+Undo the changes
+
+Новая строка
+New line
+
+Текст строки
+Text of the line
+
+Строка получит время между соседними. Чтобы оно было точным, синхронизируйте с неё заново.
+The line gets a time between its neighbours. For an exact time, sync again from it.
+
+Слов стало {} вместо {}: время слов в этой строке будет расставлено примерно. Для точности синхронизируйте с этой строки заново.
+There are now {} words instead of {}: the words of this line will be timed approximately. For exact timing, sync again from this line.
+
+Число слов то же — время каждого слова сохранится.
+The same number of words — every word keeps its time.
+
+Синхронизировать заново с этой строки?
+Sync again from this line?
+
+Строки до неё сохранят своё время. С неё и до конца песни вы отметите время заново — песня начнётся чуть раньше этой строки. Несохранённые исправления войдут в синхронизацию.
+The lines before it keep their times. From it to the end of the song you mark the time again — the song starts a little before this line. Unsaved fixes are included in the sync.
+
+Начать
+Start
+
+Исправить отдельные строки, не синхронизируя заново
+Fix single lines without syncing everything again
+
+Отменено исцеление «{}»: возвращено {}, не получилось {}
+Undone: «{}» — {} restored, {} did not work
+
+Отмена: {}
+Undoing: {}
+
+{}: файла уже нет
+{}: the file is gone
+
+{}: на этом месте уже есть файл
+{}: there is already a file in that place
+
+{}: не удалось убрать изменённую версию
+{}: the changed version could not be moved away
+
+{}: возвращён оригинал
+{}: original restored
+
+{}: в корзине его уже нет
+{}: it is no longer in the trash
+
+{}: возвращён из корзины
+{}: restored from the trash
+
+Отмена исцеления «{}»
+Undoing healing «{}»
+
+Отменить исцеление
+Undo healing
+
+Можно отменить последнее исцеление, затем предыдущее. Исправленные версии файлов не удаляются, а уходят в корзину.
+You can undo the latest healing, then the one before it. The healed versions of the files are not deleted — they go to the trash.
+
+{} • изменено файлов: {}
+{} • files changed: {}
+
+Отменить «{}»?
+Undo «{}»?
+
+Файлы вернутся на прежние места и к прежним названиям, удалённые этим исцелением — из корзины.
+Files go back to their former places and names, and those this healing removed come back from the trash.
+
+Изменённые теги и обложки вернутся к оригиналам.
+Changed tags and covers return to the originals.
+
+Копии оригиналов не сохранились (или были очищены) — теги и обложки останутся как сейчас.
+Copies of the originals were not kept (or were cleared) — tags and covers stay as they are now.
+
+Если вы меняли эти файлы позже, эти изменения уйдут в корзину вместе с исправленными версиями.
+If you changed these files later, those changes go to the trash together with the healed versions.
+
+Меняете код и выпускаете свою версию? Лицензия просит пометить её как изменённую — проще всего добавить себя в этот список (файл Credits.kt).
+Changing the code and releasing your own version? The licence asks you to mark it as modified — the easiest way is to add yourself to this list (the Credits.kt file).
+
+Включаю защиту
+Switching protection on
+
+Выключаю защиту
+Switching protection off
+
+Меняю пароль
+Changing the password
+
+Данные плеера (история прослушиваний, плейлисты, статистика) по умолчанию не защищены паролем. Защиту можно включить в разделе «Процессы».
+The player's data (listening history, playlists, statistics) is not protected with a password by default. Protection can be switched on in the "Processes" section.
+
+Защита данных плеера
+Protecting the player's data
+
+Данные плеера защищены паролем
+The player's data is protected with a password
+
+Введите пароль, чтобы открыть историю прослушиваний, плейлисты, избранное и статистику. Музыка от пароля не зависит.
+Enter the password to open the listening history, playlists, favourites and statistics. The music does not depend on the password.
+
+Пароль
+Password
+
+Пароль не подходит
+Wrong password
+
+Забыли пароль?
+Forgot the password?
+
+Начать без защищённых данных?
+Start without the protected data?
+
+Без пароля историю прослушиваний, плейлисты, избранное и статистику прочитать нельзя — в этом и смысл защиты. Музыка не пострадает: песни, их названия, тексты и обложки останутся. Защищённые данные будут отложены в папку .malachite/locked-…, а плеер начнёт их заново. Если пароль вспомнится, эту папку сможет открыть только специалист.
+Without the password the listening history, playlists, favourites and statistics cannot be read — that is the point of the protection. The music is not affected: songs, their names, lyrics and covers stay. The protected data is put aside into the .malachite/locked-… folder and the player starts it anew. If the password is remembered later, only a specialist can open that folder.
+
+Начать заново
+Start anew
+
+Под защиту попадают данные самого плеера: история прослушиваний и избранное, плейлисты, статистика, любимые строки, незаконченные синхронизации. Сами песни, их названия (это имена файлов и папок), тексты и обложки остаются как есть.
+Protected is the player's own data: listening history and favourites, playlists, statistics, favourite lines, unfinished syncs. The songs themselves, their names (these are names of files and folders), lyrics and covers stay as they are.
+
+Защита выключена: эти данные хранятся в главной папке открытым текстом.
+Protection is off: this data is kept in the main folder as plain text.
+
+Включить защиту паролем
+Protect with a password
+
+Защита включена: AES-256, ключ из пароля (PBKDF2, 600 000 повторов).
+Protection is on: AES-256, the key is made from the password (PBKDF2, 600,000 rounds).
+
+Спрашивать пароль при каждом запуске
+Ask for the password at every start
+
+Выключено — ключ хранится в защищённом хранилище этого телефона, и плеер открывается сразу. После переустановки или на другом телефоне пароль спросят один раз
+Off — the key is kept in this phone's secure storage and the player opens at once. After a reinstall or on another phone the password is asked once
+
+Сменить пароль
+Change the password
+
+Выключить
+Switch off
+
+Данные заблокированы — введите пароль.
+The data is locked — enter the password.
+
+Защита паролем
+Password protection
+
+Пароль (не короче 6 знаков)
+Password (at least 6 characters)
+
+Пароль ещё раз
+Password again
+
+Пароли не совпадают
+The passwords do not match
+
+Я понимаю: если забыть пароль, эти данные не восстановить. Музыка не пострадает.
+I understand: if the password is forgotten, this data cannot be recovered. The music is not affected.
+
+Защита включена
+Protection is on
+
+Включить
+Switch on
+
+Выключить защиту?
+Switch protection off?
+
+Данные плеера снова будут храниться открытым текстом, плейлисты снова получат файлы .m3u8 для других плееров.
+The player's data will be kept as plain text again, and playlists get their .m3u8 files for other players back.
+
+Защита выключена
+Protection is off
+
+Старый пароль
+Old password
+
+Новый пароль (не короче 6 знаков)
+New password (at least 6 characters)
+
+Новый пароль ещё раз
+New password again
+
+Пароль изменён
+The password has been changed
+
+Сменить
+Change
+
+Разные исполнители
+Various Artists
+
+пустой файл
+empty file
+
+не воспроизвёлся в плеере
+did not play in the player
+
+нет звуковой дорожки
+no audio track
+
+звук не читается
+the sound cannot be read
+
+файл обрывается на середине
+the file breaks off in the middle
+
+не открывается
+cannot be opened
+
+сборники
+compilations
+
+повреждённые файлы
+damaged files
+
+Сборники
+Compilations
+
+Альбом разных исполнителей («A State of Trance», «Хиты 90-х») плеер показывает кусками — отдельным альбомом для каждого исполнителя. Исцеление даёт всем его песням общего исполнителя альбома «Разные исполнители», и альбом снова целый.
+An album of various artists ("A State of Trance", "Hits of the 90s") is shown in pieces — a separate album for every artist. Healing gives all its songs one album artist, "Various Artists", and the album is whole again.
+
+Повреждённые файлы
+Damaged files
+
+Пустые и оборванные файлы, файлы без читаемого звука — на них плеер останавливается. Каждый файл открывается и проверяется по кусочку из начала и середины. Убираются в корзину (можно вернуть).
+Empty and cut-off files, files without readable sound — the player stops on them. Every file is opened and checked by a piece from its beginning and its middle. They go to the trash (can be restored).
+
+Сборников, разбитых на части: {}. Отмечено: {}. Остальные проверьте — может быть, это альбом одного исполнителя с гостями.
+Compilations split into pieces: {}. Ticked: {}. Check the others — it may be one artist's album with guests.
+
+{} песен • {} исполнителей: 
+{} songs • {} artists: 
+
+Собрать в целые альбомы ({})
+Put them together into whole albums ({})
+
+Найдено: {}. Отмечены точно повреждённые; остальные откройте и послушайте сами, прежде чем убирать.
+Found: {}. Surely damaged files are ticked; open and listen to the others yourself before removing them.
+
+{}: исполнитель альбома → «{}»
+{}: album artist → «{}»
+
+Вопросы и ответы
+Questions and answers
+
+Где настроить вид текста песни: шрифт, размер, цвет, выравнивание?
+Where do I set how lyrics look: font, size, colour, alignment?
+
+Настройки → «Тексты песен». Там же выделение слов в такт, анимация, яркость строк и любимые строки. Быстрый путь: на экране песни откройте текст и нажмите «Вид текста» внизу.
+Settings → "Lyrics". The same page has word highlighting, animation, line brightness and favourite lines. A shortcut: open the lyrics on the song screen and tap "Lyrics look" at the bottom.
+
+Как найти текст песни, если его нет?
+How do I find lyrics if there are none?
+
+Откройте песню (нажмите на мини-плеер внизу), нажмите кнопку текста и «Найти текст». Если найдено не то — меню ⋮ → «Найти текст»: можно исправить название и исполнителя, выбрать вариант или вставить свой текст.
+Open the song (tap the mini player at the bottom), tap the lyrics button and "Find lyrics". If the wrong lyrics were found — menu ⋮ → "Find lyrics": you can correct the title and artist, choose a version or paste your own text.
+
+Как синхронизировать текст самому или исправить одну строку?
+How do I sync lyrics myself or fix a single line?
+
+На экране песни: меню ⋮ → «Синхронизировать текст вручную» (держите кнопку, пока поётся строка или слово) или «Исправить строки текста» — поправить слова, добавить или удалить строку, синхронизировать заново только с нужного места. Незаконченная работа сохраняется сама — продолжить можно в «Процессах».
+On the song screen: menu ⋮ → "Sync lyrics by hand" (hold the button while a line or word is sung) or "Fix lines of the lyrics" — correct words, add or delete a line, sync again only from the place you need. Unfinished work is saved by itself — continue it in "Processes".
+
+Как отметить любимую строку?
+How do I mark a favourite line?
+
+В тексте песни удерживайте нужную строку. Вид отметки (подчёркивание, маркер, цвет, толщина) — Настройки → «Тексты песен» → «Любимые строки». Отметка видна и в виджете.
+Press and hold the line in the lyrics. The look of the mark (underline, highlighter, colour, thickness) — Settings → "Lyrics" → "Favourite lines". The mark shows in the widget too.
+
+Где изменить название песни, исполнителя или альбом?
+Where do I change a song's title, artist or album?
+
+Удерживайте песню в списке (или нажмите ⋮ справа от неё) → «Изменить теги». На экране песни то же самое — в меню ⋮. Изменения записываются в сам файл, и он переезжает в папку нового исполнителя и альбома.
+Press and hold the song in the list (or tap ⋮ to its right) → "Edit tags". On the song screen the same is in the ⋮ menu. The changes are written into the file itself, and it moves to the folder of the new artist and album.
+
+Как поменять или обрезать обложку?
+How do I change or crop a cover?
+
+Песня: удерживайте её → «Заменить обложку» — найти в интернете, выбрать свою картинку или обрезать текущую. Альбом: удерживайте плитку альбома → «Заменить или обрезать обложку». Плейлист: откройте его и нажмите на картинку.
+Song: press and hold it → "Replace cover" — find one on the internet, choose your own picture or crop the current one. Album: press and hold the album tile → "Replace or crop the cover". Playlist: open it and tap the picture.
+
+Как переименовать, закрепить или добавить альбом в избранное?
+How do I rename, pin or favourite an album?
+
+Во вкладке «Альбомы» удерживайте плитку альбома — появится меню. Те же кнопки есть вверху открытого альбома. Сортировка и фильтр «Избранные» — над сеткой альбомов.
+In the "Albums" tab press and hold the album tile — a menu appears. The same buttons are at the top of an open album. Sorting and the "Favourites" filter are above the album grid.
+
+Где песни без альбома?
+Where are the songs without an album?
+
+Во вкладке «Альбомы» первая плитка «Без альбома». Если у таких песен на самом деле есть альбом, его поможет найти «Исцеление» → «Пустые альбомы и исполнители».
+In the "Albums" tab, the first tile "No album". If such songs really belong to an album, "Healing" → "Empty albums and artists" helps to find it.
+
+Как поменять вид меню: где панель вкладок, какие вкладки и в каком порядке?
+How do I change the menu: where the tab panel is, which tabs and in what order?
+
+Настройки → «Меню и вкладки». Там положение панели (снизу, сверху, сбоку), список вкладок с порядком, мини-плеер, цвет, прозрачность и размытие панелей.
+Settings → "Menu and tabs". There: the panel position (bottom, top, side), the list of tabs and their order, the mini player, colour, transparency and blur of the panels.
+
+Как сменить тему, цвет, язык или значок приложения?
+How do I change the theme, colour, language or app icon?
+
+Настройки → «Тема, цвета и язык»: тёмная или светлая тема, цвет акцента, свои цвета, шрифт меню, язык интерфейса и цвет значка на рабочем столе.
+Settings → "Theme, colours and language": dark or light theme, accent colour, custom colours, menu font, interface language and the colour of the home screen icon.
+
+Что такое главная папка и где лежит моя музыка?
+What is the main folder and where is my music?
+
+Все песни плеера лежат в одной главной папке, разложенными по папкам «Исполнитель / Альбом». Там же плейлисты и данные плеера, поэтому её легко перенести на другой телефон. Где она и как искать новые песни — Настройки → «Главная папка и новые песни».
+All the player's songs live in one main folder, sorted into "Artist / Album" folders. Playlists and the player's data are there too, so it is easy to move to another phone. Where it is and how new songs are found — Settings → "Main folder and new songs".
+
+Почему не видно новых песен и как их добавить?
+Why don't new songs show up, and how do I add them?
+
+Плеер показывает только песни из главной папки. Новые песни на телефоне он находит сам по расписанию; найти сразу — Настройки → «Главная папка и новые песни» → «Найти сейчас». Голосовые, записи и рингтоны не добавляются никогда.
+The player shows only songs from the main folder. It finds new songs on the phone by itself on a schedule; to find them right away — Settings → "Main folder and new songs" → "Find now". Voice messages, recordings and ringtones are never added.
+
+Что делает «Исцеление» и не испортит ли оно файлы?
+What does "Healing" do, and can it damage my files?
+
+Оно наводит порядок: исправляет названия и альбомы, вшивает обложки, убирает клоны и «не музыку», раскладывает файлы по папкам. Каждое изменение делается на копии и проверяется, а любое исцеление можно отменить на том же экране. Сначала нажмите «Проверить» — плеер покажет, что собирается изменить.
+It puts things in order: fixes names and albums, embeds covers, removes duplicates and "not music", sorts files into folders. Every change is made on a copy and verified, and any healing can be undone on the same screen. Tap "Check" first — the player shows what it is going to change.
+
+Как настроить виджет?
+How do I set up the widget?
+
+Добавьте виджет Malachite на рабочий стол и растяните его: чем больше, тем больше в нём видно. Цвета, текст песни и его вид — Настройки → «Виджет на рабочем столе».
+Add the Malachite widget to the home screen and stretch it: the bigger it is, the more it shows. Colours, lyrics and their look — Settings → "Home screen widget".
+
+Где скорость, питч, эквалайзер и таймер сна?
+Where are speed, pitch, equalizer and the sleep timer?
+
+Скорость и питч — кнопка с числом (например, 1,00x) внизу экрана песни, таймер сна — кнопка с луной. Эквалайзер и значения по умолчанию — Настройки → «Воспроизведение и звук».
+Speed and pitch — the button with a number (for example 1.00x) at the bottom of the song screen; the sleep timer — the button with the moon. Equalizer and defaults — Settings → "Playback and sound".
+
+Как защитить данные плеера паролем?
+How do I protect the player's data with a password?
+
+«Процессы» → «Защита данных плеера». Шифруются история прослушиваний, плейлисты, статистика, избранное и любимые строки. Забытый пароль восстановить нельзя, но музыка от него не зависит.
+"Processes" → "Protecting the player's data". The listening history, playlists, statistics, favourites and favourite lines are encrypted. A forgotten password cannot be recovered, but the music does not depend on it.
+
+Как перенести музыку на другой телефон?
+How do I move my music to another phone?
+
+Настройки → «Перенос и резервные копии» → «Экспорт в ZIP». На новом телефоне распакуйте архив или откройте его через «Импорт ZIP» — песни, плейлисты, тексты, избранное и настройки переедут вместе.
+Settings → "Moving and backups" → "Export to ZIP". On the new phone unpack the archive or open it with "Import ZIP" — songs, playlists, lyrics, favourites and settings move together.
+
+Как слушать и скачивать музыку из интернета?
+How do I listen to and download music from the internet?
+
+Плеер работает без интернета, онлайн-раздел выключен. Включите его: Настройки → «Музыка и тексты» → «Поиск и скачивание музыки в интернете» — появится поиск по открытым каталогам. Скачанные песни ложатся в главную папку как обычные.
+The player works without the internet; the online section is off. Switch it on: Settings → "Music and lyrics" → "Searching for and downloading music on the internet" — a search in open catalogues appears. Downloaded songs go to the main folder like any others.
+
+Где статистика прослушиваний?
+Where are the listening statistics?
+
+Во вкладке «Статистика»: время прослушивания по дням и часам, самые слушаемые песни, альбомы и исполнители, что исправило исцеление. Если вкладки нет на панели — добавьте её в «Меню и вкладки».
+In the "Statistics" tab: listening time by day and hour, the most played songs, albums and artists, what healing has fixed. If the tab is not on the panel — add it in "Menu and tabs".
+
+Что-то работает не так — как сообщить об ошибке?
+Something does not work — how do I report a bug?
+
+Настройки → «Ошибки и журнал»: включите журнал, повторите ошибку и нажмите «Создать сообщение на GitHub», приложив файл журнала из папки Download.
+Settings → "Errors and log": switch the log on, repeat the error and tap "Create a report on GitHub", attaching the log file from the Download folder.
+
+Тема, цвета и язык
+Theme, colours and language
+
+Меню и вкладки
+Menu and tabs
+
+Воспроизведение и звук
+Playback and sound
+
+Главная папка и новые песни
+Main folder and new songs
+
+Виджет на рабочем столе
+Home screen widget
+
+Перенос и резервные копии
+Moving and backups
+
+Вкладка
+Tab
+
+Ничего не найдено. Попробуйте другое слово или откройте «Вопросы и ответы».
+Nothing found. Try another word or open "Questions and answers".
+
+Что вы ищете? Например: обложка, текст, тема
+What are you looking for? For example: cover, lyrics, theme
+
+Показать обучение ещё раз
+Show the tour again
+
+Добро пожаловать в Malachite
+Welcome to Malachite
+
+Если что-то непонятно
+If something is unclear
+
+Далее
+Next
+
+Найти настройку или ответ…
+Find a setting or an answer…
+
+Помощь
+Help
+
+Где настроить текст, как изменить название, обложку, вид меню…
+Where to set up lyrics, how to change a title, a cover, the menu…
+
+Короткое знакомство с плеером
+A short introduction to the player
+
+Внешний вид
+Look
+
+Тёмная или светлая тема, цвет акцента, значок, шрифт меню, язык интерфейса
+Dark or light theme, accent colour, icon, menu font, interface language
+
+Где панель вкладок, какие вкладки и в каком порядке, мини-плеер, прозрачность
+Where the tab panel is, which tabs and in what order, mini player, transparency
+
+Цвета, текст песни в виджете и его вид, перемотка
+Colours, lyrics in the widget and their look, seeking
+
+Музыка и тексты
+Music and lyrics
+
+Шрифт и вид текста, любимые строки, поиск текстов, синхронизация
+Font and look of the lyrics, favourite lines, finding lyrics, sync
+
+Скорость, питч, эквалайзер, пропуск тишины, уведомление
+Speed, pitch, equalizer, skipping silence, notification
+
+Где лежит музыка, поиск новых песен, что не считать музыкой, удаление оригиналов
+Where the music is, finding new songs, what not to count as music, deleting originals
+
+Порядок в названиях, альбомах и обложках; отмена исцеления
+Order in names, albums and covers; undoing healing
+
+Процессы и защита данных
+Processes and data protection
+
+Пароль на данные плеера, незаконченные синхронизации, что выполняется сейчас
+A password for the player's data, unfinished syncs, what is running now
+
+ZIP главной папки для другого телефона, корзина, копии файлов
+A ZIP of the main folder for another phone, trash, file copies
+
+Дополнительно
+Advanced
+
+Шрифт и вид текста песни
+Font and look of the lyrics
+
+Всё о тексте песни — в разделе «Тексты песен»
+Everything about lyrics is in the "Lyrics" section
+
+Его можно добавить и на панель вкладок: «Меню и вкладки» → «Вкладки и их порядок»
+It can also be added to the tab panel: "Menu and tabs" → "Tabs and their order"
+
+Нет интернета: списки песен альбомов берутся из интернета. Проверьте позже.
+No internet: the albums' track lists come from the internet. Check later.
+
+качество обложек
+cover quality
+
+номера треков
+track numbers
+
+номера в названиях
+numbers in titles
+
+регистр букв
+letter case
+
+громкость
+loudness
+
+Номера в названиях
+Numbers in titles
+
+«01 - Песня» → название «Песня», а номер переходит в номер трека. Числа, которые относятся к названию («7-я пятница», «99 Luftballons»), не трогаются.
+"01 - Song" → the title "Song", and the number goes to the track number. Numbers that belong to the title ("7-я пятница", "99 Luftballons") are left alone.
+
+Номера треков
+Track numbers
+
+Альбомы, у песен которых нет номеров, играют в случайном порядке. Номера берутся из списка песен альбома в интернете (Deezer) — песни сопоставляются по названию.
+Albums whose songs have no numbers play in a made-up order. The numbers come from the album's track list on the internet (Deezer) — songs are matched by title.
+
+Регистр букв
+Letter case
+
+«НАЗВАНИЕ КАПСОМ» и «всё с маленькой буквы» → нормальный вид. Многие исполнители пишут имя так нарочно, поэтому ничего не отмечено — выберите сами.
+"TITLE IN CAPITALS" and "all in small letters" → the normal look. Many artists write their names so on purpose, so nothing is ticked — choose yourself.
+
+Качество обложек
+Cover quality
+
+Громкость
+Loudness
+
+Измеряет, насколько громко звучит каждая песня (как это делают стриминги), и плеер играет все песни одинаково громко. Файлы не меняются. Выключить — Настройки → «Воспроизведение и звук».
+Measures how loud every song sounds (the way streaming services do), and the player plays all songs equally loud. The files do not change. To switch it off — Settings → "Playback and sound".
+
+Найдено: {}. Отмечено: {}. Без галочки — где номер в названии не совпадает с номером в теге.
+Found: {}. Ticked: {}. Not ticked — where the number in the title differs from the one in the tag.
+
+, трек {}
+, track {}
+
+Альбомов без номеров, для которых нашёлся список песен, нет ✓
+There are no albums without numbers whose track list was found ✓
+
+Альбомов: {}. Номера сверены с их списками песен по названиям.
+Albums: {}. The numbers were matched with their track lists by title.
+
+Записать номера ({})
+Write the numbers ({})
+
+Найдено: {}. Отметьте то, что действительно нужно исправить.
+Found: {}. Tick what really needs fixing.
+
+исполнитель
+artist
+
+альбом
+album
+
+название
+title
+
+файлов: {}
+files: {}
+
+Мелких: {}, тяжёлых: {}. Мелкие заменяются, только если в интернете нашлась обложка больше.
+Small: {}, heavy: {}. Small ones are replaced only if a bigger cover was found on the internet.
+
+тяжёлая — уменьшить
+heavy — make lighter
+
+мелкая — найти больше
+small — find a bigger one
+
+Громкость всех песен измерена ✓
+The loudness of all songs is measured ✓
+
+Не измерено песен: {}. Это долго (около секунды на песню), но делается один раз; можно свернуть плеер.
+Songs not measured: {}. It takes a while (about a second per song) but is done once; you can put the player in the background.
+
+Выравнивание громкости сейчас выключено в настройках воспроизведения.
+Equal loudness is switched off in the playback settings now.
+
+Измерить ({})
+Measure ({})
+
+Одинаковая громкость
+Equal loudness
+
+Выравнивать громкость песен
+Level the loudness of songs
+
+Тихие и громкие песни звучат одинаково. Громкость измеряет исцеление «Громкость»; не измеренные песни играют как есть
+Quiet and loud songs sound the same. Loudness is measured by the "Loudness" healing; songs not measured play as they are
+
+«{}» → «{}»
+«{}» → «{}»
+
+номер трека {}
+track number {}
+
+{}: картинка не читается
+{}: the picture cannot be read
+
+{}: обложки лучше не нашлось
+{}: no better cover was found
+
+обложка {}×{}
+cover {}×{}
+
+Почему одни песни громче других и как это выровнять?
+Why are some songs louder than others, and how do I level them?
+
+Песни записаны с разной громкостью. «Исцеление» → «Громкость» → «Проверить» → «Измерить»: плеер один раз измерит каждую песню и дальше играет все одинаково громко. Выключить — Настройки → «Воспроизведение и звук» → «Выравнивать громкость песен».
+Songs are recorded at different loudness. "Healing" → "Loudness" → "Check" → "Measure": the player measures every song once and then plays them all equally loud. To switch it off — Settings → "Playback and sound" → "Level the loudness of songs".
+
+Открыть «Тексты песен»
+Open “Song lyrics”
+
+Открыть экран песни
+Open the song screen
+
+Открыть песни
+Open songs
+
+Открыть альбомы
+Open albums
+
+Открыть «Без альбома»
+Open “No album”
+
+Открыть «Меню и вкладки»
+Open “Menu and tabs”
+
+Открыть «Тема, цвета и язык»
+Open “Theme, colours and language”
+
+Открыть «Главная папка и новые песни»
+Open “Main folder and new songs”
+
+Открыть «Виджет на рабочем столе»
+Open “Home screen widget”
+
+Открыть «Воспроизведение и звук»
+Open “Playback and sound”
+
+Открыть «Процессы»
+Open “Processes”
+
+Открыть «Перенос и резервные копии»
+Open “Transfer and backups”
+
+Открыть настройки
+Open settings
+
+Открыть статистику
+Open statistics
+
+Открыть «Ошибки и журнал»
+Open “Errors and log”
+
+Покажу, где что находится — это займёт полминуты. Нажмите «Далее» или «Пропустить».
+Let me show you where everything is — it takes half a minute. Tap “Next” or “Skip”.
+
+Вкладки
+Tabs
+
+Здесь переключаются разделы: песни, альбомы, исполнители, плейлисты, исцеление, статистика. Какие вкладки показывать и где панель — Настройки → «Меню и вкладки».
+Switch between sections here: songs, albums, artists, playlists, healing, statistics. Which tabs to show and where the panel sits — Settings → “Menu and tabs”.
+
+Удерживайте плитку альбома — появится меню: закрепить, в избранное, переименовать, поменять обложку. Песни без альбома собраны в первой плитке.
+Long-press an album tile for a menu: pin, add to favourites, rename, change the cover. Songs without an album are gathered in the first tile.
+
+Нажмите на него — откроется экран песни: текст, скорость, таймер сна и меню ⋮ (изменить теги, обложку, найти и синхронизировать текст).
+Tap it to open the song screen: lyrics, speed, sleep timer and the ⋮ menu (edit tags and cover, find and sync lyrics).
+
+Когда заиграет песня, внизу появится мини-плеер. Нажмите на него — откроется экран песни: текст, скорость, таймер сна и меню ⋮.
+When a song plays, a mini player appears at the bottom. Tap it to open the song screen: lyrics, speed, sleep timer and the ⋮ menu.
+
+Наводит порядок: названия, альбомы, обложки, клоны, громкость. Сначала «Проверить» — плеер покажет, что изменит. Любое исцеление можно отменить.
+Tidies things up: titles, albums, covers, duplicates, loudness. Tap “Check” first — the player shows what it will change. Any healing can be undone.
+
+Ищет песни, исполнителей и альбомы — можно писать и латиницей, и кириллицей.
+Finds songs, artists and albums — you can type in Latin or Cyrillic letters.
+
+Вид, тексты песен, звук, виджет, защита данных. Вверху настроек есть поиск: напишите, что нужно, — например, «обложка».
+Look, lyrics, sound, widget, data protection. There is a search at the top of settings: type what you need — for example, “cover”.
+
+Здесь вопросы и ответы с кнопками, которые сразу ведут в нужное место. Отсюда же можно пройти это обучение ещё раз.
+Questions and answers, with buttons that take you straight to the right place. You can also replay this tour from here.
+
+Использовать пароль
+Use password
+
+Отпечаток не подтверждён
+Fingerprint not confirmed
+
+Отпечатки на телефоне изменились — войдите по паролю и включите вход по отпечатку снова.
+The fingerprints on this phone have changed — sign in with the password and turn fingerprint unlock on again.
+
+Вход в Malachite
+Unlock Malachite
+
+Приложите палец, чтобы открыть данные плеера
+Touch the sensor to open the player's data
+
+Не получилось открыть по отпечатку — введите пароль.
+Could not unlock with the fingerprint — enter the password.
+
+Войти по отпечатку пальца
+Unlock with fingerprint
+
+Входить по отпечатку пальца
+Unlock with fingerprint
+
+При запуске откроется окно отпечатка; пароль можно ввести всегда. После переустановки или если добавить на телефон новый отпечаток, нужен будет пароль
+At start the fingerprint prompt opens; the password always works too. After reinstalling, or if a new fingerprint is added to the phone, the password will be needed
+
+Отпечаток на этом телефоне недоступен
+Fingerprint is not available on this phone
+
+Вход по отпечатку
+Fingerprint unlock
+
+Подтвердите отпечатком, чтобы включить
+Confirm with your fingerprint to turn it on
+
+Вход по отпечатку включён
+Fingerprint unlock is on
+
+Не получилось включить вход по отпечатку
+Could not turn on fingerprint unlock
+
+Исцеление не закончилось — продолжить можно во вкладке «Исцеление»
+Healing was not finished — you can continue it in the “Healing” tab
+
+Исцеление не закончилось
+Healing was not finished
+
+Плеер закрылся или обновился, пока шло исцеление ({}). Оно продолжится с того места, где остановилось.
+The player was closed or updated while healing was running ({}). It will continue from where it stopped.
+
+Не продолжать
+Don't continue
+
+Сдвиг текста
+Lyrics shift
+
+На сколько секунд сдвинуть текст относительно песни.
+How many seconds to shift the lyrics against the song.
+
+Позже (+)
+Later (+)
+
+Раньше (−)
+Earlier (−)
+
+Секунды
+Seconds
+
+Число от 0 до 600, например 8,8
+A number from 0 to 600, for example 8.8
+
+−1 с
+−1 s
+
++1 с
++1 s
+
+Без сдвига
+No shift
+
+Положение текста на экране песни
+Lyrics position on the song screen
+
+Это пример текста для настройки
+This is a sample text for setting up
+
+Строка, которая поётся, светится ярче
+The line being sung is brighter
+
+Поставьте её туда, где удобно читать
+Put it where it is easy to read
+
+Сетка показывает рамку и её середину
+The grid shows the frame and its middle
+
+Ползунок двигает строку выше или ниже
+The slider moves the line up or down
+
+Когда всё готово, нажмите «Готово»
+When everything is right, tap “Done”
+
+Положение строки
+Line position
+
+Рамка — от названия альбома вверху до «таблетки» сдвига внизу. Строка, которая поётся, встаёт на пунктир (или на середину рамки).
+The frame runs from the album name at the top to the shift capsule at the bottom. The line being sung goes on the dashed line (or the middle of the frame).
+
+Ровно посередине
+Exactly in the middle
+
+Выше середины на {}%
+{}% above the middle
+
+Ниже середины на {}%
+{}% below the middle
+
+Посередине
+Middle
+
+Строка, которая поётся, стоит посередине рамки: от названия альбома вверху до «таблетки» сдвига внизу. Её можно поставить выше или ниже.
+The line being sung sits in the middle of the frame: from the album name at the top to the shift capsule at the bottom. It can be placed higher or lower.
+
+Строка, которая поётся
+Line being sung
+
+ровно посередине
+exactly in the middle
+
+выше на {}%
+{}% higher
+
+ниже на {}%
+{}% lower
+
+Включите любую песню — положение настраивается прямо в плеере, по сетке
+Play any song — the position is set right in the player, by the grid
+
+Настроить по сетке в плеере
+Set up by the grid in the player
+
+В плеере появится полупрозрачная сетка и ползунок. Если у песни нет текста, для настройки покажется пример.
+A see-through grid and a slider appear in the player. If the song has no lyrics, a sample text is shown for setting up.
+
+Журнал очищен
+Log cleared
+
+Очистить
+Clear
+
+{}: путь ведёт за пределы главной папки, пропущено
+{}: the path leads outside the main folder, skipped
+
+Уже скачивается: {}
+Already downloading: {}
+
+Скачивать нечего: всё уже скачано или авторы не открыли скачивание
+Nothing to download: everything is downloaded already or the authors did not allow downloading
+
+Скачано в главную папку: {} из {}
+Downloaded into the main folder: {} of {}
+
+Скачано в главную папку: {} из {}, не скачалось: {}
+Downloaded into the main folder: {} of {}, failed: {}
+
+Скачивание остановлено: скачано {} из {}
+Download stopped: {} of {} downloaded
+
+Скачано {} из {}
+Downloaded {} of {}
+
+Остановить
+Stop
+
+Скачать всё ({})
+Download all ({})
+
+Всё скачано
+All downloaded
+
+Песен только для прослушивания (автор не открыл скачивание): {}
+Songs for listening only (the author did not allow downloading): {}
+
+Сейчас скачивается «{}»: {} из {}
+Now downloading “{}”: {} of {}
+
+Исполнитель, альбом или песня
+Artist, album or song
+
+Все исполнители ({})
+All artists ({})
+
+Альбомы и плейлисты
+Albums and playlists
+
+Все альбомы ({})
+All albums ({})
+
+Здесь ничего не нашлось — посмотрите на других вкладках поиска.
+Nothing here — have a look at the other kinds of results.
+
+Можно писать через запятую: исполнитель, альбом, песня — в любом порядке и любой частью. Точное совпадение не нужно: первыми идут самые похожие.
+You can type several parts separated by commas: artist, album, song — in any order, any of them. An exact match is not needed: the closest ones come first.
+
+песен: {}
+songs: {}
+
+слушателей: {}
+listeners: {}
+
+ — альбом
+ — album
+
+ — плейлист
+ — playlist
+
+Отрывки по 30 секунд (Deezer): {}
+30-second excerpts (Deezer): {}
+
+Скрыть
+Hide
+
+Показать
+Show
+
+Скачать «{}»?
+Download “{}”?
+
+Песен: {}. Они скачаются по очереди в главную папку и разложатся по папкам исполнителя и альбома, как остальная музыка.
+Songs: {}. They are downloaded one after another into the main folder and sorted into artist and album folders like the rest of your music.
+
+Только для прослушивания (автор не открыл скачивание), пропускаются: {}.
+For listening only (the author did not allow downloading), skipped: {}.
+
+Загрузку можно остановить; уже скачанные песни останутся.
+You can stop the download; the songs already downloaded stay.
+
+Скачать
+Download
+
+Займут примерно: {}
+Will take about: {}
+
+Уменьшается и тускнеет
+Shrinks and dims
+
+Просто уезжает
+Simply moves on
+
+Тает
+Fades away
+
+Размывается
+Blurs
+
+Как уходит спетая строка
+How a sung line leaves
+
+Размытие есть на Android 12 и новее; здесь строки просто тускнеют.
+Blur needs Android 12 or newer; here the lines just dim.
+
+Проверяю: {}
+Checking: {}
+
+вместо «{}» ({}): интернет ({}
+instead of “{}” ({}): internet ({}
+
+«{}» — {}; в интернете альбом не нашёлся: стереть, песня ляжет к синглам
+“{}” — {}; no album found online: erase it, the song goes to the singles
+
+Проверено {} песен: предложений {}
+Checked {} songs: {} suggestions
+
+, без ответа {} (там неверно и альбом, и исполнитель — их лучше поправить вручную)
+, no answer for {} (both album and artist are wrong there — better fix them by hand)
+
+. Проверьте и отметьте.
+. Check and tick them.
+
+Проверить странные альбомы и исполнителей ({})
+Check odd albums and artists ({})
+
+Например «{}» — {}. Альбом ищется по песне и исполнителю, исполнитель — по песне и альбому (Deezer, iTunes). Найденное не применяется само.
+For example “{}” — {}. The album is looked up by song and artist, the artist by song and album (Deezer, iTunes). Nothing found is applied by itself.
+
+альбом → стереть
+album → erase
+
+альбом стёрт
+album erased
+
+в альбоме название сайта
+the album is a website name
+
+заглушка вместо альбома
+a placeholder instead of an album
+
+в альбоме исполнитель и название песни
+the album is the artist and the song title
+
+в исполнителе название сайта
+the artist is a website name
+
+заглушка вместо исполнителя
+a placeholder instead of an artist
+
+«{}» убран
+"{}" removed
+
+в альбоме имя программы или папки загрузок
+the album is the name of an app or a download folder
+
+в исполнителе имя программы или папки загрузок
+the artist is the name of an app or a download folder
+
+Не удалось сохранить текст
+Could not save the lyrics
+
+Самая высокая частота экрана
+Fastest screen refresh rate
+
+Просить у телефона 90 или 120 Гц, пока плеер открыт: анимации и текст плавнее. Некоторые телефоны иначе держат приложения на 60 Гц
+Ask the phone for 90 or 120 Hz while the player is open: smoother animations and lyrics. Some phones otherwise keep apps at 60 Hz
+
+«{}» — {}: стереть, песня ляжет к синглам
+"{}" — {}: erase it, the song goes to the singles
+
+Закончить выбор
+Stop choosing
+
+Выбрано: {} из {}
+Chosen: {} of {}
+
+Что сделать с выбранным
+What to do with the chosen ones
+
+Выбрать все
+Choose all
+
+Наоборот
+Invert
+
+Таких здесь нет
+There are none here
+
+Удалить выбранные песни ({})?
+Delete the chosen songs ({})?
+
+Файлы перемещаются в корзину плеера (.malachite/trash) — их можно вернуть, пока корзина не очищена.
+The files go to the player's trash (.malachite/trash) — they can be brought back until the trash is emptied.
+
+Перемещено в корзину: {}
+Moved to the trash: {}
+
+В корзине: {}, не удалось: {}
+In the trash: {}, failed: {}
+
+Сведения о выбранном
+About the chosen songs
+
+Песен
+Songs
+
+Форматы
+Formats
+
+Исполнителей
+Artists
+
+Альбомов
+Albums
+
+у песен разное — оставить
+differs between the songs — keep
+
+Теги у выбранных ({})
+Tags of the chosen songs ({})
+
+Пишется только то, что вы изменили. Файлы переедут в папки нового исполнителя и альбома.
+Only what you changed is written. The files move to the folders of the new artist and album.
+
+Теги записаны: {}
+Tags written: {}
+
+Записано: {}, не получилось: {}
+Written: {}, failed: {}
+
+Записать
+Write
+
+Исцелить выбранные ({})
+Heal the chosen songs ({})
+
+Ход виден во вкладке «Исцеление». Всё сделанное можно отменить там же.
+The progress is shown in the "Healing" tab. Everything done can be undone there too.
+
+Исцеление выбранных началось
+Healing of the chosen songs has started
+
+Выбрано
+Chosen
+
+Убрать из избранных альбомов
+Remove from favourite albums
+
+В избранные альбомы
+Add to favourite albums
+
+Выбрать несколько
+Choose several
+
+Слушать ({})
+Listen ({})
+
+Играть следующими
+Play next
+
+Убрано из избранного: {}
+Removed from favourites: {}
+
+В избранном: {}
+In favourites: {}
+
+Изменить теги у всех…
+Edit tags of all…
+
+Исцелить выбранные…
+Heal the chosen songs…
+
+Одна обложка для всех…
+One cover for all…
+
+Удалить (в корзину)…
+Delete (to the trash)…
+
+Появились за последний час
+Added in the last hour
+
+За неделю
+This week
+
+Без исполнителя
+No artist
+
+С песнями за последний час
+With songs added in the last hour
+
+Удалить плейлисты ({})?
+Delete the playlists ({})?
+
+Удаляются только файлы плейлистов. Сами песни остаются в главной папке.
+Only the playlist files are deleted. The songs stay in the main folder.
+
+Удалено плейлистов: {}
+Playlists deleted: {}
+
+Собрать в другой плейлист…
+Gather into another playlist…
+
+Удалить плейлист…
+Delete the playlist…
+
+Удалить плейлисты ({})…
+Delete the playlists ({})…
+
+Убрать из плейлиста ({})
+Remove from the playlist ({})
+
+Убрано из плейлиста: {}
+Removed from the playlist: {}
+
+ (за {} с)
+ (in {} s)
+
+вместо «{}»: в исполнителе было ещё и название песни
+instead of "{}": the artist also held the song's title
+
+«{}» — {}; в интернете исполнитель не нашёлся: стереть
+"{}" — {}; no artist found online: erase it
+
+«{}» — {}, «{}» — {}: стереть оба
+"{}" — {}, "{}" — {}: erase both
+
+«{}» — {}: стереть
+"{}" — {}: erase it
+
+Подробный журнал: плавность и задержки
+Detailed log: smoothness and delays
+
+Каждые несколько секунд: сколько кадров в секунду было на каждом экране, с какой частотой работал экран, какие кадры опоздали и на что ушло время. Ещё долгие задачи главного потока и память. Журнал растёт быстрее — включайте, когда что-то тормозит
+Every few seconds: how many frames per second each screen had, the refresh rate the screen ran at, which frames came late and what took the time. Also long tasks of the main thread and memory. The log grows faster — turn it on when something lags
+
+исполнитель «{}» стёрт
+artist "{}" erased
+
+«{}» — это пометка сборника, а не исполнитель
+"{}" marks a compilation, it is not an artist
+
+в исполнителе ещё и название песни
+the artist also holds the song's title
+
+Пружина
+Spring
+
+Плавно
+Smooth
+
+Слушаю: {}
+Listening: {}
+
+Прослушано {} песен: узнано {}, уверенно {}
+Listened to {} songs: recognised {}, sure {}
+
+, неизвестны сервису {}
+, unknown to the service {}
+
+, звук не прочитался у {}
+, sound could not be read for {}
+
+. Сервис не отвечает — проверьте интернет
+. The service does not answer — check the internet
+
+. Ключ AcoustID не принят
+. The AcoustID key was not accepted
+
+пропущено: в настройках нет ключа AcoustID
+skipped: there is no AcoustID key in the settings
+
+узнавание по звуку
+recognition by sound
+
+Узнавание по звуку
+Recognition by sound
+
+Узнать песни по звуку
+Recognise songs by their sound
+
+Для песен с непонятными названиями («115620301», «tmpeicn5cwv») или без исполнителя: плеер слушает начало песни, составляет её звуковой отпечаток и спрашивает базу AcoustID, что это за песня. Нужен бесплатный ключ — Настройки → «Узнавание песен по звуку». Отправляется только отпечаток и длина песни.
+For songs with meaningless titles ("115620301", "tmpeicn5cwv") or without an artist: the player listens to the beginning of the song, makes its sound print and asks the AcoustID database what song it is. A free key is needed — Settings → "Recognising songs by sound". Only the print and the song's length are sent.
+
+Эта проверка не получилась из-за отсутствия ключа в настройках.
+This check could not run because there is no key in the settings.
+
+Открыть настройки ключа
+Open the key settings
+
+Узнавать по звуку нечего (или сервис не знает этих песен)
+Nothing to recognise by sound (or the service does not know these songs)
+
+Узнано: {}. Отмечены уверенные (совпадение от 85% и длина сходится).
+Recognised: {}. The sure ones are ticked (85% match or more and the length agrees).
+
+Записать отмеченные ({})
+Write the ticked ones ({})
+
+Ключ AcoustID не работает
+The AcoustID key does not work
+
+Узнавание по звуку пропущено, остальное исцеление продолжается как обычно.
+Recognition by sound was skipped, the rest of the healing goes on as usual.
+
+Как выбрать сразу несколько песен, альбомов или плейлистов?
+How do I choose several songs, albums or playlists at once?
+
+Нажмите кнопку-галочку рядом с «Слушать» (или «Выбрать» над альбомами, исполнителями и плейлистами), либо зажмите песню и выберите «Выбрать несколько». Дальше нажатия выбирают, сверху появляется панель: «Выбрать все», «Снять все», «Наоборот» и быстрый выбор — «Последнее пополнение» (все песни последней закачки или импорта), «Появились за последний час», «За сутки», «Без обложки», «Без текста» и другие. Меню ⋮ на панели или долгое нажатие на любую выбранную песню — что сделать со всеми сразу: слушать, в очередь, в плейлист, в избранное, теги, исцелить, удалить. Чтобы выбрать подряд, зажмите песню и ведите пальцем — выбираются все песни под пальцем, у края список листается сам; отпустите и повторите в другом месте. Если зажать уже выбранную и повести — выбор снимается. «По имени…» выбирает песни исполнителя, альбома или с названием (можно латиницей: kino = кино), или все, кроме них. Выбор действует только в открытом списке; «Назад» или ✕ его заканчивают.
+Tap the tick button next to "Listen" (or "Choose" above albums, artists and playlists), or hold a song and pick "Choose several". Taps then choose, and a panel appears on top: "Choose all", "Untick all", "Invert" and quick picks — "Latest addition" (all songs of the last download or import), "Added in the last hour", "Last 24 hours", "No cover", "No lyrics" and more. The ⋮ menu on the panel or a long press on any chosen song shows what to do with all of them: listen, queue, playlist, favourites, tags, heal, delete. To choose a row of songs, hold a song and slide your finger — every song under it is chosen, the list scrolls by itself at the edge; let go and repeat elsewhere. Holding a chosen song and sliding unchooses. "By name…" chooses the songs of an artist, an album or with a title (Latin letters work too: kino = кино), or all but them. The choice works only in the open list; "Back" or ✕ ends it.
+
+Как исцелить только некоторые песни, а не всю главную папку?
+How do I heal only some songs, not the whole main folder?
+
+У песен названия из цифр («115620301») — как узнать, что это за песни?
+Songs are named with numbers ("115620301") — how do I find out what they are?
+
+Плеер может узнать песню по звуку: он слушает её начало и спрашивает открытую базу AcoustID. Для этого нужен бесплатный ключ: Настройки → «Узнавание песен по звуку» — там пошаговая инструкция, поле для ключа и кнопка «Проверить ключ». После этого «Исцелить всё», «Исцелить выбранные» или раздел «Узнать песни по звуку» во вкладке «Исцеление» запишут найденные название, исполнителя и альбом. Без ключа это просто пропускается, остальное исцеление работает.
+The player can recognise a song by its sound: it listens to the beginning and asks the open AcoustID database. A free key is needed: Settings → "Recognising songs by sound" — with step-by-step instructions, a field for the key and a "Check the key" button. Then "Heal everything", "Heal the chosen songs" or the "Recognise songs by their sound" section of the "Healing" tab write the found title, artist and album. Without a key this is simply skipped; the rest of the healing works.
+
+Открыть настройку ключа
+Open the key setting
+
+Почему «AyuGram» или «Telegram» стоят вместо альбома, а «Разные исполнители» — вместо исполнителя?
+Why is "AyuGram" or "Telegram" the album, and "Various artists" the artist?
+
+Так получается у песен, скачанных из Telegram-клиентов и загрузчиков: имя их папки принималось за альбом. Теперь плеер никогда не считает такие папки альбомом или исполнителем. Уже испорченные песни исправит «Исцеление» → «Пустые альбомы и исполнители» → «Проверить странные альбомы и исполнителей» или «Исцелить выбранные» с первой галочкой. Песни без названий узнаются по звуку (вопрос выше).
+This happens to songs downloaded with Telegram clients and downloaders: the name of their folder was taken for the album. Now the player never takes such folders for an album or an artist. Songs already spoiled are fixed by "Healing" → "Empty albums and artists" → "Check odd albums and artists", or by "Heal the chosen songs" with the first tick. Songs without titles are recognised by sound (the question above).
+
+Как быстро переключать вкладки, не попадая пальцем?
+How do I switch tabs quickly without aiming?
+
+Зажмите палец на панели вкладок — подсветка-«таблетка» поднимется и поедет за пальцем, вкладка под ней подсвечивается. Отпустите — таблетка сама доедет до ближайшей вкладки и откроет её. Обычное нажатие работает как раньше. Сколько держать палец и как таблетка доезжает (пружина, плавно, быстро, без анимации) — в «Меню и вкладки».
+Hold a finger on the tab panel — the highlight "pill" lifts and follows the finger, the tab under it lights up. Let go — the pill glides to the nearest tab and opens it. A normal tap works as before. How long to hold and how the pill glides (spring, smooth, fast, no animation) — in "Menu and tabs".
+
+Плеер помнит, где я был в другой вкладке?
+Does the player remember where I was in another tab?
+
+Да: у каждой вкладки свой путь. Открытый плейлист, альбом или исполнитель и место, до которого вы пролистали, остаются, пока вы смотрите другую вкладку. Повторное нажатие на уже открытую вкладку возвращает в её начало.
+Yes: each tab keeps its own way. The open playlist, album or artist and how far you scrolled stay while you look at another tab. Tapping the tab that is already open takes you back to its start.
+
+Анимации кажутся медленнее, чем в остальном телефоне (90/120 Гц)
+Animations feel slower than in the rest of the phone (90/120 Hz)
+
+Плеер просит у телефона самую высокую частоту экрана — «Меню и вкладки» → «Самая высокая частота экрана». Если всё равно тормозит, включите в «Ошибки и журнал» журнал и «Подробный журнал: плавность и задержки», повторите то, что тормозит, и пришлите файл журнала — в нём видно, сколько кадров в секунду было на каждом экране и что их задерживало.
+The player asks the phone for its fastest screen refresh — "Menu and tabs" → "Fastest screen refresh rate". If it still lags, turn on the log and "Detailed log: smoothness and delays" in "Errors and log", repeat what lags and send the log file — it shows how many frames per second each screen had and what held them up.
+
+Как настроить, как уходит спетая строка и как закрашиваются слова?
+How do I set how a sung line leaves and how words are filled?
+
+Настройки → «Тексты песен»: «Как уходит спетая строка» — уменьшается и тускнеет, уезжает вверх, гаснет или размывается (размытие — на Android 12 и новее). «Выделение слов в такт песне» — сразу, быстро, плавно, пока слово поётся, или «по буквам, с мягким краем» — цвет бежит по строке буква за буквой.
+Settings → "Lyrics": "How a sung line leaves" — shrinks and dims, slides up, fades out or blurs (blur on Android 12 and newer). "Highlighting words in time with the song" — at once, fast, smoothly while the word is sung, or "letter by letter, with a soft edge" — the colour runs along the line letter by letter.
+
+Как скачать сразу все песни исполнителя или альбома из «Онлайн»?
+How do I download all songs of an artist or album from "Online" at once?
+
+В разделе «Онлайн» найдите исполнителя, альбом или плейлист, откройте его и нажмите «Скачать все» — плеер покажет примерный размер и спросит подтверждение. Ход скачивания виден полосой с отрезками; остановить можно в любой момент. Раздел «Онлайн» включается в настройках «Музыка и тексты».
+In the "Online" section find the artist, album or playlist, open it and tap "Download all" — the player shows the approximate size and asks to confirm. The progress is shown as a bar of segments; it can be stopped at any moment. The "Online" section is turned on in the "Music and lyrics" settings.
+
+Открыть «Онлайн»
+Open "Online"
+
+Узнавание песен по звуку
+Recognising songs by sound
+
+Переключать вкладки, ведя пальцем
+Switch tabs by sliding a finger
+
+Ключ AcoustID: песни «115620301» и без исполнителя узнаются по звуку при исцелении
+AcoustID key: songs like "115620301" and songs without an artist are recognised by sound during healing
+
+Задержите палец на панели вкладок — подсветка поднимется и поедет за пальцем; отпустите над нужной вкладкой. Обычное нажатие работает как раньше
+Hold a finger on the tab panel — the highlight lifts and follows the finger; let go over the tab you want. A normal tap works as before
+
+Сколько держать палец
+How long to hold the finger
+
+Как подсветка доезжает до вкладки
+How the highlight glides to a tab
+
+Для песен с непонятными названиями («115620301», «tmpeicn5cwv», «Track 3») или без исполнителя. Плеер слушает первые две минуты песни, составляет её звуковой отпечаток и спрашивает открытую базу AcoustID (её ведут сами слушатели вместе с MusicBrainz), что это за песня. Найденные название, исполнитель и альбом записываются в файл через «Исцеление».
+For songs with meaningless titles ("115620301", "tmpeicn5cwv", "Track 3") or without an artist. The player listens to the first two minutes of the song, makes its sound print and asks the open AcoustID database (kept by listeners together with MusicBrainz) what song it is. The found title, artist and album are written into the file through "Healing".
+
+Отправляется только отпечаток (набор чисел) и длина песни — не сам звук и не имя файла.
+Only the print (a set of numbers) and the song's length are sent — not the sound itself and not the file name.
+
+Ключ AcoustID
+AcoustID key
+
+Ключ приложения (API key)
+Application key (API key)
+
+Скрыть ключ
+Hide the key
+
+Показать ключ
+Show the key
+
+Ключ убран
+Key removed
+
+Ключ сохранён
+Key saved
+
+Ключ работает ✓
+The key works ✓
+
+Сервис не ответил ({}). Проверьте интернет и попробуйте ещё раз.
+The service did not answer ({}). Check the internet and try again.
+
+Проверка не удалась
+The check failed
+
+Проверить ключ
+Check the key
+
+Убрать ключ
+Remove the key
+
+Ключа нет — исцеление пропускает узнавание по звуку, всё остальное работает как обычно.
+No key — healing skips recognition by sound, everything else works as usual.
+
+Как получить ключ (бесплатно, 2 минуты)
+How to get a key (free, 2 minutes)
+
+1. Откройте сайт acoustid.org (кнопка ниже) и нажмите «Sign in» — войти можно через аккаунт MusicBrainz или Google.
+1. Open acoustid.org (the button below) and tap "Sign in" — you can sign in with a MusicBrainz or Google account.
+
+2. Вверху откройте «Applications» и нажмите «Register a new application» (новое приложение).
+2. At the top open "Applications" and tap "Register a new application".
+
+3. Name — любое название, например «Malachite на моём телефоне». Version — 1.0. Website можно не заполнять. Нажмите «Register».
+3. Name — any name, for example "Malachite on my phone". Version — 1.0. Website can stay empty. Tap "Register".
+
+4. В списке приложений появится ваше — скопируйте его «API key» (строка из букв и цифр).
+4. Your application appears in the list — copy its "API key" (a string of letters and digits).
+
+5. Вставьте ключ в поле выше и нажмите «Проверить ключ».
+5. Paste the key into the field above and tap "Check the key".
+
+Нужен именно ключ приложения (API key). «User API key» из профиля — для отправки своих отпечатков в базу, плееру он не нужен.
+It must be the application key (API key). The "User API key" of your profile is for sending your own prints to the database; the player does not need it.
+
+Не нашлось браузера
+No browser found
+
+Открыть acoustid.org
+Open acoustid.org
+
+Ключа AcoustID нет в настройках.
+There is no AcoustID key in the settings.
+
+Сервис не принял ключ: такого ключа нет или он больше не действителен
+The service did not accept the key: there is no such key or it is no longer valid
+
+Сервис отключил этот ключ
+The service has disabled this key
+
+ Сделайте новый ключ на acoustid.org.
+ Make a new key at acoustid.org.
+
+название «{}»
+title "{}"
+
+ (по звуку, совпадение {}%)
+ (by sound, {}% match)
+
+«{}»: исполнитель «{}», название «{}»
+"{}": artist "{}", title "{}"
+
+{} мин назад
+{} min ago
+
+{} ч назад
+{} h ago
+
+{} дн. назад
+{} days ago
+
+{}: новых песен нет
+{}: no new songs
+
+. Последние появились {}
+. The newest came on {}
+
+Последнее пополнение
+Latest addition
+
+За последний час
+In the last hour
+
+За сутки
+Last 24 hours
+
+в названии ещё и исполнитель
+the title also holds the artist
+
+По имени…
+By name…
+
+Выбранное
+Chosen
+
+Выбрать по имени
+Choose by name
+
+латиницей или кириллицей: kino = кино
+Latin or Cyrillic letters: kino = кино
+
+Только они
+Only them
+
+Все, кроме них
+All but them
+
+Оставить уже выбранные ({})
+Keep the ones already chosen ({})
+
+Введите имя
+Type a name
+
+Подходит: {}
+Matching: {}
+
+Выбрать ({})
+Choose ({})
+
+Строки «♪» отмечаются сами
+"♪" lines mark themselves
+
+нет, нажимать вручную
+no, press by hand
+
+через {} с тишины
+after {} s of silence
+
+«♪» — проигрыш без слов. Если после строки вы не нажимаете кнопку столько секунд, «♪» начинается сам с того места, где закончилось пение, и длится до следующего нажатия. Нажали раньше — «♪» пропускается, нажатие идёт следующей строке.
+"♪" is music without words. If you do not press the button for this many seconds after a line, the "♪" starts by itself where the singing stopped and lasts until the next press. Pressed earlier — the "♪" is left out and the press goes to the next line.
+
+Кнопка «Держите, пока поётся»
+The "Hold while it is sung" button
+
+Ширина
+Width
+
+во всю ширину
+full width
+
+Высота
+Height
+
+Скругление углов
+Corner rounding
+
+полностью круглые
+fully round
+
+Вернуть круг
+Back to a circle
+
+«♪» отметится сам через {} с тишины — нажмите, когда снова запоют
+"♪" marks itself after {} s of silence — press when the singing starts again
+
+При синхронизации неудобно попадать в круглую кнопку, а строки «♪» приходится нажимать
+When syncing, the round button is hard to hit, and "♪" lines have to be pressed
+
+Настройки → «Тексты песен» → «Ручная синхронизация»: кнопку «Держите, пока поётся» можно сделать шире (вплоть до всей ширины экрана), выше и с любым скруглением углов — от прямоугольника до круга. Там же «Строки «♪» отмечаются сами»: если после строки вы не нажимаете кнопку выбранное число секунд, «♪» (проигрыш) отмечается сам и длится до следующего нажатия; нажали раньше — «♪» пропускается.
+Settings → "Lyrics" → "Manual sync": the "Hold while it is sung" button can be made wider (up to the full width of the screen), taller and with any corner rounding — from a rectangle to a circle. There also: ""♪" lines mark themselves": if you do not press the button for the chosen number of seconds after a line, the "♪" (music without words) marks itself and lasts until the next press; pressed earlier — the "♪" is left out.
+
+Как поменять порядок песен в плейлисте?
+How do I change the order of songs in a playlist?
+
+Откройте плейлист, зажмите песню и, не отпуская, ведите её вверх или вниз — она поднимется и поедет за пальцем, остальные расступятся, у края список листается сам. Отпустите там, где она должна стоять. Если зажать и не вести — откроется меню песни.
+Open the playlist, hold a song and, without letting go, move it up or down — it lifts and follows your finger, the others make room, and the list scrolls by itself at the edge. Let go where it should be. Held without moving, the song's menu opens.
+
+Открыть плейлисты
+Open playlists
+
+Зажмите песню и перенесите её выше или ниже, чтобы поменять порядок
+Hold a song and carry it up or down to change the order
+
+, выбран вручную
+, chosen by hand
+
+ • другим алфавитом
+ • in another alphabet
+
+Не музыка
+Not music
+
+видео, кэш мессенджеров, голосовые — в корзину
+videos, messenger cache, voice notes — to the trash
+
+расширение по настоящему формату
+the extension of the real format
+
+Странные альбомы и исполнители
+Odd albums and artists
+
+«AyuGram», сайты, «Разные исполнители» — проверка в интернете
+«AyuGram», sites, «Various artists» — checked online
+
+непонятные названия; нужен ключ AcoustID
+meaningless titles; needs an AcoustID key
+
+«01 - Песня» → «Песня»
+«01 - Song» → «Song»
+
+из тегов Android и папок
+from Android's tags and the folders
+
+Написание названий
+Spelling of names
+
+опечатки, кириллица и латиница, украшения
+typos, Cyrillic and Latin, decorations
+
+«2_3049492992.mp3» → название песни
+«2_3049492992.mp3» → the song's title
+
+лишние копии с тем же звуком — в корзину
+extra copies with the same sound — to the trash
+
+пустые и без звука — в корзину
+empty ones and those without sound — to the trash
+
+для песен без обложки
+for songs without a cover
+
+мелкие, тяжёлые и одна картинка на разные альбомы
+small, heavy, and one picture on different albums
+
+по списку песен альбома в интернете
+by the album's list of songs online
+
+целый альбом разных исполнителей
+a whole album of various artists
+
+Исполнитель / Альбом / Песня
+Artist / Album / Song
+
+Тексты
+Lyrics
+
+найти недостающие; заменить тексты другим алфавитом
+find the missing ones; replace lyrics in another alphabet
+
+измерить, чтобы песни звучали одинаково громко
+measure, so that songs play equally loud
+
+«НАЗВАНИЕ КАПСОМ» → «Название капсом» — меняет всё найденное; многие пишут имена так нарочно
+«TITLE IN CAPITALS» → «Title in capitals» — changes everything found; many write their names so on purpose
+
+Что исцелить
+What to heal
+
+Отметьте, что сделать — по отдельности или всё сразу. Делаются только уверенные исправления; сомнительные остаются во вкладке «Исцеление», их можно разобрать вручную.
+Tick what to do — one by one or everything at once. Only confident fixes are made; doubtful ones stay in the «Healing» tab to be sorted out by hand.
+
+Всё сразу
+Everything at once
+
+Как обычно
+As usual
+
+Только если отметить отдельно:
+Only when ticked by itself:
+
+Ключа AcoustID нет в настройках — узнавание по звуку будет пропущено, остальное сделается.
+There is no AcoustID key in the settings — recognition by sound will be skipped, the rest will be done.
+
+Исцеление началось
+Healing started
+
+Исцелить ({})
+Heal ({})
+
+Слишком мелкие обложки (меньше 300 точек — размыты) заменяются найденными в интернете, если там есть больше. Слишком тяжёлые (больше 1 МБ — каждая песня альбома носит её целиком) уменьшаются до 1000 точек. Одна и та же картинка на песнях разных альбомов (вся дискография с одной обложкой) заменяется своей обложкой каждого альбома. Обложки, которые вы выбрали сами, не трогаются.
+Covers that are too small (under 300 pixels — blurry) are replaced by ones found online if a bigger one is there. Covers that are too heavy (over 1 MB — every song of the album carries the whole picture) are made 1000 pixels. One and the same picture on songs of different albums (a whole discography with one cover) is replaced by each album's own cover. Covers you chose yourself are not touched.
+
+Ищет тексты (по возможности синхронизированные) для песен без текста и сохраняет их в главной папке. Тексты, найденные раньше другим алфавитом (русская песня латиницей: «I dve tysyachi let voyna»), заменяются настоящими, если они нашлись; свои и синхронизированные вручную тексты не трогаются.
+Finds lyrics (synced when possible) for songs without lyrics and keeps them in the main folder. Lyrics found earlier in another alphabet (a Russian song in Latin letters: «I dve tysyachi let voyna») are replaced by the real ones when those are found; your own lyrics and lyrics synced by hand are not touched.
+
+Исцелить всё или выбрать, что именно…
+Heal everything or choose what…
+
+С текстом другим алфавитом (латиницей вместо кириллицы и т. п.): {} — для них ищется настоящий текст.
+With lyrics in another alphabet (Latin instead of Cyrillic and so on): {} — the real lyrics are looked for.
+
+Одна картинка на разные альбомы: {}. Так бывает, когда вся дискография скачана с одной картинкой или сайт вшил свой логотип в каждый файл. Для каждого альбома ищется своя обложка — так же, как при ручной замене; если уверенной не нашлось, остаётся как есть. Обложки, выбранные вами вручную, не трогаются.
+One picture on different albums: {}. This happens when a whole discography was downloaded with one picture or a site put its logo into every file. Each album's own cover is looked for — the same way as when you replace it by hand; when no sure one is found, it stays as it is. Covers you chose by hand are not touched.
+
+та же, что у альбомов: {} — найти свою
+the same as on albums: {} — find its own
+
+Выберите эти песни (см. вопрос о выборе нескольких) и в меню выбранного нажмите «Исцелить выбранные…». Откроется список исцелений: отметьте только нужные (например, одни «Тексты» или одно «Качество обложек») или «Всё сразу». Плеер запоминает ваш выбор до следующего раза, «Как обычно» возвращает обычный набор. Ход виден во вкладке «Исцеление», там же всё можно отменить.
+Choose these songs (see the question about choosing several) and in the menu of the chosen ones tap «Heal the chosen…». A list of healings opens: tick only the ones you need (for example, just «Lyrics» or just «Cover quality») or «Everything at once». The player remembers your choice until next time; «As usual» brings back the usual set. The progress is seen in the «Healing» tab, where everything can be undone too.
+
+Можно исцелить не всё, а только что-то одно?
+Can I heal just one thing instead of everything?
+
+Да. Во вкладке «Исцеление» кнопка «Исцелить всё или выбрать, что именно…» открывает список: отметьте нужные исцеления по отдельности или «Всё сразу». То же самое — в «Исцелить выбранные…» для выбранных песен. «Регистр букв» включается только отдельной галочкой: многие исполнители пишут имя капсом нарочно. Кроме того, у каждого раздела ниже есть своя кнопка «Проверить» — там видно, что будет исправлено, и можно снять галочки.
+Yes. In the «Healing» tab the button «Heal everything or choose what…» opens a list: tick the healings you need one by one or «Everything at once». The same is in «Heal the chosen…» for chosen songs. «Letter case» is turned on only by its own tick: many artists write their name in capitals on purpose. Besides, every section below has its own «Check» button — it shows what will be fixed, and ticks can be removed.
+
+Почему текст русской песни написан латиницей («I dve tysyachi let voyna»)?
+Why are the lyrics of a Russian song written in Latin letters («I dve tysyachi let voyna»)?
+
+В открытых базах текстов кто-то выложил транслит (или перевод) рядом с настоящим текстом, и раньше он мог совпасть с песней на 100%. Теперь текст другим алфавитом сам не ставится: в окне «Текст песни» он помечен «другим алфавитом» и стоит ниже, а исцеление «Тексты» находит такие сохранённые тексты и заменяет их настоящими, если нашлись. Тексты, которые вы выбрали, вставили или синхронизировали сами, исцеление не трогает.
+In the open lyrics databases somebody uploaded a transliteration (or a translation) next to the real lyrics, and before it could match the song 100%. Now lyrics in another alphabet are never put on by themselves: in the «Lyrics» window they are marked «in another alphabet» and listed lower, and the «Lyrics» healing finds such saved lyrics and replaces them by the real ones when found. Lyrics you chose, pasted or synced yourself are not touched by healing.
+
+Почему у всех альбомов исполнителя одна и та же обложка?
+Why do all albums of an artist have the same cover?
+
+Так бывает, когда вся дискография скачана одним архивом с одной картинкой (например, из Internet Archive) или сайт вшил свой логотип в каждый файл. Исцеление «Качество обложек» (оно входит и в «Исцелить всё») находит одну картинку на разных альбомах и ищет для каждого альбома его собственную обложку — тем же поиском, что и ручная «Заменить обложку». Обложки, которые вы выбрали сами, не трогаются. Новые скачивания из Internet Archive берут картинку из папки своего альбома.
+This happens when a whole discography was downloaded as one archive with one picture (for example, from the Internet Archive) or a site put its logo into every file. The «Cover quality» healing (it is part of «Heal everything» too) finds one picture on different albums and looks for each album's own cover — with the same search as the manual «Replace cover». Covers you chose yourself are not touched. New downloads from the Internet Archive take the picture from their own album's folder.
+
+{}: своей обложки альбома не нашлось, осталась общая
+{}: the album's own cover was not found, the shared one stays
+
+своя обложка альбома {}×{} вместо общей на {} альбомов
+the album's own cover {}×{} instead of the one shared by {} albums
+
+{}: текст записан другим алфавитом, а настоящего не нашлось
+{}: the lyrics are in another alphabet, and the real ones were not found
+
+ вместо текста другим алфавитом
+ instead of lyrics in another alphabet
+
+Как отсортировать песни в плейлисте (по альбомам, названию, году)?
+How do I sort the songs of a playlist (by album, title, year)?
+
+Откройте плейлист и нажмите кнопку сортировки рядом с «Слушать» и «Вперемешку». По альбомам — песни одного альбома вместе и по порядку треков, альбомы по году; ещё по исполнителям, названию, году, недавно добавленным, длине или наоборот. Новый порядок записывается в плейлист; «Вернуть порядок до сортировки» там же. Песню можно и перенести вручную: зажать и вести вверх или вниз.
+Open the playlist and tap the sort button next to «Play» and «Shuffle». By album — songs of one album together in track order, albums by year; also by artist, title, year, recently added, length, or reversed. The new order is written into the playlist; «Bring back the order before sorting» is there too. A song can also be moved by hand: hold it and move it up or down.
+
+Как убрать песню или исполнителя из перемешивания, не удаляя?
+How do I keep a song or an artist out of shuffle without deleting it?
+
+В меню песни — «Не нравится» (или для выбранных песен сразу), для исполнителя — кнопка 👎 на его странице. Такие песни не играют во «Вперемешку» и не попадают в умные плейлисты («Часто слушаю», «Недавно добавленные»…), но файлы остаются, и нажатие на песню играет её как обычно. Список отмеченного и «Снова нравится» — Настройки → «Воспроизведение и звук».
+In the song's menu — «Don't like» (or for chosen songs at once); for an artist — the 👎 button on their page. Such songs do not play in «Shuffle» and are left out of smart playlists («Most played», «Recently added»…), but the files stay, and tapping a song plays it as usual. The list of marked ones and «Like again» — Settings → «Playback and sound».
+
+Как сделать плавный переход между песнями (кроссфейд)?
+How do I make songs blend into each other (crossfade)?
+
+Настройки → «Воспроизведение и звук» → «Плавный переход»: от 1 до 12 секунд. Конец песни затихает, следующая в это время набирает громкость. Работает для песен на телефоне; на паузе, при перемотке или выборе другой песни старая сразу замолкает.
+Settings → «Playback and sound» → «Crossfade»: from 1 to 12 seconds. The end of a song fades out while the next one fades in. Works for songs on the phone; on a pause, a seek or another song the old one goes silent at once.
+
+Можно ли слушать онлайн-песни без интернета?
+Can I listen to online songs without internet?
+
+Да: песня из раздела «Онлайн», которую дослушали, остаётся на телефоне, и потом играет без интернета — список «Слушали — играют без интернета» в разделе «Онлайн». Сколько места на это отдать (или не хранить вовсе) — в настройках под переключателем онлайн-раздела. Чтобы песня стала обычным файлом главной папки — «Скачать».
+Yes: a song from the «Online» section that was played to the end stays on the phone and later plays without internet — the list «Heard — play without internet» in the «Online» section. How much space to give to it (or not to keep them at all) — in the settings under the online section switch. To make a song an ordinary file of the main folder — «Download».
+
+Плавный переход между песнями
+Crossfade between songs
+
+Визуализатор
+Visualizer
+
+Не нравится
+Don't like
+
+Онлайн-песни без интернета
+Online songs without internet
+
+Отметить лучший момент здесь ({})
+Mark the best moment here ({})
+
+Убрать отметку лучшего момента
+Remove the best moment mark
+
+Снова нравится
+Like again
+
+Песня снова играет вперемешку
+The song plays in shuffle again
+
+Не нравится: песня не играет вперемешку и не попадает в умные плейлисты
+Don't like: the song does not play in shuffle and is left out of smart playlists
+
+Снова нравятся
+Like again
+
+Не нравятся
+Don't like
+
+Снова играют вперемешку: {}
+Play in shuffle again: {}
+
+Не нравятся: {} — не играют вперемешку и не попадают в умные плейлисты
+Don't like: {} — they do not play in shuffle and are left out of smart playlists
+
+«{}» снова играет вперемешку
+«{}» plays in shuffle again
+
+«{}»: не нравится — не играет вперемешку и не попадает в умные плейлисты
+«{}»: don't like — not played in shuffle and left out of smart playlists
+
+Не нравится: песни этого исполнителя не играют вперемешку и не попадают в умные плейлисты. Файлы на месте; нажатие на песню играет её как обычно.
+Don't like: this artist's songs do not play in shuffle and are left out of smart playlists. The files stay; tapping a song plays it as usual.
+
+Плейлист уже в таком порядке
+The playlist is already in this order
+
+Порядок сохранён в плейлисте. Вернуть прежний — там же, в сортировке
+The order is saved in the playlist. The old one can be brought back there, in sorting
+
+Сортировать плейлист
+Sort the playlist
+
+Новый порядок записывается в плейлист
+The new order is written into the playlist
+
+По альбомам
+By album
+
+По исполнителям
+By artist
+
+По году, старые первыми
+By year, oldest first
+
+Недавно добавленные первыми
+Recently added first
+
+Длинные первыми
+Longest first
+
+Перевернуть
+Reverse
+
+Вернуть порядок до сортировки
+Bring back the order before sorting
+
+Прежний порядок вернулся
+The old order is back
+
+Слушали — играют без интернета ({})
+Heard — play without internet ({})
+
+Переход между песнями
+Between songs
+
+Плавный переход
+Crossfade
+
+выключен
+off
+
+Конец песни затихает, а следующая в это время набирает громкость. Работает для песен на телефоне; онлайн-песни и «Повтор одной» сменяются как обычно.
+The end of a song fades out while the next one fades in. Works for songs on the phone; online songs and «Repeat one» change as usual.
+
+Полоски под обложкой
+Bars under the cover
+
+Двигаются вместе с музыкой: слева басы, справа высокие. Берутся из самого звука плеера — микрофон и разрешения не нужны
+They move with the music: bass on the left, highs on the right. Taken from the player's own sound — no microphone or permissions needed
+
+Хранить прослушанные онлайн-песни
+Keep heard online songs
+
+не хранить
+don't keep
+
+до {} МБ
+up to {} MB
+
+до {} ГБ
+up to {} GB
+
+Песня, которую дослушали, играет потом и без интернета (раздел «Онлайн» → «Слушали — играют без интернета»). Когда место кончается, первыми уходят те, что давно не слушали. Новый размер — со следующего запуска плеера.
+A song played to the end later plays without internet too («Online» → «Heard — play without internet»). When the space runs out, the ones not played for the longest go first. A new size applies from the next start of the player.
+
+ Сейчас занято: {} МБ.
+ Now used: {} MB.
+
+Сохранённые онлайн-песни удалены
+Kept online songs deleted
+
+Удалить сохранённые онлайн-песни
+Delete kept online songs
+
+Песни и исполнители с отметкой «Не нравится» не играют вперемешку и не попадают в умные плейлисты. Файлы остаются, нажатие на песню играет её как обычно. Отметить — в меню песни или на странице исполнителя (👎).
+Songs and artists marked «Don't like» do not play in shuffle and are left out of smart playlists. The files stay; tapping a song plays it as usual. Mark them in the song's menu or on the artist's page (👎).
+
+Пока ничего не отмечено.
+Nothing is marked yet.
+
+Исполнитель: {}
+Artist: {}
+
+Вернуть все песни ({})
+Bring back all songs ({})
+
+Сортировка плейлиста
+Playlist sorting
+
+В плейлисте рядом с «Слушать» и «Вперемешку» — кнопка сортировки: по альбомам, исполнителям, названию, году и другие. Песню, которую несёте пальцем, больше не теряет у края экрана.
+In a playlist, next to «Play» and «Shuffle», there is a sort button: by album, artist, title, year and more. A song carried by the finger is no longer lost at the edge of the screen.
+
+К плейлистам
+To playlists
+
+Конец песни затихает, следующая набирает громкость. Включается в Настройки → «Воспроизведение и звук» → «Плавный переход» (1–12 с).
+The end of a song fades out while the next one fades in. Turn it on in Settings → «Playback and sound» → «Crossfade» (1–12 s).
+
+К экрану песни
+To the song screen
+
+Лучший момент
+Best moment
+
+Песня (меню песни) или исполнитель (👎 на его странице) не играет вперемешку и не попадает в умные плейлисты. Файлы остаются.
+A song (its menu) or an artist (👎 on their page) does not play in shuffle and is left out of smart playlists. The files stay.
+
+Список
+List
+
+Дослушанная песня из раздела «Онлайн» остаётся на телефоне и потом играет без интернета: список «Слушали — играют без интернета» в разделе «Онлайн».
+A song from the «Online» section played to the end stays on the phone and later plays without internet: the list «Heard — play without internet» in the «Online» section.
+
+Исцеление: выбор, что исцелять
+Healing: choose what to heal
+
+«Исцелить всё или выбрать, что именно…» и «Исцелить выбранные…» открывают список исцелений с галочками. Тексты латиницей заменяются настоящими, одна обложка на разные альбомы — своими.
+«Heal everything or choose what…» and «Heal the chosen songs…» open a list of healings with ticks. Lyrics in Latin letters are replaced by the real ones, one cover on different albums by their own.
+
+К исцелению
+To healing
+
+Что нового
+What's new
+
+Сборка {}
+Build {}
+
+Сборка {} — что появилось в последних обновлениях
+Build {} — what the latest updates brought
+
+Установлена сборка {}
+Installed build {}
+
+Лучший момент отмечен чертой на полосе перемотки: ведите ползунок к ней — он сам встанет точно на неё
+The best moment is marked with a notch on the seek bar: move the thumb to it — it snaps exactly onto it
+
+Что за черта на полосе перемотки?
+What is the notch on the seek bar?
+
+Это лучший момент песни. Если у песни есть синхронизированный текст, плеер сам находит припев (строки, которые поются снова) и ставит там черту. Свой момент можно отметить в меню ⋮ на экране песни: «Отметить лучший момент здесь». Ведите ползунок к черте — рядом с ней он сам встаёт точно на неё (с лёгкой отдачей), и песня продолжится с этого места.
+It is the best moment of the song. If the song has synced lyrics, the player finds the chorus itself (lines that are sung again) and puts a notch there. You can mark your own moment in the ⋮ menu on the song screen: «Mark the best moment here». Move the thumb to the notch — near it the thumb snaps exactly onto it (with a light tick), and the song goes on from there.
+
+Черта на полосе перемотки: припев, найденный по синхронизированному тексту, или своя отметка (меню ⋮ на экране песни → «Отметить лучший момент здесь»). Ведите ползунок к черте — он сам встанет точно на неё.
+A notch on the seek bar: the chorus found in the synced lyrics, or your own mark (⋮ menu on the song screen → «Mark the best moment here»). Move the thumb to the notch — it snaps exactly onto it.
+
+Полоски под обложкой на экране песни: высота — громкость, скачки — удары. Видны, когда песня играет и открыта обложка, а не текст.
+Bars under the cover on the song screen: their height is the loudness, the jumps are the beats. Seen while a song plays and the cover, not the lyrics, is shown.
+

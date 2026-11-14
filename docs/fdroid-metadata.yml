@@ -1,0 +1,32 @@
+# Draft of metadata/app.malachite.player.yml for the fdroiddata repository.
+# The commit hash and the repository address must be filled in when the release tag exists.
+Categories:
+  - Multimedia
+License: GPL-3.0-or-later
+AuthorName: Krysmed
+SourceCode: https://github.com/stromik839/malachite
+IssueTracker: https://github.com/stromik839/malachite/issues
+Bitcoin: bc1q2p5lzd42lpxcwnlynt9dtwzd3ntw2aykn5y8ts
+# Donate: <link>            # a donation page, when there is one
+
+AutoName: Malachite
+
+AntiFeatures:
+  NonFreeNet:
+    en-US: Lyrics, covers and album data are looked up on request through iTunes, Deezer, Genius and other non-free services.
+
+RepoType: git
+Repo: https://github.com/stromik839/malachite.git
+
+Builds:
+  - versionName: 0.2.0
+    versionCode: 2
+    commit: v0.2.0
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 0.2.0
+CurrentVersionCode: 2

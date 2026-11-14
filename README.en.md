@@ -7,7 +7,7 @@
 Missing covers, broken tags, synced lyrics, duplicates and files called `115620301.mp3` —
 Malachite finds and fixes them without touching the sound itself.
 
-[Download the APK](https://github.com/stromik839/malachite/releases) · [По-русски](README.md) · [All features in detail (RU)](docs/FEATURES.md)
+[Download the APK](https://github.com/stromik839/malachite-music-player/releases) · [По-русски](README.md) · [All features in detail (RU)](docs/FEATURES.md)
 
 Android 8.0+ · no ads · no accounts · no tracking
 
@@ -50,7 +50,7 @@ of the file, checked byte for byte, and only then replaces the original. Any hea
 
 ## Install
 
-1. Open [Releases](https://github.com/stromik839/malachite/releases) and download the APK of the
+1. Open [Releases](https://github.com/stromik839/malachite-music-player/releases) and download the APK of the
    fresh build.
 2. Install it. New versions install over old ones; your music and settings stay.
 
@@ -73,7 +73,7 @@ Idea, decisions and testing on a real phone — **Krysmed**. All the code was wr
 - `tools/` — checks that run on every build.
 
 Build it yourself: `./gradlew :app:assembleRelease` (JDK 17, Android SDK 35).
-Found a bug? [Tell us](https://github.com/stromik839/malachite/issues/new/choose) and attach the log.
+Found a bug? [Tell us](https://github.com/stromik839/malachite-music-player/issues/new/choose) and attach the log.
 Interface texts are written in Russian in the code and translated in
 `core/src/main/resources/i18n/en.txt`; `python3 tools/i18n.py check` makes sure nothing is left out.
 

@@ -19,7 +19,7 @@ import app.malachite.player.MalachiteApp
 import app.malachite.player.ui.LocalNavigator
 import app.malachite.player.ui.Navigator
 import app.malachite.player.ui.Screen
-import app.malachite.player.ui.Tab
+import app.malachite.player.data.Tab
 
 /**
  * What the last updates brought, shown once after an update (and from Settings → «Что нового»):

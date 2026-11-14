@@ -48,7 +48,7 @@
 | Что | Зачем | Как |
 |---|---|---|
 | **Свой ключ подписи** | Сборки подписываются только ключом из Secrets: в репозитории ключа нет. Без него APK подписывается временным ключом и не встаёт поверх установленного плеера. | Ключ хранится только у вас и в **Settings → Secrets and variables → Actions** репозитория (секреты `SIGNING_KEYSTORE_BASE64`, `SIGNING_STORE_PASSWORD`, `SIGNING_KEY_ALIAS`, `SIGNING_KEY_PASSWORD`). Как только секреты добавлены, сборки на GitHub подписываются им сами. Сборка падает, если в репозитории окажется файл ключа, закрытый ключ, пароль или токен (`tools/check_no_secrets.py`). В F-Droid свой ключ не нужен: он подписывает сам. |
-| **Имя репозитория** | `stromik839/malachite`. | Если переименуете (Settings → General → Repository name), поменяйте `SOURCE_URL` в `Credits.kt` и адреса в `docs/fdroid-metadata.yml`. |
+| **Имя репозитория** | `stromik839/malachite-music-player`. | Если переименуете (Settings → General → Repository name), поменяйте `SOURCE_URL` в `Credits.kt` и адреса в `docs/fdroid-metadata.yml`. |
 | **Скриншоты** | F-Droid показывает их на странице приложения. | Снимаются на эмуляторе с демо-библиотекой (без чужих песен и обложек) и кладутся в `fastlane/metadata/android/*/images/phoneScreenshots/`. |
 | **Метка версии** | F-Droid собирает приложение по меткам. | На GitHub: Releases → Draft a new release → тег `v0.2.0` на проверенном коммите. |
 

@@ -4,8 +4,8 @@ Categories:
   - Multimedia
 License: GPL-3.0-or-later
 AuthorName: Krysmed
-SourceCode: https://github.com/stromik839/malachite
-IssueTracker: https://github.com/stromik839/malachite/issues
+SourceCode: https://github.com/stromik839/malachite-music-player
+IssueTracker: https://github.com/stromik839/malachite-music-player/issues
 Bitcoin: bc1q2p5lzd42lpxcwnlynt9dtwzd3ntw2aykn5y8ts
 # Donate: <link>            # a donation page, when there is one
 
@@ -16,7 +16,7 @@ AntiFeatures:
     en-US: Lyrics, covers and album data are looked up on request through iTunes, Deezer, Genius and other non-free services.
 
 RepoType: git
-Repo: https://github.com/stromik839/malachite.git
+Repo: https://github.com/stromik839/malachite-music-player.git
 
 Builds:
   - versionName: 0.2.0

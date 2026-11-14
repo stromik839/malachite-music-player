@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 
 /** Small HTTP helper shared by lyrics and cover search. No API keys are needed anywhere. */
 class Http(
-    val userAgent: String = "Malachite/0.1 (offline-first music player; https://github.com/stromik839/malachite)",
+    val userAgent: String = "Malachite/0.1 (offline-first music player; https://github.com/stromik839/malachite-music-player)",
     val client: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(20, TimeUnit.SECONDS)

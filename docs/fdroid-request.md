@@ -57,7 +57,7 @@ No ads, no accounts, no trackers.
 
 ### Link to the source code
 
-https://github.com/stromik839/malachite
+https://github.com/stromik839/malachite-music-player
 
 ### License used
 

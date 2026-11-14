@@ -7,7 +7,7 @@
 Обложки, теги, синхронизированные тексты, клоны и «115620301.mp3» вместо названий —
 Malachite находит и исправляет это, не трогая сам звук.
 
-[Скачать APK](https://github.com/stromik839/malachite/releases) · [English](README.en.md) · [Все возможности подробно](docs/FEATURES.md)
+[Скачать APK](https://github.com/stromik839/malachite-music-player/releases) · [English](README.en.md) · [Все возможности подробно](docs/FEATURES.md)
 
 Android 8.0+ · без рекламы · без аккаунтов · без слежки
 
@@ -50,7 +50,7 @@ Malachite собирает всю музыку в одну папку и леч�
 
 ## Установка
 
-1. Откройте [Releases](https://github.com/stromik839/malachite/releases) и скачайте APK из
+1. Откройте [Releases](https://github.com/stromik839/malachite-music-player/releases) и скачайте APK из
    «свежей сборки».
 2. Установите его. Новые версии ставятся поверх старых, музыка и настройки сохраняются.
 
@@ -74,7 +74,7 @@ Malachite собирает всю музыку в одну папку и леч�
 - `tools/` — проверки, которые запускаются при каждой сборке.
 
 Собрать самому: `./gradlew :app:assembleRelease` (JDK 17, Android SDK 35).
-Нашли ошибку — [напишите об этом](https://github.com/stromik839/malachite/issues/new/choose) и
+Нашли ошибку — [напишите об этом](https://github.com/stromik839/malachite-music-player/issues/new/choose) и
 приложите журнал. Как помочь проекту — в [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Поддержать автора

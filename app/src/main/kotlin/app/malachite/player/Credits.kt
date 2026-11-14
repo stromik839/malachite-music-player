@@ -24,7 +24,7 @@ object Credits {
     /** How the code was written. */
     val CODE_BY get() = tr("ИИ Claude (Anthropic)")
 
-    const val SOURCE_URL = "https://github.com/stromik839/malachite"
+    const val SOURCE_URL = "https://github.com/stromik839/malachite-music-player"
     const val ISSUES_URL = SOURCE_URL + "/issues"
 
     /** A link for voluntary donations (a page such as Ko-fi or Liberapay); may stay empty. */

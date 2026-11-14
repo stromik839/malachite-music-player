@@ -188,7 +188,9 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
             val v = ((level[k] - floor) / RANGE_DB).coerceIn(0f, 1f)
             val beat = if (fresh) 0f else ((level[k] - previous[k] - 2f) / 10f).coerceAtLeast(0f)
             previous[k] = level[k]
-            out[k] = if (level[k] < -70f) 0f else (Math.pow(v.toDouble(), 1.6).toFloat() + beat).coerceIn(0f, 1f)
+            val value = if (level[k] < -70f) 0f else (Math.pow(v.toDouble(), 1.6).toFloat() + beat).coerceIn(0f, 1f)
+            // broken samples must not turn into NaN bars
+            out[k] = if (value.isNaN()) 0f else value
         }
         fresh = false
         // the meter: -48 dB … 0 dB as 0 … 1, the RMS and the peak of each channel

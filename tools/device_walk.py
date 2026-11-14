@@ -142,6 +142,17 @@ def alive():
     return adb("shell", "pidof", PKG).strip() != ""
 
 
+def responsive():
+    return adb("shell", "echo", "ok", timeout=20).strip() == "ok"
+
+
+def give_up_if_dead(where):
+    """An emulator that stopped answering cannot be walked any further: the rest only waits."""
+    if not responsive():
+        print(f"::error::Android API {API}: the emulator stopped answering ({where})")
+        sys.exit(3)
+
+
 shots = 0
 
 
@@ -171,8 +182,15 @@ def tap(n):
 
 
 def swipe_up():
-    adb("shell", "input", "swipe", str(W // 2), str(int(H * 0.75)), str(W // 2), str(int(H * 0.3)), "250")
-    time.sleep(0.8)
+    # slow: a fast swipe flings the list on, and a moving screen cannot be read
+    adb("shell", "input", "swipe", str(W // 2), str(int(H * 0.7)), str(W // 2), str(int(H * 0.4)), "700")
+    time.sleep(1.2)
+
+
+def scroll_top():
+    for _ in range(4):
+        adb("shell", "input", "swipe", str(W // 2), str(int(H * 0.3)), str(W // 2), str(int(H * 0.8)), "300")
+    time.sleep(1.5)
 
 
 def back():
@@ -247,6 +265,8 @@ def step(name, ru=None, regex=None, desc=False, lowest=False, scroll=0, wait=12,
             swipes += 1
             continue
         if time.time() > end:
+            if not nodes:
+                give_up_if_dead(f"looking for «{name}»")
             print(f"{'SKIP' if optional else 'MISS'} {name} — on the screen: {words(nodes)}")
             if not optional:
                 missing.append(name)
@@ -313,6 +333,10 @@ else:
     tap(play)
     st, pos = wait_state("PLAYING", 8)
     print(f"  play button: {st} at {secs(pos)}")
+    time.sleep(2)
+    busy = adb("shell", "top", "-b", "-n", "1", "-m", "8", timeout=20).strip().splitlines()
+    print("  busiest processes while it plays: " + (" / ".join(l.strip()[:110] for l in busy[-9:]) if busy else "no answer"))
+    give_up_if_dead("playing on the song screen")
     if st != "PLAYING":
         print(f"::warning::Android API {API}: the play button did not start playback ({st})")
         missing.append("play button")
@@ -356,6 +380,7 @@ else:
         adb("shell", "input", "keyevent", "127")
     if not alive():
         print(f"::error::Android API {API}: the app is gone after seeking")
+    give_up_if_dead("after seeking")
     time.sleep(1)
     nodes = screen("after seeking and pause")
 
@@ -455,9 +480,11 @@ if step("Choose several songs", "Выбрать несколько", desc=True, 
 # --- settings, help, search
 if step("Settings", "Настройки", desc=True, optional=True):
     screen("settings")
+    scroll_top()
     if step("Settings: lyrics", "Тексты песен", optional=True, scroll=3):
         screen("settings lyrics")
         back()
+    scroll_top()
     if step("Settings: playback", "Воспроизведение и звук", optional=True, scroll=3):
         screen("settings playback")
         # the DJ mixer: turn LOW all the way down (KILL) and let the music play through it
@@ -486,10 +513,12 @@ if step("Settings", "Настройки", desc=True, optional=True):
                     print(f"::error::Android API {API}: the app is gone while the mixer played")
             back()
         back()
+    scroll_top()
     if step("Settings: recognition by sound", "Узнавание песен по звуку", optional=True, scroll=4):
         screen("settings sound recognition")
         back()
     # which build is installed, and what it brought
+    scroll_top()
     if step("Settings: what's new", "Что нового", optional=True, scroll=8):
         time.sleep(1)
         screen("what's new")

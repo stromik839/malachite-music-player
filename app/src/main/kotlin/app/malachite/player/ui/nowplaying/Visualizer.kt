@@ -68,7 +68,7 @@ private class Motion(val n: Int) {
         }
         var moving = false
         for (i in 0 until n) {
-            val t = spread[i]
+            val t = spread[i].let { if (it.isNaN()) 0f else it.coerceIn(0f, 1f) }
             var l = level[i]
             if (t >= l) {
                 l += (t - l) * min(1f, dt / 18f)
@@ -118,6 +118,8 @@ fun Visualizer(style: VisualizerStyle, modifier: Modifier, low: Color, high: Col
         while (true) {
             var moved = false
             withFrameMillis { t ->
+                // about 60 pictures a second at most: a 120 Hz screen would draw twice the work for nothing
+                if (last != 0L && t - last < 15) { moved = true; return@withFrameMillis }
                 val dt = if (last == 0L) 16f else (t - last).coerceIn(1, 100).toFloat()
                 last = t
                 moved = motion.step(Spectrum.now(motion.target), dt, width)
@@ -130,7 +132,6 @@ fun Visualizer(style: VisualizerStyle, modifier: Modifier, low: Color, high: Col
     }
     Spacer(
         modifier.drawWithCache {
-            val colors = Array(n) { lerp(low, high, it / (n - 1f)) }
             val gap = 3.dp.toPx()
             val w = (size.width - gap * (n - 1)) / n
             when (style) {
@@ -141,32 +142,40 @@ fun Visualizer(style: VisualizerStyle, modifier: Modifier, low: Color, high: Col
                     val room = base - capH - capGap
                     val minH = 2.dp.toPx()
                     val mirrorTop = base + 2.dp.toPx()
-                    val radius = min(w / 2, 3.dp.toPx())
-                    val glowNear = 2.dp.toPx()
-                    val glowFar = 4.5.dp.toPx()
-                    // each bar brightens towards its top; its reflection fades out downwards
-                    val bodies = Array(n) { Brush.verticalGradient(0f to lerp(colors[it], tip, 0.55f), 1f to colors[it], startY = base - room, endY = base) }
-                    val mirrors = Array(n) { Brush.verticalGradient(0f to colors[it].copy(alpha = 0.32f), 1f to colors[it].copy(alpha = 0f), startY = mirrorTop, endY = size.height) }
-                    val floor = Brush.horizontalGradient(colors.map { it.copy(alpha = 0.22f) })
+                    val radius = CornerRadius(min(w / 2, 3.dp.toPx()))
+                    val glow = 3.dp.toPx()
+                    val glowRadius = CornerRadius(radius.x + glow)
+                    // Few brushes shared by all bars, drawn layer after layer: the graphics chip gets a
+                    // handful of draws per picture however many bars there are.
+                    // the colours of the theme from the bass to the highs, across the whole width
+                    val across = Brush.horizontalGradient(listOf(low, high), startX = 0f, endX = size.width)
+                    // the tops of tall bars shine
+                    val shine = Brush.verticalGradient(0f to tip.copy(alpha = 0.6f), 1f to tip.copy(alpha = 0f), startY = base - room, endY = base - room * 0.45f)
+                    // the reflection fades out downwards
+                    val mirror = Brush.verticalGradient(0f to low.copy(alpha = 0.3f), 1f to low.copy(alpha = 0f), startY = mirrorTop, endY = size.height)
+                    val floor = Brush.horizontalGradient(listOf(low.copy(alpha = 0.25f), high.copy(alpha = 0.25f)), startX = 0f, endX = size.width)
                     onDrawBehind {
                         @Suppress("UNUSED_EXPRESSION") frame.intValue
                         val a = alpha()
                         if (a <= 0.01f) return@onDrawBehind
+                        fun x(i: Int) = i * (w + gap)
+                        fun h(i: Int) = max(minH, motion.level[i] * room)
                         drawRect(floor, Offset(0f, base), Size(size.width, 1.dp.toPx()), alpha = a)
                         for (i in 0 until n) {
-                            val x = i * (w + gap)
                             val lv = motion.level[i]
-                            val h = max(minH, lv * room)
-                            val top = base - h
-                            if (lv > 0.12f) {
-                                drawRoundRect(colors[i], Offset(x - glowFar, top - glowFar), Size(w + 2 * glowFar, h + 2 * glowFar), CornerRadius(radius + glowFar), alpha = a * 0.07f * lv)
-                                drawRoundRect(colors[i], Offset(x - glowNear, top - glowNear), Size(w + 2 * glowNear, h + 2 * glowNear), CornerRadius(radius + glowNear), alpha = a * 0.13f * lv)
-                            }
-                            drawRoundRect(bodies[i], Offset(x, top), Size(w, h), CornerRadius(radius), alpha = a)
-                            val rh = min(size.height - mirrorTop, h * 0.35f)
-                            if (rh > 0.5f) drawRoundRect(mirrors[i], Offset(x, mirrorTop), Size(w, rh), CornerRadius(radius), alpha = a)
+                            if (lv > 0.15f) drawRoundRect(across, Offset(x(i) - glow, base - h(i) - glow), Size(w + 2 * glow, h(i) + 2 * glow), glowRadius, alpha = a * 0.18f * lv)
+                        }
+                        for (i in 0 until n) drawRoundRect(across, Offset(x(i), base - h(i)), Size(w, h(i)), radius, alpha = a)
+                        for (i in 0 until n) {
+                            if (motion.level[i] > 0.45f) drawRoundRect(shine, Offset(x(i), base - h(i)), Size(w, h(i)), radius, alpha = a)
+                        }
+                        for (i in 0 until n) {
+                            val rh = min(size.height - mirrorTop, h(i) * 0.35f)
+                            if (rh > 0.5f) drawRect(mirror, Offset(x(i), mirrorTop), Size(w, rh), alpha = a)
+                        }
+                        for (i in 0 until n) {
                             val p = motion.peak[i]
-                            if (p > 0.03f) drawRoundRect(tip, Offset(x, base - p * room - capGap - capH), Size(w, capH), CornerRadius(capH / 2), alpha = a * 0.9f)
+                            if (p > 0.03f) drawRect(tip, Offset(x(i), base - p * room - capGap - capH), Size(w, capH), alpha = a * 0.9f)
                         }
                     }
                 }

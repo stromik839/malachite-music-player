@@ -34,6 +34,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.malachite.player.MalachiteApp
@@ -60,6 +65,7 @@ fun AddScreen() {
     val g = MalachiteApp.graph
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val keyboard = LocalSoftwareKeyboardController.current
     val tracks by g.library.tracks.collectAsState()
 
     // ---- adding
@@ -106,6 +112,9 @@ fun AddScreen() {
                 label = { Text(tr("Путь к песне или к папке")) },
                 placeholder = { Text("/storage/emulated/0/Download/") },
                 singleLine = true,
+                // a path: no corrections of "words" by the keyboard, the keys of a web address
+                keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { keyboard?.hide() }),
             )
             // the usual places of this phone: a tap puts one into the field
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -137,12 +146,17 @@ fun AddScreen() {
                 label = { Text(tr("Найти песню в библиотеке")) },
                 leadingIcon = { Icon(Icons.Filled.Search, null) },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Search),
+                // "search" on the keyboard puts it away: the songs found are seen whole
+                keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
             )
+            // every word somewhere in the title, the artist or the file name, in any order
             val matches = remember(query, tracks) {
-                if (query.trim().length < 2) emptyList() else {
-                    val q = query.trim()
-                    tracks.asSequence().filter {
-                        it.displayTitle.contains(q, true) || it.displayArtist.contains(q, true) || it.fileName.contains(q, true)
+                val words = query.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+                if (words.isEmpty() || query.trim().length < 2) emptyList() else {
+                    tracks.asSequence().filter { t ->
+                        val text = t.displayTitle + " " + t.displayArtist + " " + t.fileName
+                        words.all { text.contains(it, ignoreCase = true) }
                     }.take(8).toList()
                 }
             }

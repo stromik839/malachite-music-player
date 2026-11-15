@@ -165,7 +165,7 @@ fun SettingsAppearanceScreen() {
             ) { v -> up { it.copy(gradients = v) } }
             SwitchRow(
                 tr("Размытие"), s.blur,
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) tr("Матовое стекло: размытая обложка играющей песни за верхней панелью, панелью вкладок и мини-плеером. Чуть больше работы для телефона")
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) tr("Матовое стекло: размытая обложка играющей песни лежит под всем окном — и под экранами, и под панелями, а панели становятся прозрачнее. Чуть больше работы для телефона")
                 else tr("Нужен Android 12 или новее: на этом телефоне размытие не видно"),
             ) { v -> up { it.copy(blur = v) } }
         }
@@ -587,14 +587,17 @@ fun SettingsPlaybackScreen() {
                         FilterChip(s.visualizerStyle == v, { up { it.copy(visualizerStyle = v) } }, label = { Text(v.title) })
                     }
                 }
-                Hint(tr("Полосы — со свечением, отражением и «шапочками», которые ненадолго задерживаются на самой высокой точке. Светодиоды — как индикатор на пульте. Волна — плавная, отражённая от середины."))
-                Text(tr("Расположение"), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 6.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    app.malachite.player.data.VisualizerOrder.entries.forEach { o ->
-                        FilterChip(s.visualizerOrder == o, { up { it.copy(visualizerOrder = o) } }, label = { Text(o.title) })
+                Hint(tr("Полосы — со свечением, отражением и «шапочками», которые ненадолго задерживаются на самой высокой точке. Светодиоды — как индикатор на пульте. Волна — плавная, отражённая от середины. Горы — залитый график частот. Точки — круглые огоньки. Осциллограф — сама звуковая волна, а не частоты. Пульс — громкость последних секунд бежит справа налево, удары видны всплесками."))
+                val byBands = s.visualizerStyle != app.malachite.player.data.VisualizerStyle.SCOPE && s.visualizerStyle != app.malachite.player.data.VisualizerStyle.PULSE
+                if (byBands) {
+                    Text(tr("Расположение"), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 6.dp))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        app.malachite.player.data.VisualizerOrder.entries.forEach { o ->
+                            FilterChip(s.visualizerOrder == o, { up { it.copy(visualizerOrder = o) } }, label = { Text(o.title) })
+                        }
                     }
+                    Hint(tr("«Сильные…» расставляют полосы не по частоте, а по силе звука в эту секунду: самые громкие собираются в середине или с одного края."))
                 }
-                Hint(tr("«Сильные…» расставляют полосы не по частоте, а по силе звука в эту секунду: самые громкие собираются в середине или с одного края."))
                 SliderRow(
                     tr("Появление и исчезание"), s.visualizerFadeMs / 1000f, 0.1f..3f, { tr("%.1f с").format(it) },
                 ) { v -> up { it.copy(visualizerFadeMs = (v * 1000).toInt()) } }

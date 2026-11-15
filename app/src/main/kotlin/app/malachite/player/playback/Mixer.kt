@@ -91,8 +91,8 @@ object Mixer {
      */
     @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     fun renderers(context: Context, withSpectrum: Boolean): RenderersFactory = object : DefaultRenderersFactory(context) {
-        override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean): AudioSink? =
-            DefaultAudioSink.Builder(context)
+        override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean): AudioSink? {
+            val sink = DefaultAudioSink.Builder(context)
                 .setEnableFloatOutput(enableFloatOutput)
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
                 .setAudioProcessors(
@@ -100,6 +100,22 @@ object Mixer {
                     else arrayOf<AudioProcessor>(MixerProcessor()),
                 )
                 .build()
+            if (!withSpectrum) return sink
+            // The visualizer shows what comes out of the speaker now: the output tells the place of
+            // every buffer it takes and the place it plays (with its own buffering counted in).
+            return object : androidx.media3.exoplayer.audio.ForwardingAudioSink(sink) {
+                override fun handleBuffer(buffer: java.nio.ByteBuffer, presentationTimeUs: Long, encodedAccessUnitCount: Int): Boolean {
+                    Spectrum.inputAt(presentationTimeUs)
+                    return super.handleBuffer(buffer, presentationTimeUs, encodedAccessUnitCount)
+                }
+
+                override fun getCurrentPositionUs(sourceEnded: Boolean): Long {
+                    val p = super.getCurrentPositionUs(sourceEnded)
+                    if (p != AudioSink.CURRENT_POSITION_NOT_SET) Spectrum.heard(p)
+                    return p
+                }
+            }
+        }
     }
 }
 

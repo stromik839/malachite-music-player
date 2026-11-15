@@ -26,9 +26,10 @@ import kotlin.math.sin
  *    little room left above;
  *  - a beat – a band suddenly louder than a moment ago – kicks the bar up.
  *
- * The sound is decoded a little before it is heard; every window of it is stamped with the moment it
- * will be heard (one window after another from now on), and the screen shows the window whose moment
- * has come, so the bars move with the music, not ahead of it.
+ * The sound is decoded well before it is heard (the phone keeps a fraction of a second of it in its
+ * output buffer, more or less on every phone). So every window is stamped with its place in the
+ * stream (the time the player gave its sound), and the audio output says which place is coming out
+ * of the speaker now ([heard]): the screen shows that window, and a beat is seen when it is heard.
  */
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 object Spectrum : TeeAudioProcessor.AudioBufferSink {
@@ -41,6 +42,9 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
     /** How much room is left above the loudest band, and how many dB the height spans. */
     private const val HEADROOM_DB = 8f
     private const val RANGE_DB = 36f
+
+    /** How many points of the sound wave each window keeps (for the oscilloscope). */
+    const val WAVE_POINTS = 96
 
     /** How many things on the screen show the sound now (the visualizer, the mixer's meter). */
     private val watchers = java.util.concurrent.atomic.AtomicInteger()
@@ -85,13 +89,29 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
     /** The level (dB) the top of the picture stands for: follows the music. */
     private var top = -20f
 
-    // the computed windows: when each is heard (uptime ms), its bands and the channel levels
+    // the computed windows: their place in the stream (µs, the middle of the window), bands,
+    // channel levels and the shape of the sound wave
     private val times = LongArray(KEEP)
     private val bands = Array(KEEP) { FloatArray(BANDS) }
     /** Per window: RMS left, RMS right, peak left, peak right (0…1 of the meter). */
     private val meters = Array(KEEP) { FloatArray(4) }
+    /** Per window: the sound wave of its newest part, [WAVE_POINTS] values -1…1. */
+    private val waves = Array(KEEP) { FloatArray(WAVE_POINTS) }
     @Volatile private var written = 0L
-    private var nextAt = 0L
+
+    /** The place in the stream (µs) of the first sample of the buffer being read, and how many came since. */
+    private var startUs = Long.MIN_VALUE
+    private var framesSince = 0L
+    /** Set by [inputAt] before the player hands over a buffer: its first sample is at this place. */
+    @Volatile private var inputUs = Long.MIN_VALUE
+
+    /**
+     * What the audio output plays now: its place in the stream (µs), when it last told it and when
+     * that place last moved (uptime ms; a place that stands still is a pause).
+     */
+    @Volatile private var heardUs = Long.MIN_VALUE
+    @Volatile private var heardAt = 0L
+    @Volatile private var movedAt = 0L
 
     override fun flush(sampleRateHz: Int, channelCount: Int, encoding: Int) {
         synchronized(this) {
@@ -100,14 +120,40 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
             this.encoding = encoding
             filled = 0
             monoCount = 0
-            nextAt = 0L
             fresh = true
+            written = 0L
+            startUs = Long.MIN_VALUE
+            framesSince = 0L
             sumL = 0.0; sumR = 0.0; peakL = 0f; peakR = 0f; counted = 0
         }
     }
 
+    /** Called by the audio output before it takes a buffer whose first sample is at [presentationUs]. */
+    fun inputAt(presentationUs: Long) {
+        inputUs = presentationUs
+    }
+
+    /** Called by the audio output with the place of the stream it plays now. */
+    fun heard(positionUs: Long) {
+        val now = SystemClock.uptimeMillis()
+        if (positionUs != heardUs) {
+            heardUs = positionUs
+            movedAt = now
+        }
+        heardAt = now
+    }
+
     override fun handleBuffer(buffer: ByteBuffer) {
-        if (!watching) return
+        // the place of this buffer's first sample (taken even when nothing is shown, to stay in step)
+        val start = inputUs
+        if (start != Long.MIN_VALUE) {
+            inputUs = Long.MIN_VALUE
+            synchronized(this) { startUs = start; framesSince = 0L }
+        }
+        if (!watching) {
+            synchronized(this) { advance(buffer.remaining()) }
+            return
+        }
         synchronized(this) {
             val b = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN)
             when (encoding) {
@@ -129,12 +175,19 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
         mono = 0f
         monoCount = 0
         counted++
+        framesSince++
         if (filled == SIZE) {
             compute()
             // the next picture overlaps this one by half
             System.arraycopy(window, HOP, window, 0, SIZE - HOP)
             filled = SIZE - HOP
         }
+    }
+
+    /** Moves the place in the stream past [bytes] of sound that is not looked at. */
+    private fun advance(bytes: Int) {
+        val frame = channels * (if (encoding == C.ENCODING_PCM_FLOAT) 4 else 2)
+        framesSince += bytes / frame
     }
 
     /** Log-spaced bands from 40 Hz to 12 kHz; each has at least one bin of its own (no doubled bass bars). */
@@ -203,28 +256,41 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
         m[3] = meter(db(peakR * peakR))
         sumL = 0.0; sumR = 0.0; peakL = 0f; peakR = 0f; counted = 0
 
-        val now = SystemClock.uptimeMillis()
-        val length = (HOP * 1000L / rate / speed.coerceAtLeast(0.25f)).toLong()
-        nextAt = if (nextAt < now) now else nextAt
-        times[slot] = nextAt
-        nextAt += length
+        // the sound wave of the newest half of the window, for the oscilloscope
+        val wave = waves[slot]
+        val from = SIZE - HOP
+        val per = HOP / WAVE_POINTS
+        for (p in 0 until WAVE_POINTS) {
+            // the sample of the largest swing in each slice keeps the shape (peaks are not averaged away)
+            var v = 0f
+            val at = from + p * per
+            for (i in at until at + per) if (kotlin.math.abs(window[i]) > kotlin.math.abs(v)) v = window[i]
+            wave[p] = v
+        }
+        // its place in the stream: the middle of the window (its last sample came just now)
+        times[slot] = if (startUs == Long.MIN_VALUE) Long.MIN_VALUE else startUs + (framesSince - SIZE / 2) * 1_000_000L / rate
         written++
     }
 
-    /** The window heard now; -1 when there is nothing fresh. Call inside synchronized(this). */
+    /** The window heard now; -1 when nothing plays. Call inside synchronized(this). */
     private fun heardNow(): Int {
-        val now = SystemClock.uptimeMillis()
         val n = written
-        if (n == 0L) return -1
+        if (n == 0L || heardUs == Long.MIN_VALUE) return -1
+        val now = SystemClock.uptimeMillis()
+        // the output tells its place many times a second while it plays; silence or a place that
+        // stands still means paused
+        if (now - heardAt > 300 || now - movedAt > 250) return -1
+        val nowUs = heardUs + ((now - movedAt) * 1000 * speed.coerceAtLeast(0.25f)).toLong()
         var best = -1
-        var bestTime = Long.MIN_VALUE
+        var bestUs = Long.MIN_VALUE
         val from = max(0L, n - KEEP)
         for (w in from until n) {
             val s = (w % KEEP).toInt()
             val t = times[s]
-            if (t <= now && t > bestTime) { bestTime = t; best = s }
+            if (t != Long.MIN_VALUE && t <= nowUs && t > bestUs) { bestUs = t; best = s }
         }
-        return if (best < 0 || now - bestTime > 400) -1 else best
+        // nothing of the place heard now was computed (just after a seek): nothing to show yet
+        return if (best < 0 || nowUs - bestUs > 400_000) -1 else best
     }
 
     /** The bands heard now (into [into]); false when there is nothing fresh. */
@@ -232,6 +298,14 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
         val best = heardNow()
         if (best < 0) return false
         bands[best].copyInto(into)
+        true
+    }
+
+    /** The sound wave heard now ([WAVE_POINTS] values -1…1, into [into]); false when nothing plays. */
+    fun wave(into: FloatArray): Boolean = synchronized(this) {
+        val best = heardNow()
+        if (best < 0) return false
+        waves[best].copyInto(into)
         true
     }
 

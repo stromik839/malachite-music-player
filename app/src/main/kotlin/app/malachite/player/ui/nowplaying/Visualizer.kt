@@ -98,6 +98,56 @@ private class Motion(val n: Int) {
     }
 }
 
+/** The oscilloscope: the wave heard now, smoothed between pictures, and its own sensitivity. */
+private class Scope {
+    val shown = FloatArray(Spectrum.WAVE_POINTS)
+    var gain = 1f
+
+    fun step(fresh: Boolean, wave: FloatArray): Boolean {
+        var moved = false
+        var peak = 0f
+        for (i in shown.indices) {
+            val target = if (fresh) wave[i] else 0f
+            val before = shown[i]
+            shown[i] = before + (target - before) * 0.55f
+            if (kotlin.math.abs(shown[i]) < 1e-4f) shown[i] = 0f
+            if (shown[i] != before) moved = true
+            peak = max(peak, kotlin.math.abs(shown[i]))
+        }
+        // a quiet song fills the height too: the wave is lifted until its peaks touch 90 %
+        gain = if (peak * gain > 0.9f) 0.9f / peak else min(gain * 1.03f, 12f)
+        return moved
+    }
+}
+
+/** The pulse: the loudness of the last [COLUMNS] moments (one every [STEP_MS]), the newest last. */
+private class Pulse {
+    companion object {
+        const val COLUMNS = 48
+        const val STEP_MS = 60L
+    }
+
+    private val values = FloatArray(COLUMNS)
+    private var head = 0
+    private var lastAt = 0L
+    private var level = 0f
+
+    /** Column [c] from the left (0 is the oldest). */
+    fun value(c: Int) = values[(head + c) % COLUMNS]
+
+    fun step(fresh: Boolean, meter: FloatArray, now: Long): Boolean {
+        // the louder channel, its body and a little of its peaks: beats stand out
+        val target = if (fresh) (0.7f * max(meter[0], meter[1]) + 0.3f * max(meter[2], meter[3])).coerceIn(0f, 1f) else 0f
+        level = if (target > level) target else level + (target - level) * 0.35f
+        if (now - lastAt < STEP_MS) return false
+        lastAt = now
+        values[head] = level * level
+        head = (head + 1) % COLUMNS
+        // all quiet and nothing left on the screen: no need to draw again
+        return values.any { it > 0.001f }
+    }
+}
+
 /**
  * The music as a picture under the cover, its bands in the chosen [order]. [low] and [high] are
  * the colours of the two ends (the theme's), [tip] the bright tops and caps; [alpha] is how far it
@@ -116,6 +166,8 @@ fun Visualizer(
 ) {
     val n = Spectrum.BANDS
     val motion = remember { Motion(n) }
+    val scope = remember { Scope() }
+    val pulse = remember { Pulse() }
     val frame = remember { mutableIntStateOf(0) }
     DisposableEffect(Unit) {
         Spectrum.startWatching()
@@ -131,6 +183,8 @@ fun Visualizer(
         val heard = FloatArray(n)
         val sorted = FloatArray(n)
         val fromCentre = centreOutwards(n)
+        val waveIn = FloatArray(Spectrum.WAVE_POINTS)
+        val meter = FloatArray(4)
         var last = 0L
         var still = 0
         while (true) {
@@ -140,9 +194,15 @@ fun Visualizer(
                 if (last != 0L && t - last < 15) { moved = true; return@withFrameMillis }
                 val dt = if (last == 0L) 16f else (t - last).coerceIn(1, 100).toFloat()
                 last = t
-                val fresh = Spectrum.now(heard)
-                if (fresh) arrange(heard, motion.target, order, sorted, fromCentre)
-                moved = motion.step(fresh, dt, width)
+                moved = when (style) {
+                    VisualizerStyle.SCOPE -> scope.step(Spectrum.wave(waveIn), waveIn)
+                    VisualizerStyle.PULSE -> pulse.step(Spectrum.meter(meter), meter, t)
+                    else -> {
+                        val fresh = Spectrum.now(heard)
+                        if (fresh) arrange(heard, motion.target, order, sorted, fromCentre)
+                        motion.step(fresh, dt, width)
+                    }
+                }
                 if (moved) frame.intValue++
             }
             // nothing playing: look for the music a few times a second instead of on every frame
@@ -229,6 +289,122 @@ fun Visualizer(
                             for (r in 0 until lit) drawRect(heat, Offset(x, cellTop(r)), Size(w, cell), alpha = a)
                             val pr = (motion.peak[i] * a * rows).roundToInt() - 1
                             if (pr >= lit && pr < rows) drawRect(tip, Offset(x, cellTop(pr)), Size(w, cell), alpha = a * 0.95f)
+                        }
+                    }
+                }
+                VisualizerStyle.MOUNTAINS -> {
+                    // an area graph: hills of the spectrum standing on the floor, a bright ridge on top
+                    val floorY = size.height - 1.dp.toPx()
+                    val room = floorY - 4.dp.toPx()
+                    val k = n + 2
+                    val xs = FloatArray(k) { if (it == 0) 0f else if (it == k - 1) size.width else (it - 0.5f) * size.width / n }
+                    val ys = FloatArray(k)
+                    val caps = FloatArray(k)
+                    val hill = Path()
+                    val ridge = Path()
+                    val trail = Path()
+                    val fill = Brush.verticalGradient(
+                        0f to lerp(high, tip, 0.3f).copy(alpha = 0.85f), 0.6f to low.copy(alpha = 0.45f), 1f to low.copy(alpha = 0.08f),
+                        startY = floorY - room, endY = floorY,
+                    )
+                    val edge = Brush.horizontalGradient(listOf(lerp(low, tip, 0.5f), lerp(high, tip, 0.5f)))
+                    val thick = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    val thin = Stroke(1.2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    onDrawBehind {
+                        @Suppress("UNUSED_EXPRESSION") frame.intValue
+                        val a = alpha()
+                        if (a <= 0.01f) return@onDrawBehind
+                        ys[0] = floorY; ys[k - 1] = floorY; caps[0] = floorY; caps[k - 1] = floorY
+                        for (i in 0 until n) {
+                            ys[i + 1] = floorY - motion.level[i] * a * room
+                            caps[i + 1] = floorY - motion.peak[i] * a * room
+                        }
+                        hill.reset()
+                        hill.smooth(xs, ys, start = true)
+                        hill.lineTo(size.width, floorY)
+                        hill.lineTo(0f, floorY)
+                        hill.close()
+                        ridge.reset()
+                        ridge.smooth(xs, ys, start = true)
+                        trail.reset()
+                        trail.smooth(xs, caps, start = true)
+                        drawPath(hill, fill, alpha = a)
+                        drawPath(trail, tip, alpha = a * 0.4f, style = thin)
+                        drawPath(ridge, edge, alpha = a, style = thick)
+                    }
+                }
+                VisualizerStyle.DOTS -> {
+                    // round lights in columns, like a matrix display; unlit ones glimmer faintly
+                    val pitch = max(w + gap, 6.dp.toPx())
+                    val radius = min(w, pitch - gap) / 2f
+                    val rows = max(4, (size.height / pitch).toInt())
+                    fun cy(r: Int) = size.height - pitch / 2 - r * pitch
+                    val ghost = Path().apply {
+                        for (i in 0 until n) for (r in 0 until rows) {
+                            val cx = i * (w + gap) + w / 2
+                            addOval(Rect(cx - radius, cy(r) - radius, cx + radius, cy(r) + radius))
+                        }
+                    }
+                    val heat = Brush.verticalGradient(
+                        0f to lerp(high, tip, 0.6f), 0.35f to high, 1f to low,
+                        startY = cy(rows - 1) - radius, endY = size.height,
+                    )
+                    onDrawBehind {
+                        @Suppress("UNUSED_EXPRESSION") frame.intValue
+                        val a = alpha()
+                        if (a <= 0.01f) return@onDrawBehind
+                        drawPath(ghost, low, alpha = a * 0.1f)
+                        for (i in 0 until n) {
+                            val cx = i * (w + gap) + w / 2
+                            val lv = motion.level[i] * a
+                            val lit = if (lv < 0.01f) 0 else ceil(lv * rows - 0.25f).toInt().coerceIn(1, rows)
+                            for (r in 0 until lit) drawCircle(heat, radius, Offset(cx, cy(r)), alpha = a)
+                            val pr = (motion.peak[i] * a * rows).roundToInt() - 1
+                            if (pr >= lit && pr < rows) drawCircle(tip, radius, Offset(cx, cy(pr)), alpha = a * 0.95f)
+                        }
+                    }
+                }
+                VisualizerStyle.SCOPE -> {
+                    // the sound wave itself, as on an oscilloscope: a glowing line over a faint middle line
+                    val mid = size.height / 2
+                    val amp = mid - 4.dp.toPx()
+                    val pts = Spectrum.WAVE_POINTS
+                    val xs = FloatArray(pts) { it * size.width / (pts - 1) }
+                    val ys = FloatArray(pts)
+                    val line = Path()
+                    val edge = Brush.horizontalGradient(listOf(lerp(low, tip, 0.35f), lerp(high, tip, 0.35f)))
+                    val glow = Stroke(7.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    val sharp = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    onDrawBehind {
+                        @Suppress("UNUSED_EXPRESSION") frame.intValue
+                        val a = alpha()
+                        if (a <= 0.01f) return@onDrawBehind
+                        for (i in 0 until pts) ys[i] = mid - scope.shown[i] * scope.gain * amp * a
+                        line.reset()
+                        line.smooth(xs, ys, start = true)
+                        drawLine(low.copy(alpha = 0.18f), Offset(0f, mid), Offset(size.width, mid), 1.dp.toPx(), alpha = a)
+                        drawPath(line, edge, alpha = a * 0.18f, style = glow)
+                        drawPath(line, edge, alpha = a, style = sharp)
+                    }
+                }
+                VisualizerStyle.PULSE -> {
+                    // the loudness of the last seconds running from right to left: every beat a spike
+                    val mid = size.height / 2
+                    val amp = mid - 2.dp.toPx()
+                    val count = Pulse.COLUMNS
+                    val colGap = 2.dp.toPx()
+                    val colW = (size.width - colGap * (count - 1)) / count
+                    val across = Brush.horizontalGradient(listOf(low, high), startX = 0f, endX = size.width)
+                    val radius = CornerRadius(min(colW / 2, 2.dp.toPx()))
+                    onDrawBehind {
+                        @Suppress("UNUSED_EXPRESSION") frame.intValue
+                        val a = alpha()
+                        if (a <= 0.01f) return@onDrawBehind
+                        for (c in 0 until count) {
+                            val v = pulse.value(c) * a
+                            val h = max(1.5.dp.toPx(), v * amp)
+                            // older columns fade towards the left
+                            drawRoundRect(across, Offset(c * (colW + colGap), mid - h), Size(colW, 2 * h), radius, alpha = a * (0.3f + 0.7f * c / (count - 1)))
                         }
                     }
                 }

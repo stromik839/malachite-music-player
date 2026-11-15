@@ -4651,9 +4651,6 @@ off
 центр
 centre
 
-Полосы — со свечением, отражением и «шапочками», которые ненадолго задерживаются на самой высокой точке. Светодиоды — как индикатор на пульте. Волна — плавная, отражённая от середины.
-Bars — with a glow, a reflection and caps that stay at the highest point for a moment. LEDs — like the meter of a mixing desk. Wave — smooth, mirrored around its middle.
-
 Ручки TRIM, HI, MID, LOW с KILL, фильтр, баланс и эквалайзер телефона
 TRIM, HI, MID, LOW knobs with KILL, a filter, balance and the phone's equalizer
 
@@ -4762,8 +4759,8 @@ Soft shadows at the edges of the top bar, the mini player and the tab panel, and
 Размытие
 Blur
 
-Матовое стекло: размытая обложка играющей песни за верхней панелью, панелью вкладок и мини-плеером. Чуть больше работы для телефона
-Frosted glass: the blurred cover of the playing song behind the top bar, the tab panel and the mini player. A little more work for the phone
+Матовое стекло: размытая обложка играющей песни лежит под всем окном — и под экранами, и под панелями, а панели становятся прозрачнее. Чуть больше работы для телефона
+Frosted glass: the blurred cover of the playing song lies under the whole window — under the screens and the panels alike, and the panels become clearer. A little more work for the phone
 
 Нужен Android 12 или новее: на этом телефоне размытие не видно
 Needs Android 12 or newer: on this phone the blur is not visible
@@ -5031,4 +5028,31 @@ Best moment and tabs
 
 Ползунок встаёт на черту лучшего момента, только если задержать его рядом на пару секунд. Таблетка вкладок больше не возвращается назад и не догоняет вкладку, когда появляется клавиатура.
 The thumb lands on the best-moment notch only when held near it for a couple of seconds. The tab pill no longer jumps back and no longer chases its tab when the keyboard appears.
+
+Горы
+Mountains
+
+Точки
+Dots
+
+Осциллограф
+Oscilloscope
+
+Пульс
+Pulse
+
+Полосы — со свечением, отражением и «шапочками», которые ненадолго задерживаются на самой высокой точке. Светодиоды — как индикатор на пульте. Волна — плавная, отражённая от середины. Горы — залитый график частот. Точки — круглые огоньки. Осциллограф — сама звуковая волна, а не частоты. Пульс — громкость последних секунд бежит справа налево, удары видны всплесками.
+Bars — with a glow, a reflection and caps that stay at the highest point for a moment. LEDs — like the meter of a mixing desk. Wave — smooth, mirrored around its middle. Mountains — a filled graph of the frequencies. Dots — round lights. Oscilloscope — the sound wave itself, not the frequencies. Pulse — the loudness of the last seconds runs from right to left, beats show as spikes.
+
+Визуализатор точно в такт
+The visualizer right on the beat
+
+Удар на полосках теперь виден ровно тогда, когда он слышен: визуализатор берёт время у самого звукового выхода телефона, а не угадывает его. Новые виды: «Горы», «Точки», «Осциллограф» (сама звуковая волна) и «Пульс» (громкость последних секунд).
+A beat now shows on the bars exactly when it is heard: the visualizer takes the time from the phone's audio output itself instead of guessing it. New looks: "Mountains", "Dots", "Oscilloscope" (the sound wave itself) and "Pulse" (the loudness of the last seconds).
+
+Размытие по-новому
+Blur, done anew
+
+Размытая обложка теперь лежит под всем окном, а панели — прозрачные слои поверх неё: нет резкой середины между размытыми краями. Оформление → Эффекты → «Размытие».
+The blurred cover now lies under the whole window, and the panels are clear layers over it: no sharp middle between blurred edges. Look → Effects → "Blur".
 

@@ -547,6 +547,9 @@ def convert(to_ru, label, now):
     if not need(step(f"Convert: find First Song ({label})", "Найти песню в библиотеке", optional=True, scroll=4), "search field"):
         return
     adb("shell", "input", "text", "First")
+    time.sleep(1)
+    # "search" on the keyboard puts it away: swipes and taps then cannot land on its keys
+    adb("shell", "input", "keyevent", "66")
     time.sleep(2)
     # the found song's second line («Test Artist • MP3»): the mini player shows «First Song» too
     if not need(step(f"Convert: choose First Song ({label})", regex=rf"^Test Artist • {now}$", optional=True, scroll=2), f"Test Artist • {now}"):

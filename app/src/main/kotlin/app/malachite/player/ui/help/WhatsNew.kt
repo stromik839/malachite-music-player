@@ -27,7 +27,7 @@ import app.malachite.player.data.Tab
  */
 object WhatsNew {
     /** Raised whenever the list below changes: the window is shown once more after such an update. */
-    const val ID = 3
+    const val ID = 4
 
     class Item(val title: String, val text: String, val open: ((Navigator) -> Unit)? = null, val openLabel: String = "")
 
@@ -36,6 +36,16 @@ object WhatsNew {
     }
 
     fun items(): List<Item> = listOf(
+        Item(
+            tr("Визуализатор точно в такт"),
+            tr("Удар на полосках теперь виден ровно тогда, когда он слышен: визуализатор берёт время у самого звукового выхода телефона, а не угадывает его. Новые виды: «Горы», «Точки», «Осциллограф» (сама звуковая волна) и «Пульс» (громкость последних секунд)."),
+            { it.push(Screen.SettingsPlayback) }, tr("Выбрать вид"),
+        ),
+        Item(
+            tr("Размытие по-новому"),
+            tr("Размытая обложка теперь лежит под всем окном, а панели — прозрачные слои поверх неё: нет резкой середины между размытыми краями. Оформление → Эффекты → «Размытие»."),
+            { it.push(Screen.SettingsAppearance) }, tr("К эффектам"),
+        ),
         Item(
             tr("Вкладка «Добавить»"),
             tr("Песню, которую плеер не заметил, можно добавить самому: путь к файлу или к папке, или выбор в файловом менеджере. Там же песню можно перевести в M4A, FLAC или WAV, или просто исправить неправильное расширение."),

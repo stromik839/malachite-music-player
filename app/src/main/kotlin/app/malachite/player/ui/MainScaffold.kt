@@ -64,6 +64,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -126,14 +127,15 @@ fun Tab.icon(): ImageVector = when (this) {
 fun PartBackground(style: PartStyle, default: Color, cover: Bitmap?, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val fx by MalachiteApp.graph.settings.state.collectAsState()
     val base = style.color?.let { Color(it.toInt()) } ?: default
-    // frosted glass: the part's own switch or the one for all parts (Settings → Look → Effects)
-    val frosted = (style.blur || fx.blur) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val canBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && cover != null
+    // "Размытие" for everything (Look → Effects): one frosted picture lies behind the whole window
+    // (see [FrostedBackdrop]) and the parts are clear layers over it, the same glass as the rest.
+    val glass = fx.blur && canBlur
+    // the part's own frosted look (Menu and tabs) when the one for everything is off
+    val own = style.blur && !fx.blur && canBlur
     Box(modifier) {
-        if (frosted && cover != null) {
-            Image(cover.asImageBitmap(), null, Modifier.matchParentSize().blur(28.dp), contentScale = ContentScale.Crop)
-        }
-        // with the frosted look for all parts the colour lets the blurred cover show through
-        val alpha = style.alpha.coerceIn(0f, 1f).let { if (frosted && fx.blur && cover != null) kotlin.math.min(it, 0.72f) else it }
+        if (own) Image(cover!!.asImageBitmap(), null, Modifier.matchParentSize().blur(28.dp), contentScale = ContentScale.Crop)
+        val alpha = style.alpha.coerceIn(0f, 1f).let { a -> if (glass) kotlin.math.min(a, 0.5f) else if (own) kotlin.math.min(a, 0.72f) else a }
         Box(Modifier.matchParentSize().background(base.copy(alpha = alpha)))
         // a faint sheen from above
         if (fx.gradients) Box(Modifier.matchParentSize().background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.04f), Color.Transparent))))
@@ -236,6 +238,8 @@ fun MainScaffold() {
         }
     }
 
+    // the frosted glass behind the whole window, the screens and the panels alike
+    if (settings.blur) FrostedBackdrop(cover)
     Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
         when (navPosition) {
             NavPosition.BOTTOM -> Column(Modifier.fillMaxSize()) {
@@ -279,6 +283,18 @@ fun MainScaffold() {
         NowPlayingScreen()
     }
     DialogHost()
+}
+
+/**
+ * The playing song's cover, blurred and dimmed, behind the whole window (Android 12+): screens and
+ * panels lie on the same frosted glass instead of blurred panels beside a sharp screen.
+ */
+@Composable
+private fun FrostedBackdrop(cover: Bitmap?) {
+    if (cover == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+    androidx.compose.animation.Crossfade(cover, label = "backdrop") { c ->
+        Image(c.asImageBitmap(), null, Modifier.fillMaxSize().blur(48.dp).alpha(0.32f), contentScale = ContentScale.Crop)
+    }
 }
 
 /** Gradient shadows along the edges of the screen area: under the top bar, above the bottom bars, beside a side panel. */

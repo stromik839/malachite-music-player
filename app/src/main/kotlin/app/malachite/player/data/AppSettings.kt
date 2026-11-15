@@ -94,6 +94,14 @@ enum class VisualizerStyle(val title: String) {
     LEDS(tr("Светодиоды")),
     /** A smooth wave mirrored around its middle. */
     WAVE(tr("Волна")),
+    /** An area graph: hills of the spectrum standing on the floor. */
+    MOUNTAINS(tr("Горы")),
+    /** Round lights in columns, like a matrix display. */
+    DOTS(tr("Точки")),
+    /** The sound wave itself, as on an oscilloscope (not the spectrum). */
+    SCOPE(tr("Осциллограф")),
+    /** The loudness of the last seconds running across: every beat a spike. */
+    PULSE(tr("Пульс")),
 }
 
 /** In which order the bands stand in the visualizer. */

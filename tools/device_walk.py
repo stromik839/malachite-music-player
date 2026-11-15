@@ -537,18 +537,26 @@ if step("Search", "Поиск", desc=True, optional=True):
 
 # --- the «Add» tab: a song is converted with the phone's own encoders, then converted once more
 # (last in the walk: the converted song replaces the original, which goes to the trash)
-def convert(to_ru, label):
-    """Finds First Song in the «Add» tab, converts it and reports what the screen says."""
-    if not step(f"Convert: find First Song ({label})", "Найти песню в библиотеке", optional=True, scroll=4):
+def convert(to_ru, label, now):
+    """Finds First Song (now a .{now} file) in the «Add» tab, converts it to {label}, reports the result."""
+    def need(ok, what):
+        if not ok:
+            print(f"::warning::Android API {API}: converting to {label}: «{what}» not found")
+            missing.append(f"convert to {label}: {what}")
+        return ok
+    if not need(step(f"Convert: find First Song ({label})", "Найти песню в библиотеке", optional=True, scroll=4), "search field"):
         return
     adb("shell", "input", "text", "First")
     time.sleep(2)
-    if not step(f"Convert: choose First Song ({label})", regex=r"^First Song$", optional=True, scroll=2):
+    # the found song's second line («Test Artist • MP3»): the mini player shows «First Song» too
+    if not need(step(f"Convert: choose First Song ({label})", regex=rf"^Test Artist • {now}$", optional=True, scroll=2), f"Test Artist • {now}"):
         return
     time.sleep(2)
     if not step(f"Convert: choose {label}", to_ru, optional=True, scroll=3):
+        if label != "FLAC":  # FLAC is offered only where the phone has its encoder
+            need(False, label + " choice")
         return
-    if not step(f"Convert: start ({label})", "Перевести", optional=True, scroll=3):
+    if not need(step(f"Convert: start ({label})", "Перевести", optional=True, scroll=3), "Convert button"):
         return
     end = time.time() + 120
     said = None
@@ -569,10 +577,10 @@ time.sleep(5)
 if step("Tab «Add»", "Добавить", lowest=True, optional=True, wait=20):
     time.sleep(2)
     screen("add")
-    convert("M4A (AAC) — маленький файл, играет везде", "M4A")
+    convert("M4A (AAC) — маленький файл, играет везде", "M4A", "MP3")
     screen("after converting to M4A")
     # FLAC: only where the phone has its encoder (the choice is not offered otherwise)
-    convert("FLAC — без потерь", "FLAC")
+    convert("FLAC — без потерь", "FLAC", "M4A")
     screen("after converting to FLAC")
 
 print(f"Walk on Android API {API}: {'every step found' if not missing else 'not found: ' + ', '.join(missing)}")

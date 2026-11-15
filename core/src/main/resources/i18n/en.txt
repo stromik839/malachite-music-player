@@ -4831,6 +4831,9 @@ The encoder did not finish writing
 Кодировщик ничего не записал
 The encoder wrote nothing
 
+Кодировщик FLAC выдал звук в непонятном виде
+The FLAC encoder gave its sound in a form that cannot be read
+
 Получился пустой файл
 The result is an empty file
 

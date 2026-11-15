@@ -1,5 +1,6 @@
 package app.malachite.player.data
 
+import app.malachite.core.audio.FlacHeader
 import app.malachite.core.i18n.tr
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
@@ -274,6 +275,8 @@ object Converter {
         /** The FLAC stream header as the encoder gives it (sometimes in pieces, sometimes not at all). */
         private val flacHeader = java.io.ByteArrayOutputStream()
         private var flacFrames = false
+        /** What the first frame says: the block size for a header made here. */
+        private var flacFirst: FlacHeader.FirstFrame? = null
 
         init {
             val format = MediaFormat.createAudioFormat(target.mime!!, rate, channels)
@@ -387,55 +390,27 @@ object Converter {
             }
         }
 
-        /** The first frames arrive: the header goes in front of them when the encoder gave a real one. */
+        /**
+         * The first frames arrive: the header goes in front of them when the encoder gave one (closed
+         * so that old Android versions open the file, see [FlacHeader]); otherwise [finish] puts one
+         * made here in front of all the frames.
+         */
         private fun startFlac(f: RandomAccessFile, first: ByteArray) {
-            var head = flacHeader.toByteArray()
             var rest = first
-            // some encoders put the header in front of the first frames instead
-            if (head.isEmpty() && first.size >= 4 && String(first, 0, 4, Charsets.US_ASCII) == "fLaC") {
-                head = first
-                rest = ByteArray(0)
+            val given = flacHeader.toByteArray()
+            val made = when {
+                given.isNotEmpty() -> FlacHeader.fromEncoder(given)
+                // some encoders put the header in front of the first frames instead
+                FlacHeader.startsWithMagic(first) -> FlacHeader.fromEncoder(first)?.also { rest = first.copyOfRange(it.used, first.size) }
+                    ?: throw Failed(tr("Кодировщик FLAC выдал звук в непонятном виде"))
+                else -> null
             }
-            if (head.isNotEmpty()) writeFlacHeader(f, head)
+            if (made != null) {
+                flacHeaderAt = f.filePointer
+                f.write(made.header)
+            }
+            flacFirst = FlacHeader.firstFrame(rest)
             if (rest.isNotEmpty()) f.write(rest)
-        }
-
-        /**
-         * "fLaC" and the metadata blocks, the last one marked as last – only when the first block is
-         * a STREAMINFO; otherwise nothing is written and [finish] puts a header of its own in front.
-         */
-        private fun writeFlacHeader(f: RandomAccessFile, csd: ByteArray) {
-            val magic = "fLaC".toByteArray(Charsets.US_ASCII)
-            val withMagic = csd.size >= 4 && csd.copyOfRange(0, 4).contentEquals(magic)
-            val blocks = if (withMagic) csd.copyOfRange(4, csd.size) else csd
-            if (blocks.size < 4 + 34 || (blocks[0].toInt() and 0x7F) != 0) return
-            var at = 0
-            var lastStart = -1
-            while (at + 4 <= blocks.size) {
-                val len = ((blocks[at + 1].toInt() and 0xFF) shl 16) or ((blocks[at + 2].toInt() and 0xFF) shl 8) or (blocks[at + 3].toInt() and 0xFF)
-                lastStart = at
-                if (blocks[at].toInt() and 0x80 != 0) break
-                at += 4 + len
-            }
-            if (lastStart >= 0) blocks[lastStart] = (blocks[lastStart].toInt() or 0x80).toByte()
-            flacHeaderAt = f.filePointer
-            f.write(magic)
-            f.write(blocks)
-        }
-
-        /**
-         * A FLAC header made here: "fLaC" and a STREAMINFO with the rate, the channels, 16 bits and the
-         * number of samples (block and frame sizes left open, no checksum) – for encoders that give none.
-         */
-        private fun ownFlacHeader(samples: Long): ByteArray {
-            val h = ByteBuffer.allocate(4 + 4 + 34).order(ByteOrder.BIG_ENDIAN)
-            h.put("fLaC".toByteArray(Charsets.US_ASCII))
-            h.put(0x80.toByte()).put(0.toByte()).put(0.toByte()).put(34.toByte()) // the last block, STREAMINFO, 34 bytes
-            h.putShort(16.toShort()).putShort(65535.toShort()) // block sizes: any
-            h.put(ByteArray(6)) // frame sizes: unknown
-            h.putLong((rate.toLong() shl 44) or ((channels - 1).toLong() shl 41) or (15L shl 36) or (samples and 0xF_FFFF_FFFFL))
-            h.put(ByteArray(16)) // no MD5
-            return h.array()
         }
 
         override fun finish() {
@@ -465,9 +440,11 @@ object Converter {
                 } else {
                     // the encoder gave no header (Android 8 and some others): one is put in front of the frames
                     f.close()
+                    val first = flacFirst ?: throw Failed(tr("Кодировщик FLAC выдал звук в непонятном виде"))
+                    val head = FlacHeader.forFrames(rate, channels, 16, frames, first)
                     val whole = File(file.path + ".head")
                     whole.outputStream().buffered(1 shl 16).use { o ->
-                        o.write(ownFlacHeader(frames))
+                        o.write(head)
                         file.inputStream().use { it.copyTo(o) }
                     }
                     if (!file.delete() || !whole.renameTo(file)) throw Failed(tr("Не удалось дописать заголовок FLAC"))
@@ -477,7 +454,7 @@ object Converter {
 
         /** The total sample count in STREAMINFO (36 bits from bit 108 of its data): length and seeking work. */
         private fun patchFlacSamples(f: RandomAccessFile, headerAt: Long, samples: Long) {
-            val at = headerAt + 4 + 4 + 13 // "fLaC", block header, 13 bytes into STREAMINFO
+            val at = headerAt + FlacHeader.SAMPLES_AT // "fLaC", block header, 13 bytes into STREAMINFO
             f.seek(headerAt + 4)
             if ((f.read() and 0x7F) != 0) return // the first block is not STREAMINFO
             f.seek(at)

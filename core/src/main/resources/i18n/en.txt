@@ -4831,9 +4831,6 @@ The encoder did not finish writing
 Кодировщик ничего не записал
 The encoder wrote nothing
 
-Кодировщик FLAC не дал заголовок
-The FLAC encoder gave no header
-
 Получился пустой файл
 The result is an empty file
 
@@ -5055,4 +5052,7 @@ Blur, done anew
 
 Размытая обложка теперь лежит под всем окном, а панели — прозрачные слои поверх неё: нет резкой середины между размытыми краями. Оформление → Эффекты → «Размытие».
 The blurred cover now lies under the whole window, and the panels are clear layers over it: no sharp middle between blurred edges. Look → Effects → "Blur".
+
+Не удалось дописать заголовок FLAC
+Could not put the FLAC header in place
 

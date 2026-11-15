@@ -103,6 +103,16 @@ fun helpItems(): List<HelpItem> = listOf(
         tab(Tab.ALBUMS), tr("Открыть альбомы"),
     ),
     HelpItem(
+        tr("Плеер не видит новую песню. Как добавить её самому?"),
+        tr("Вкладка «Добавить»: впишите путь к файлу или к папке (например, /storage/emulated/0/Download/) или нажмите «Выбрать файлы…» и найдите песню в файловом менеджере. Файл копируется в главную папку, оригинал остаётся на месте."),
+        tab(Tab.ADD), tr("Открыть «Добавить»"),
+    ),
+    HelpItem(
+        tr("Как перевести песню в другой формат?"),
+        tr("Вкладка «Добавить» → «Перевести в другой формат»: найдите песню в библиотеке (или выберите файл), выберите M4A, FLAC или WAV и нажмите «Перевести». Если у файла неправильное расширение (например, «.ogg» у MP3), можно просто исправить его — звук не меняется. Старый файл уходит в корзину главной папки, а при любой ошибке ничего не меняется."),
+        tab(Tab.ADD), tr("Открыть «Добавить»"),
+    ),
+    HelpItem(
         tr("Как создать свой альбом?"),
         tr("Альбомы собираются из тегов песен. Во вкладке «Песни» удерживайте песню и проведите пальцем по остальным (или «Выбрать несколько»), затем «Что сделать с выбранным» → «Собрать в свой альбом…» и впишите название альбома (и, если хотите, исполнителя). Название запишется в сами файлы, и они переедут в папку этого альбома."),
         tab(Tab.SONGS), tr("Открыть песни"),
@@ -204,7 +214,7 @@ fun helpItems(): List<HelpItem> = listOf(
     ),
     HelpItem(
         tr("Что за черта на полосе перемотки?"),
-        tr("Это лучший момент песни. Если у песни есть синхронизированный текст, плеер сам находит припев (строки, которые поются снова) и ставит там черту. Свой момент можно отметить в меню ⋮ на экране песни: «Отметить лучший момент здесь». Ведите ползунок к черте — рядом с ней он сам встаёт точно на неё (с лёгкой отдачей), и песня продолжится с этого места."),
+        tr("Это лучший момент песни. Если у песни есть синхронизированный текст, плеер сам находит припев (строки, которые поются снова) и ставит там черту. Свой момент можно отметить в меню ⋮ на экране песни: «Отметить лучший момент здесь». Подведите ползунок к черте и задержите палец на пару секунд — ползунок встанет точно на неё (с лёгкой отдачей). Если не задерживать, можно выбрать любое место рядом с чертой."),
         player(), tr("Открыть экран песни"),
     ),
     HelpItem(
@@ -288,6 +298,7 @@ fun settingEntries(): List<SettingEntry> {
     return listOf(
         SettingEntry(tr("Язык интерфейса"), look, screen(Screen.SettingsAppearance), "language язык english русский"),
         SettingEntry(tr("Тема меню"), look, screen(Screen.SettingsAppearance), "тёмная светлая amoled dark light theme"),
+        SettingEntry(tr("Эффекты"), look, screen(Screen.SettingsAppearance), "анимации градиенты тени блюр размытие стекло animations gradients shadows blur glass"), // i18n:off
         SettingEntry(tr("Цвет акцента"), look, screen(Screen.SettingsAppearance), "цвет colour color accent"),
         SettingEntry(tr("Значок приложения"), look, screen(Screen.SettingsAppearance), "иконка icon"),
         SettingEntry(tr("Шрифт меню"), look, screen(Screen.SettingsAppearance), "font размер текста"),
@@ -324,6 +335,7 @@ fun settingEntries(): List<SettingEntry> {
         SettingEntry(tr("Онлайн-раздел"), tr("Настройки"), screen(Screen.Settings), "интернет online audius"),
         SettingEntry(tr("Исцеление"), tr("Вкладка"), tab(Tab.HEAL), "heal порядок названия обложки клоны отменить undo"),
         SettingEntry(tr("Статистика"), tr("Вкладка"), tab(Tab.STATS), "stats statistics"),
+        SettingEntry(tr("Добавить песню по пути или файлом"), tr("Вкладка"), tab(Tab.ADD), "путь файл менеджер добавить вручную конвертировать формат mp3 m4a flac wav ogg add path file convert format"), // i18n:off
         SettingEntry(tr("Root и Shizuku"), tr("Настройки"), screen(Screen.SettingsAdvanced), "root shizuku"),
         SettingEntry(tr("Ошибки и журнал"), tr("Настройки"), screen(Screen.SettingsDiagnostics), "log ошибка bug журнал"),
         SettingEntry(tr("Подробный журнал: плавность и задержки"), tr("Ошибки и журнал"), screen(Screen.SettingsDiagnostics), "fps кадры лаги тормозит lag frames"), // i18n:off

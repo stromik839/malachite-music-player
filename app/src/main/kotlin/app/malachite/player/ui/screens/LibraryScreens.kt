@@ -55,6 +55,7 @@ import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -965,13 +966,30 @@ fun SearchScreen() {
     val foundPlaylists = remember(q, playlists, scope) {
         if (scope == SearchScope.ALL || scope == SearchScope.PLAYLISTS) playlists.filter { match(it.name) }.take(50) else emptyList()
     }
+    // What was searched for is remembered: on "search" on the keyboard, after the words stayed the
+    // same for a few seconds with something found, and when the screen is left.
+    val found = songs.isNotEmpty() || foundArtists.isNotEmpty() || foundAlbums.isNotEmpty() || foundPlaylists.isNotEmpty()
+    val keep by androidx.compose.runtime.rememberUpdatedState(if (found) q.trim() else "")
+    androidx.compose.runtime.LaunchedEffect(q, found) {
+        if (!found || q.isBlank()) return@LaunchedEffect
+        kotlinx.coroutines.delay(3000)
+        app.malachite.player.data.SearchHistory.add(app.malachite.player.data.SearchHistory.Kind.LIBRARY, q)
+    }
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { if (keep.isNotEmpty()) app.malachite.player.data.SearchHistory.add(app.malachite.player.data.SearchHistory.Kind.LIBRARY, keep) }
+    }
     Column(Modifier.fillMaxSize()) {
         OutlinedTextField(
             q, { q = it },
             Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 4.dp),
             placeholder = { Text(tr("Песня, исполнитель, альбом… (можно латиницей)")) },
             leadingIcon = { Icon(Icons.Filled.Search, null) },
+            trailingIcon = if (q.isNotEmpty()) ({ IconButton(onClick = { q = "" }) { Icon(Icons.Filled.Close, tr("Очистить")) } }) else null,
             singleLine = true,
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Search),
+            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = {
+                app.malachite.player.data.SearchHistory.add(app.malachite.player.data.SearchHistory.Kind.LIBRARY, q)
+            }),
         )
         Row(
             Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp),
@@ -984,6 +1002,8 @@ fun SearchScreen() {
         if (showSongs) SortAndFilterRow(sort, { sort = it }, filters) { filters = it }
         TrackList(songs, header = {
             Column {
+                // nothing typed: the recent searches, a tap searches again
+                if (q.isBlank() && filters.isEmpty()) app.malachite.player.data.RecentSearches(app.malachite.player.data.SearchHistory.Kind.LIBRARY) { q = it }
                 if (foundArtists.isNotEmpty()) SectionTitle(tr("Исполнители"))
                 foundArtists.forEach { a ->
                     ListItem(headlineContent = { Text(a.name) }, leadingContent = { Icon(Icons.Filled.Person, null) },

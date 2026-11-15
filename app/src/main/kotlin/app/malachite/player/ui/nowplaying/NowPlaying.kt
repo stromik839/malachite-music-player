@@ -226,7 +226,7 @@ private fun NowPlayingContent(t: TrackInfo, st: PlayerUiState) {
                         DropdownMenuItem(text = { Text(tr("Отметить лучший момент здесь (${formatTime(pos.longValue)})")) }, onClick = {
                             menu = false
                             g.library.setBestMoment(t.path, pos.longValue)
-                            nav.toast(tr("Лучший момент отмечен чертой на полосе перемотки: ведите ползунок к ней — он сам встанет точно на неё"))
+                            nav.toast(tr("Лучший момент отмечен чертой на полосе перемотки: задержите ползунок у неё на пару секунд — он встанет точно на неё"))
                         })
                         if (data.user(t.path).bestMomentMs != null) {
                             DropdownMenuItem(text = { Text(tr("Убрать отметку лучшего момента")) }, onClick = { menu = false; g.library.setBestMoment(t.path, null) })
@@ -260,10 +260,15 @@ private fun NowPlayingContent(t: TrackInfo, st: PlayerUiState) {
     val settings by g.settings.state.collectAsState()
     // The visualizer under the cover (with the lyrics the screen is theirs). Its place is kept
     // while the music is paused too, so the cover does not jump when it starts; the bars fade.
-    val barsShown by androidx.compose.animation.core.animateFloatAsState(if (st.isPlaying) 1f else 0f, label = "bars")
+    val barsShown by androidx.compose.animation.core.animateFloatAsState(
+        if (st.isPlaying) 1f else 0f,
+        androidx.compose.animation.core.tween(settings.visualizerFadeMs.coerceIn(0, 5000), easing = androidx.compose.animation.core.FastOutSlowInEasing),
+        label = "bars",
+    )
     val bars: @Composable () -> Unit = {
         if (settings.visualizer && !showLyrics) Visualizer(
             settings.visualizerStyle,
+            settings.visualizerOrder,
             Modifier.fillMaxWidth().height(96.dp).padding(top = 8.dp),
             low = MaterialTheme.colorScheme.primary,
             high = MaterialTheme.colorScheme.tertiary,
@@ -471,15 +476,31 @@ private fun SeekTrack(fraction: Float, enabled: Boolean, onMove: (Float) -> Unit
     val move by androidx.compose.runtime.rememberUpdatedState(onMove)
     val done by androidx.compose.runtime.rememberUpdatedState(onDone)
     val cancel by androidx.compose.runtime.rememberUpdatedState(onCancel)
-    val inset = with(androidx.compose.ui.platform.LocalDensity.current) { SEEK_THUMB_W.toPx() / 2 }
-    val snap = with(androidx.compose.ui.platform.LocalDensity.current) { 16.dp.toPx() }
-    // the place under the finger: the track runs from half a thumb to half a thumb from the edges;
-    // near the best moment the thumb sticks to it, so a song lands exactly on its chorus
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val inset = with(density) { SEEK_THUMB_W.toPx() / 2 }
+    val near = with(density) { 28.dp.toPx() }
+    val jitter = with(density) { 4.dp.toPx() }
+    // the place under the finger: the track runs from half a thumb to half a thumb from the edges
     fun at(x: Float, width: Int): Float {
         val track = (width - 2 * inset).coerceAtLeast(1f)
-        val f = ((x - inset) / track).coerceIn(0f, 1f)
-        val b = bestNow
-        return if (b in 0f..1f && kotlin.math.abs(f - b) * track <= snap) b else f
+        return ((x - inset) / track).coerceIn(0f, 1f)
+    }
+    // The best moment catches the thumb only when the finger stays still near it for a while: a
+    // place close to the chorus but not on it can be chosen as before.
+    val drag = remember { SeekDrag() }
+    var holding by remember { mutableStateOf(false) }
+    LaunchedEffect(holding) {
+        while (holding) {
+            kotlinx.coroutines.delay(100)
+            val b = bestNow
+            val still = android.os.SystemClock.uptimeMillis() - drag.stillSince
+            if (!drag.caught && b in 0f..1f && kotlin.math.abs(drag.at - b) * drag.track <= near && still >= BEST_HOLD_MS) {
+                drag.caught = true
+                drag.at = b
+                haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                move(b)
+            }
+        }
     }
     androidx.compose.foundation.Canvas(
         Modifier
@@ -498,18 +519,31 @@ private fun SeekTrack(fraction: Float, enabled: Boolean, onMove: (Float) -> Unit
             }
             .pointerInput(enabled) {
                 if (!enabled) return@pointerInput
-                var last = 0f
                 detectHorizontalDragGestures(
-                    onDragStart = { last = at(it.x, size.width); move(last) },
-                    onDragEnd = { done(last) },
-                    onDragCancel = { cancel() },
+                    onDragStart = {
+                        drag.track = (size.width - 2 * inset).coerceAtLeast(1f)
+                        drag.at = at(it.x, size.width)
+                        drag.stillX = it.x
+                        drag.stillSince = android.os.SystemClock.uptimeMillis()
+                        drag.caught = false
+                        holding = true
+                        move(drag.at)
+                    },
+                    onDragEnd = { holding = false; done(drag.at) },
+                    onDragCancel = { holding = false; cancel() },
                 ) { change, _ ->
                     change.consume()
-                    val now = at(change.position.x, size.width)
-                    // a light tick when the thumb catches the best moment
-                    if (now == bestNow && last != now) haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
-                    last = now
-                    move(last)
+                    val x = change.position.x
+                    // the finger moved (more than a tremble): the wait starts again, a caught moment lets go
+                    if (kotlin.math.abs(x - drag.stillX) > jitter) {
+                        drag.stillX = x
+                        drag.stillSince = android.os.SystemClock.uptimeMillis()
+                        drag.caught = false
+                    }
+                    if (!drag.caught) {
+                        drag.at = at(x, size.width)
+                        move(drag.at)
+                    }
                 }
             },
     ) {
@@ -535,7 +569,7 @@ private fun SeekTrack(fraction: Float, enabled: Boolean, onMove: (Float) -> Unit
         part(restFrom, size.width, inner, outer, inactive)
         // the small dot at the end of the track, as on the standard bar
         if (size.width - restFrom > trackH) drawCircle(active, radius = 2.dp.toPx(), center = androidx.compose.ui.geometry.Offset(size.width - trackH / 2, cy))
-        // the best moment: a slim notch across the track; the thumb sticks to it when moved near
+        // the best moment: a slim notch across the track; the thumb jumps onto it when held still near it
         if (best in 0f..1f && kotlin.math.abs(best - fraction) * (size.width - 2 * inset) > thumbW / 2 + gap) {
             val bx = inset + (size.width - 2 * inset) * best
             val w = 3.dp.toPx()
@@ -557,6 +591,18 @@ private fun SeekTrack(fraction: Float, enabled: Boolean, onMove: (Float) -> Unit
 }
 
 private val SEEK_THUMB_W = 4.dp
+
+/** How long the finger has to stay still near the best moment before the thumb jumps onto it. */
+private const val BEST_HOLD_MS = 1800L
+
+/** Where a drag on the seek bar is, and whether the finger rests near the best moment. */
+private class SeekDrag {
+    var at = 0f
+    var track = 1f
+    var stillX = 0f
+    var stillSince = 0L
+    var caught = false
+}
 
 @Composable
 fun SpeedPitchSheet(st: PlayerUiState, onDismiss: () -> Unit) {

@@ -203,6 +203,7 @@ fun OnlineScreen(initialQuery: String = "") {
     fun search() {
         val q = query.trim()
         if (q.isEmpty()) return
+        app.malachite.player.data.SearchHistory.add(app.malachite.player.data.SearchHistory.Kind.ONLINE, q)
         job?.cancel()
         busy = true; message = null; release = null; releaseTracks = null
         job = scope.launch {
@@ -317,7 +318,10 @@ fun OnlineScreen(initialQuery: String = "") {
             if (opened != null && whole.isNotEmpty()) item {
                 DownloadAllRow(opened, whole) { downloadAllOnline(opened.id, opened.title, whole) { nav.toast(it) } }
             }
-            // before a search: what was heard and plays without internet
+            // before a search: what was searched for lately, and what was heard and plays without internet
+            if (opened == null && results == null && !busy) item {
+                app.malachite.player.data.RecentSearches(app.malachite.player.data.SearchHistory.Kind.ONLINE) { query = it; search() }
+            }
             if (opened == null && found == null && kept.isNotEmpty()) {
                 item { OnlineHeader(tr("Слушали — играют без интернета (${kept.size})")) }
                 items(kept, key = { "kept|" + it.id }) { song ->

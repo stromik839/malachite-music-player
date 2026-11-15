@@ -96,6 +96,18 @@ enum class VisualizerStyle(val title: String) {
     WAVE(tr("Волна")),
 }
 
+/** In which order the bands stand in the visualizer. */
+enum class VisualizerOrder(val title: String) {
+    FREQUENCY(tr("Басы слева, высокие справа")),
+    REVERSED(tr("Басы справа, высокие слева")),
+    /** The bass in the middle, the highs towards both edges (each band twice). */
+    MIRROR(tr("Басы в центре, высокие по краям")),
+    /** By strength at this moment: the loudest in the middle, quieter towards the edges. */
+    STRONG_CENTER(tr("Сильные в центре, слабые по краям")),
+    STRONG_LEFT(tr("Сильные слева, слабые справа")),
+    STRONG_RIGHT(tr("Сильные справа, слабые слева")),
+}
+
 /** Speed of scrolling and of the current-line highlight. */
 enum class LyricsAnim(val title: String, val ms: Int) { OFF(tr("Без анимации"), 0), FAST(tr("Быстро"), 280), NORMAL(tr("Обычно"), 600), SLOW(tr("Медленно"), 1000) }
 
@@ -113,6 +125,9 @@ enum class Tab(val title: String) {
 
     /** Most played songs, listening time, what healing has fixed. */
     STATS(tr("Статистика")),
+
+    /** Songs added by hand (a path or the file manager) and songs turned into another format. */
+    ADD(tr("Добавить")),
 }
 
 /** Look of one part of the menu (navigation bar, mini player, top bar). */
@@ -278,9 +293,11 @@ data class AppSettings(
     val navPosition: NavPosition = NavPosition.RIGHT,
     /** On wide or low windows (tablet, laptop, phone on its side) the panel moves to the side by itself. */
     val navAuto: Boolean = true,
-    val tabs: List<Tab> = listOf(Tab.SONGS, Tab.ALBUMS, Tab.ARTISTS, Tab.FAVORITES, Tab.PLAYLISTS, Tab.HEAL, Tab.STATS, Tab.PROCESSES),
+    val tabs: List<Tab> = listOf(Tab.SONGS, Tab.ALBUMS, Tab.ARTISTS, Tab.FAVORITES, Tab.PLAYLISTS, Tab.HEAL, Tab.STATS, Tab.ADD, Tab.PROCESSES),
     /** The statistics tab was put on the panel once (for those who had their own set of tabs already). */
     val statsTabAdded: Boolean = true,
+    /** The «Добавить» tab was put on the panel once (settings from before it existed get it too). */
+    val addTabAdded: Boolean = false,
     /** The short tour was shown (after the first start; "show again" sets it back). */
     val tourShown: Boolean = false,
     /** The "what's new" window seen up to this list ([app.malachite.player.ui.help.WhatsNew.ID]). */
@@ -313,9 +330,21 @@ data class AppSettings(
     val levelLoudness: Boolean = true,
     /** "Плавный переход": seconds the end of a song and the start of the next one overlap (0: off). */
     val crossfadeSec: Int = 0,
+    /**
+     * Interface animations: screens gliding, the tab pill, the song screen sliding up. Off: all of it
+     * changes at once (the visualizer and the lyrics keep their own switches).
+     */
+    val animations: Boolean = true,
+    /** Soft shadows (gradients) at the edges of the bars and panels. */
+    val gradients: Boolean = true,
+    /** Frosted glass: the blurred cover behind the top bar, the tab panel and the mini player (Android 12+). */
+    val blur: Boolean = false,
     /** Bars that move with the music on the song screen. */
     val visualizer: Boolean = true,
-    val visualizerStyle: VisualizerStyle = VisualizerStyle.BARS,
+    val visualizerStyle: VisualizerStyle = VisualizerStyle.WAVE,
+    val visualizerOrder: VisualizerOrder = VisualizerOrder.FREQUENCY,
+    /** How long the visualizer takes to appear when the music starts and to go when it stops (ms). */
+    val visualizerFadeMs: Int = 900,
     /** The DJ mixer in front of the speaker (Equalizer screen) and where its knobs stand. */
     val mixerOn: Boolean = true,
     val mixer: app.malachite.player.playback.MixerKnobs = app.malachite.player.playback.MixerKnobs(),

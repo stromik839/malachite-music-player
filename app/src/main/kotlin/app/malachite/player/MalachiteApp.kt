@@ -119,6 +119,14 @@ class MalachiteApp : Application() {
         graph.settings.update { s ->
             if (s.statsTabAdded) s else s.copy(statsTabAdded = true, tabs = if (app.malachite.player.data.Tab.STATS in s.tabs) s.tabs else s.tabs + app.malachite.player.data.Tab.STATS)
         }
+        graph.settings.update { s ->
+            if (s.addTabAdded) s else {
+                val newTab = app.malachite.player.data.Tab.ADD
+                // before «Процессы» when it is there, else at the end
+                val at = s.tabs.indexOf(app.malachite.player.data.Tab.PROCESSES).let { if (it < 0) s.tabs.size else it }
+                s.copy(addTabAdded = true, tabs = if (newTab in s.tabs) s.tabs else s.tabs.toMutableList().also { it.add(at, newTab) })
+            }
+        }
         graph.openLibraryIfPossible()
         graph.scanScheduler.start()
         // The widget follows the theme and the look of the lyrics as soon as they are changed

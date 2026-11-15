@@ -150,8 +150,29 @@ class DeviceScanner(
                     .forEach { out.putIfAbsent(it.absolutePath, it) }
             }
         }
+        // 3) Automatic checks do not walk the whole storage, but the places songs are downloaded to
+        //    are looked through every time: new songs there are noticed at once, also the ones the
+        //    media index does not list (Telegram keeps its files out of it).
+        if (!deep && Storage.hasAllFilesAccess(context)) {
+            val primary = Storage.primaryRoot()
+            for (name in HOT_FOLDERS) {
+                val dir = File(primary, name)
+                if (!dir.isDirectory) continue
+                dir.walkTopDown()
+                    .onEnter { d -> d == dir || !d.name.startsWith(".") }
+                    .maxDepth(5)
+                    .filter { it.isFile && LibraryScanner.isAudioName(it) }
+                    .take(20_000)
+                    .forEach { f -> if (!f.canonicalPath.startsWith("$mainCanon/")) out.putIfAbsent(f.absolutePath, f) }
+            }
+        }
         listedFromWalk = out.size - listedFromIndex
         return out.values.toList()
+    }
+
+    private companion object {
+        /** Where downloaded songs usually land (relative to the phone's storage). */
+        val HOT_FOLDERS = listOf("Download", "Downloads", "Music", "Documents", "Telegram", "Android/media")
     }
 
     /** Classifies everything found on the device (music vs voice/system/etc.). */

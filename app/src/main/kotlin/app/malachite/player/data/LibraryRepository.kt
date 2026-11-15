@@ -511,4 +511,19 @@ class LibraryRepository(private val context: Context, private val settings: Sett
         _data.value = st.loadLibrary()
         _playlists.value = st.listPlaylists()
     }
+
+    /**
+     * The song at [oldPath] lives in [newFile] now (inside the main folder; e.g. after it was
+     * converted): its plays, favourite mark and places in playlists move along. Returns its new path.
+     */
+    suspend fun swapFile(oldPath: String, newFile: File): String? = withContext(Dispatchers.IO) {
+        val r = root ?: return@withContext null
+        val rel = newFile.relativeTo(r).invariantSeparatorsPath
+        if (rel != oldPath) store?.applyMoves(mapOf(oldPath to rel), _tracks.value.associateBy { it.path })
+        refreshTrack(oldPath)
+        refreshTrack(rel)
+        reloadData()
+        notifySystem(listOf(File(r, oldPath), newFile))
+        rel
+    }
 }

@@ -154,6 +154,21 @@ fun SettingsAppearanceScreen() {
             }
             Hint(tr("Авто: русский, если язык телефона русский, иначе английский. После смены языка плеер перезапустится (музыка остановится)."))
         }
+        Group(tr("Эффекты")) {
+            SwitchRow(
+                tr("Анимации интерфейса"), s.animations,
+                tr("Экраны плавно сменяются, таблетка вкладок скользит, экран песни выезжает. Выключено — всё меняется сразу. У визуализатора и текста песни свои настройки, этот переключатель их не трогает"),
+            ) { v -> up { it.copy(animations = v) } }
+            SwitchRow(
+                tr("Тени-градиенты"), s.gradients,
+                tr("Мягкие тени у краёв верхней панели, мини-плеера и панели вкладок и лёгкий блеск на самих панелях"),
+            ) { v -> up { it.copy(gradients = v) } }
+            SwitchRow(
+                tr("Размытие"), s.blur,
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) tr("Матовое стекло: размытая обложка играющей песни за верхней панелью, панелью вкладок и мини-плеером. Чуть больше работы для телефона")
+                else tr("Нужен Android 12 или новее: на этом телефоне размытие не видно"),
+            ) { v -> up { it.copy(blur = v) } }
+        }
         Group(tr("Тема меню")) {
             RadioRow(tr("Тёмная (по умолчанию)"), s.themeMode, ThemeMode.DARK) { v -> up { it.copy(themeMode = v) } }
             RadioRow(tr("Тёмная AMOLED (чёрный фон)"), s.themeMode, ThemeMode.AMOLED) { v -> up { it.copy(themeMode = v) } }
@@ -573,6 +588,16 @@ fun SettingsPlaybackScreen() {
                     }
                 }
                 Hint(tr("Полосы — со свечением, отражением и «шапочками», которые ненадолго задерживаются на самой высокой точке. Светодиоды — как индикатор на пульте. Волна — плавная, отражённая от середины."))
+                Text(tr("Расположение"), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 6.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    app.malachite.player.data.VisualizerOrder.entries.forEach { o ->
+                        FilterChip(s.visualizerOrder == o, { up { it.copy(visualizerOrder = o) } }, label = { Text(o.title) })
+                    }
+                }
+                Hint(tr("«Сильные…» расставляют полосы не по частоте, а по силе звука в эту секунду: самые громкие собираются в середине или с одного края."))
+                SliderRow(
+                    tr("Появление и исчезание"), s.visualizerFadeMs / 1000f, 0.1f..3f, { tr("%.1f с").format(it) },
+                ) { v -> up { it.copy(visualizerFadeMs = (v * 1000).toInt()) } }
             }
         }
         DislikedGroup()

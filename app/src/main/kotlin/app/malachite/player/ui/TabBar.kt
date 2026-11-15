@@ -105,16 +105,31 @@ fun TabBar(
     }
     val currentSpec by rememberUpdatedState(spec)
 
-    // the pill goes to the open tab (at once the first time, gliding afterwards)
+    // The pill glides when another tab opens. When only the panel moved (the keyboard came up,
+    // the window changed its size) it stays under its tab at once instead of flying after it.
     val target = center(selectedIndex)
+    var placedFor by remember { mutableIntStateOf(-1) }
+    // set when the finger lets the pill go: it glides back to a tab from wherever it was carried
+    var released by remember { mutableStateOf(false) }
     LaunchedEffect(selectedIndex, target, dragging) {
         if (dragging || target == null) return@LaunchedEffect
-        if (pill.value.isNaN()) pill.snapTo(target) else pill.animateTo(target, currentSpec)
+        val glide = !pill.value.isNaN() && (selectedIndex != placedFor || released)
+        released = false
+        if (glide) pill.animateTo(target, currentSpec) else pill.snapTo(target)
+        placedFor = selectedIndex
     }
 
     fun nearest(at: Float): Int = tabs.indices.minByOrNull { i -> center(i)?.let { kotlin.math.abs(it - at) } ?: Float.MAX_VALUE } ?: -1
 
+    /** Between the first and the last tab: the pill does not fly off into the empty ends of the panel. */
+    fun onPanel(at: Float): Float {
+        val ends = tabs.indices.mapNotNull { center(it) }
+        return if (ends.isEmpty()) at else at.coerceIn(ends.min(), ends.max())
+    }
+
     val onSelectNow by rememberUpdatedState(onSelect)
+    // the tab open now: the gesture below lives longer than one tab being open
+    val selectedNow by rememberUpdatedState(selected)
     val gesture = if (!slide) Modifier else Modifier.pointerInput(tabs, slideDelayMs, vertical) {
         awaitEachGesture {
             val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
@@ -132,7 +147,7 @@ fun TabBar(
             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
             fun along(p: Offset) = if (vertical) p.y else p.x
             hovered = nearest(along(down.position))
-            scope.launch { pill.snapTo(along(down.position)) }
+            scope.launch { pill.snapTo(onPanel(along(down.position))) }
             var last = down.position
             while (true) {
                 val ev = awaitPointerEvent(PointerEventPass.Initial)
@@ -141,7 +156,7 @@ fun TabBar(
                 c.consume()
                 if (!c.pressed) break
                 last = c.position
-                scope.launch { pill.snapTo(along(last)) }
+                scope.launch { pill.snapTo(onPanel(along(last))) }
                 val now = nearest(along(last))
                 if (now != hovered && now >= 0) {
                     hovered = now
@@ -149,11 +164,12 @@ fun TabBar(
                 }
             }
             val chosen = nearest(along(last))
+            released = true
             dragging = false
             hovered = -1
             if (chosen >= 0) {
                 center(chosen)?.let { c -> scope.launch { pill.animateTo(c, currentSpec) } }
-                if (tabs[chosen] != selected) onSelectNow(tabs[chosen])
+                if (tabs[chosen] != selectedNow) onSelectNow(tabs[chosen])
             }
         }
     }

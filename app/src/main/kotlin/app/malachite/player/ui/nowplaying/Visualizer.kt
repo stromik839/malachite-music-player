@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
+import app.malachite.player.data.VisualizerOrder
 import app.malachite.player.data.VisualizerStyle
 import app.malachite.player.playback.Spectrum
 import kotlinx.coroutines.delay
@@ -98,12 +99,21 @@ private class Motion(val n: Int) {
 }
 
 /**
- * The music as a picture under the cover: bass on the left, highs on the right. [low] and [high]
- * are the colours of the two ends (the theme's), [tip] the bright tops and caps. Nothing is
- * computed while it is not on the screen, and a still picture is not drawn again.
+ * The music as a picture under the cover, its bands in the chosen [order]. [low] and [high] are
+ * the colours of the two ends (the theme's), [tip] the bright tops and caps; [alpha] is how far it
+ * has appeared (the bars also grow out of the floor with it). Nothing is computed while it is not
+ * on the screen, and a still picture is not drawn again.
  */
 @Composable
-fun Visualizer(style: VisualizerStyle, modifier: Modifier, low: Color, high: Color, tip: Color, alpha: () -> Float = { 1f }) {
+fun Visualizer(
+    style: VisualizerStyle,
+    order: VisualizerOrder,
+    modifier: Modifier,
+    low: Color,
+    high: Color,
+    tip: Color,
+    alpha: () -> Float = { 1f },
+) {
     val n = Spectrum.BANDS
     val motion = remember { Motion(n) }
     val frame = remember { mutableIntStateOf(0) }
@@ -111,8 +121,16 @@ fun Visualizer(style: VisualizerStyle, modifier: Modifier, low: Color, high: Col
         Spectrum.startWatching()
         onDispose { Spectrum.stopWatching() }
     }
-    LaunchedEffect(style) {
-        val width = if (style == VisualizerStyle.WAVE) 0.7f else 0.42f
+    LaunchedEffect(style, order) {
+        // bands sorted by strength are smooth already; by frequency a band lifts its neighbours
+        val width = when {
+            order == VisualizerOrder.STRONG_CENTER || order == VisualizerOrder.STRONG_LEFT || order == VisualizerOrder.STRONG_RIGHT -> 0.15f
+            style == VisualizerStyle.WAVE -> 0.7f
+            else -> 0.42f
+        }
+        val heard = FloatArray(n)
+        val sorted = FloatArray(n)
+        val fromCentre = centreOutwards(n)
         var last = 0L
         var still = 0
         while (true) {
@@ -122,7 +140,9 @@ fun Visualizer(style: VisualizerStyle, modifier: Modifier, low: Color, high: Col
                 if (last != 0L && t - last < 15) { moved = true; return@withFrameMillis }
                 val dt = if (last == 0L) 16f else (t - last).coerceIn(1, 100).toFloat()
                 last = t
-                moved = motion.step(Spectrum.now(motion.target), dt, width)
+                val fresh = Spectrum.now(heard)
+                if (fresh) arrange(heard, motion.target, order, sorted, fromCentre)
+                moved = motion.step(fresh, dt, width)
                 if (moved) frame.intValue++
             }
             // nothing playing: look for the music a few times a second instead of on every frame
@@ -159,7 +179,8 @@ fun Visualizer(style: VisualizerStyle, modifier: Modifier, low: Color, high: Col
                         val a = alpha()
                         if (a <= 0.01f) return@onDrawBehind
                         fun x(i: Int) = i * (w + gap)
-                        fun h(i: Int) = max(minH, motion.level[i] * room)
+                        // the bars rise out of the floor as the visualizer appears and sink back when it goes
+                        fun h(i: Int) = max(minH, motion.level[i] * a * room)
                         drawRect(floor, Offset(0f, base), Size(size.width, 1.dp.toPx()), alpha = a)
                         for (i in 0 until n) {
                             val lv = motion.level[i]
@@ -174,7 +195,7 @@ fun Visualizer(style: VisualizerStyle, modifier: Modifier, low: Color, high: Col
                             if (rh > 0.5f) drawRect(mirror, Offset(x(i), mirrorTop), Size(w, rh), alpha = a)
                         }
                         for (i in 0 until n) {
-                            val p = motion.peak[i]
+                            val p = motion.peak[i] * a
                             if (p > 0.03f) drawRect(tip, Offset(x(i), base - p * room - capGap - capH), Size(w, capH), alpha = a * 0.9f)
                         }
                     }
@@ -203,10 +224,10 @@ fun Visualizer(style: VisualizerStyle, modifier: Modifier, low: Color, high: Col
                         drawPath(ghost, low, alpha = a * 0.09f)
                         for (i in 0 until n) {
                             val x = i * (w + gap)
-                            val lv = motion.level[i]
+                            val lv = motion.level[i] * a
                             val lit = if (lv < 0.01f) 0 else ceil(lv * rows - 0.25f).toInt().coerceIn(1, rows)
                             for (r in 0 until lit) drawRect(heat, Offset(x, cellTop(r)), Size(w, cell), alpha = a)
-                            val pr = (motion.peak[i] * rows).roundToInt() - 1
+                            val pr = (motion.peak[i] * a * rows).roundToInt() - 1
                             if (pr >= lit && pr < rows) drawRect(tip, Offset(x, cellTop(pr)), Size(w, cell), alpha = a * 0.95f)
                         }
                     }
@@ -233,8 +254,8 @@ fun Visualizer(style: VisualizerStyle, modifier: Modifier, low: Color, high: Col
                         if (a <= 0.01f) return@onDrawBehind
                         up[0] = mid; up[k - 1] = mid; caps[0] = mid; caps[k - 1] = mid
                         for (i in 0 until n) {
-                            up[i + 1] = mid - motion.level[i] * amp
-                            caps[i + 1] = mid - motion.peak[i] * amp
+                            up[i + 1] = mid - motion.level[i] * a * amp
+                            caps[i + 1] = mid - motion.peak[i] * a * amp
                         }
                         for (j in 0 until k) down[j] = 2 * mid - up[k - 1 - j]
                         body.reset()
@@ -254,6 +275,51 @@ fun Visualizer(style: VisualizerStyle, modifier: Modifier, low: Color, high: Col
             }
         },
     )
+}
+
+/** Positions from the middle outwards: middle, left of it, right of it, and so on. */
+private fun centreOutwards(n: Int): IntArray {
+    val out = IntArray(n)
+    val c = n / 2
+    var k = 0
+    out[k++] = c
+    var d = 1
+    while (k < n) {
+        if (c - d >= 0) out[k++] = c - d
+        if (k < n && c + d < n) out[k++] = c + d
+        d++
+    }
+    return out
+}
+
+/**
+ * Puts the heard bands ([src], bass first) into the places of the picture ([dst]) in the chosen
+ * [order]: by frequency (as heard, reversed, or mirrored with the bass in the middle) or by
+ * strength at this moment (the loudest in the middle, on the left or on the right).
+ */
+private fun arrange(src: FloatArray, dst: FloatArray, order: VisualizerOrder, sorted: FloatArray, fromCentre: IntArray) {
+    val n = src.size
+    when (order) {
+        VisualizerOrder.FREQUENCY -> src.copyInto(dst)
+        VisualizerOrder.REVERSED -> for (i in 0 until n) dst[i] = src[n - 1 - i]
+        VisualizerOrder.MIRROR -> {
+            val c = (n - 1) / 2f
+            for (i in 0 until n) dst[i] = src[(kotlin.math.abs(i - c) * 2).toInt().coerceIn(0, n - 1)]
+        }
+        else -> {
+            src.copyInto(sorted)
+            sorted.sort()
+            // sorted[n - 1 - k] is the k-th strongest
+            for (k in 0 until n) {
+                val v = sorted[n - 1 - k]
+                when (order) {
+                    VisualizerOrder.STRONG_LEFT -> dst[k] = v
+                    VisualizerOrder.STRONG_RIGHT -> dst[n - 1 - k] = v
+                    else -> dst[fromCentre[k]] = v
+                }
+            }
+        }
+    }
 }
 
 /**

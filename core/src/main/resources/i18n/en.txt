@@ -4576,17 +4576,17 @@ Build {} — what the latest updates brought
 Установлена сборка {}
 Installed build {}
 
-Лучший момент отмечен чертой на полосе перемотки: ведите ползунок к ней — он сам встанет точно на неё
-The best moment is marked with a notch on the seek bar: move the thumb to it — it snaps exactly onto it
+Лучший момент отмечен чертой на полосе перемотки: задержите ползунок у неё на пару секунд — он встанет точно на неё
+The best moment is marked with a notch on the seek bar: hold the thumb still near it for a couple of seconds — it lands exactly on it
 
 Что за черта на полосе перемотки?
 What is the notch on the seek bar?
 
-Это лучший момент песни. Если у песни есть синхронизированный текст, плеер сам находит припев (строки, которые поются снова) и ставит там черту. Свой момент можно отметить в меню ⋮ на экране песни: «Отметить лучший момент здесь». Ведите ползунок к черте — рядом с ней он сам встаёт точно на неё (с лёгкой отдачей), и песня продолжится с этого места.
-It is the best moment of the song. If the song has synced lyrics, the player finds the chorus itself (lines that are sung again) and puts a notch there. You can mark your own moment in the ⋮ menu on the song screen: «Mark the best moment here». Move the thumb to the notch — near it the thumb snaps exactly onto it (with a light tick), and the song goes on from there.
+Это лучший момент песни. Если у песни есть синхронизированный текст, плеер сам находит припев (строки, которые поются снова) и ставит там черту. Свой момент можно отметить в меню ⋮ на экране песни: «Отметить лучший момент здесь». Подведите ползунок к черте и задержите палец на пару секунд — ползунок встанет точно на неё (с лёгкой отдачей). Если не задерживать, можно выбрать любое место рядом с чертой.
+This is the best moment of the song. If the song has synced lyrics, the player finds the chorus itself (the lines that are sung again) and puts a notch there. Your own moment can be marked in the ⋮ menu on the song screen: «Mark the best moment here». Bring the thumb to the notch and hold your finger still for a couple of seconds — the thumb lands exactly on it (with a light tick). Without holding, any place next to the notch can be chosen.
 
-Черта на полосе перемотки: припев, найденный по синхронизированному тексту, или своя отметка (меню ⋮ на экране песни → «Отметить лучший момент здесь»). Ведите ползунок к черте — он сам встанет точно на неё.
-A notch on the seek bar: the chorus found in the synced lyrics, or your own mark (⋮ menu on the song screen → «Mark the best moment here»). Move the thumb to the notch — it snaps exactly onto it.
+Черта на полосе перемотки: припев, найденный по синхронизированному тексту, или своя отметка (меню ⋮ на экране песни → «Отметить лучший момент здесь»). Задержите ползунок у черты на пару секунд — он встанет точно на неё; рядом с ней можно выбрать любое место.
+A notch on the seek bar: the chorus found in the synced lyrics, or your own mark (⋮ menu on the song screen → «Mark the best moment here»). Hold the thumb still near the notch for a couple of seconds — it lands exactly on it; any place next to it can still be chosen.
 
 Почему ничего не нашлось
 Why nothing was found
@@ -4704,4 +4704,331 @@ An album of your own and soft screens
 
 Выберите песни → «Собрать в свой альбом…» — и они станут альбомом. Экраны теперь сменяются плавно: следующий мягко выезжает, предыдущий уходит вправо.
 Choose songs → "Make an album of them…" — and they become an album. Screens now change softly: the next one glides in, the previous one slides away to the right.
+
+Басы слева, высокие справа
+Bass left, highs right
+
+Басы справа, высокие слева
+Bass right, highs left
+
+Басы в центре, высокие по краям
+Bass in the middle, highs at the edges
+
+Сильные в центре, слабые по краям
+Strongest in the middle, weaker at the edges
+
+Сильные слева, слабые справа
+Strongest left, weaker right
+
+Сильные справа, слабые слева
+Strongest right, weaker left
+
+Расположение
+Arrangement
+
+«Сильные…» расставляют полосы не по частоте, а по силе звука в эту секунду: самые громкие собираются в середине или с одного края.
+"Strongest…" arranges the bars not by frequency but by how loud they are this second: the loudest gather in the middle or at one edge.
+
+Появление и исчезание
+Appearing and fading
+
+%.1f с
+%.1f s
+
+Недавние запросы
+Recent searches
+
+Очистить историю
+Clear history
+
+Убрать из истории
+Remove from history
+
+Эффекты
+Effects
+
+Анимации интерфейса
+Interface animations
+
+Экраны плавно сменяются, таблетка вкладок скользит, экран песни выезжает. Выключено — всё меняется сразу. У визуализатора и текста песни свои настройки, этот переключатель их не трогает
+Screens change softly, the tab pill glides, the song screen slides up. Off — everything changes at once. The visualizer and the lyrics have settings of their own; this switch leaves them alone
+
+Тени-градиенты
+Gradient shadows
+
+Мягкие тени у краёв верхней панели, мини-плеера и панели вкладок и лёгкий блеск на самих панелях
+Soft shadows at the edges of the top bar, the mini player and the tab panel, and a light sheen on the panels themselves
+
+Размытие
+Blur
+
+Матовое стекло: размытая обложка играющей песни за верхней панелью, панелью вкладок и мини-плеером. Чуть больше работы для телефона
+Frosted glass: the blurred cover of the playing song behind the top bar, the tab panel and the mini player. A little more work for the phone
+
+Нужен Android 12 или новее: на этом телефоне размытие не видно
+Needs Android 12 or newer: on this phone the blur is not visible
+
+Добавить
+Add
+
+M4A (AAC) — маленький файл, играет везде
+M4A (AAC) — a small file that plays everywhere
+
+FLAC — без потерь
+FLAC — lossless
+
+WAV — без потерь, очень большой файл
+WAV — lossless, a very big file
+
+Android не смог открыть файл: {}
+Android could not open the file: {}
+
+В файле нет звуковой дорожки
+The file has no sound track
+
+Неизвестный формат звука
+Unknown sound format
+
+В телефоне нет декодера для {}
+The phone has no decoder for {}
+
+Декодер не принял файл: {}
+The decoder did not accept the file: {}
+
+Декодер не дал буфер
+The decoder gave no buffer
+
+Декодер перестал отвечать
+The decoder stopped responding
+
+В файле не оказалось звука
+There was no sound in the file
+
+Перевод прервался: {}
+The conversion broke off: {}
+
+Поддерживаются только моно и стерео, а в файле каналов: {}
+Only mono and stereo are supported, and the file has channels: {}
+
+M4A (AAC) не бывает с частотой выше 48 кГц, а в файле {} кГц: выберите FLAC или WAV
+M4A (AAC) cannot be above 48 kHz, and the file is {} kHz: choose FLAC or WAV
+
+Слишком длинная запись для WAV (больше 4 ГБ)
+Too long a recording for WAV (over 4 GB)
+
+В телефоне нет кодировщика {}
+The phone has no {} encoder
+
+Кодировщик {} не принял {} кГц, каналов: {}
+The {} encoder did not accept {} kHz, channels: {}
+
+Кодировщик перестал принимать звук
+The encoder stopped taking the sound
+
+Кодировщик не дал буфер
+The encoder gave no buffer
+
+Кодировщик не закончил запись
+The encoder did not finish writing
+
+Кодировщик ничего не записал
+The encoder wrote nothing
+
+Кодировщик FLAC не дал заголовок
+The FLAC encoder gave no header
+
+Получился пустой файл
+The result is an empty file
+
+В получившемся файле нет звука
+The resulting file has no sound
+
+Длина не совпала: было {} с, стало {} с
+The length does not match: it was {} s, it became {} s
+
+Получившийся файл не воспроизводится
+The resulting file does not play
+
+Получившийся файл не читается: {}
+The resulting file cannot be read: {}
+
+Впишите путь к песне или к папке
+Type the path to a song or a folder
+
+Нет «Доступа ко всем файлам»: без него плеер не может читать файлы по пути. Выдайте его или выберите файл кнопкой «Выбрать файлы»
+No "All files access": without it the player cannot read files by path. Grant it or pick the file with the "Pick files" button
+
+По пути {} ничего нет. Проверьте буквы и регистр: «Download» и «download» — разные папки
+There is nothing at {}. Check the letters and their case: "Download" and "download" are different folders
+
+Это уже в главной папке — песни оттуда видны во вкладке «Песни»
+This is in the main folder already — its songs are in the "Songs" tab
+
+В папке {} нет песен
+There are no songs in the folder {}
+
+{}: не удалось прочитать
+{}: could not be read
+
+Это не аудиофайл (или формат, который Android не читает)
+This is not an audio file (or a format Android cannot read)
+
+Среди файлов нет аудио
+There is no audio among the files
+
+Добавлено в главную папку: {}
+Added to the main folder: {}
+
+уже были в библиотеке: {}
+already in the library: {}
+
+не получилось: {}
+failed: {}
+
+не аудио: {}
+not audio: {}
+
+неизвестный формат
+unknown format
+
+расширение .{} не совпадает с настоящим форматом
+the extension .{} does not match the real format
+
+Расширение и так правильное
+The extension is right already
+
+Готово: теперь файл называется {}
+Done: the file is now called {}
+
+Не получилось переименовать: {}
+Could not rename: {}
+
+Файл не найден: {}
+File not found: {}
+
+Не удалось положить новый файл: {}
+Could not place the new file: {}
+
+Теги перенести не удалось: {}.
+The tags could not be carried over: {}.
+
+Старый файл остался рядом: {}.
+The old file stayed next to it: {}.
+
+Готово: {}. Старый файл — в корзине главной папки (Настройки → Перенос и копии).
+Done: {}. The old file is in the main folder's trash (Settings → Moving and backups).
+
+Плеер не видит новую песню. Как добавить её самому?
+The player does not see a new song. How do I add it myself?
+
+Вкладка «Добавить»: впишите путь к файлу или к папке (например, /storage/emulated/0/Download/) или нажмите «Выбрать файлы…» и найдите песню в файловом менеджере. Файл копируется в главную папку, оригинал остаётся на месте.
+The "Add" tab: type the path to a file or a folder (for example /storage/emulated/0/Download/) or tap "Pick files…" and find the song in the file manager. The file is copied into the main folder; the original stays where it is.
+
+Открыть «Добавить»
+Open "Add"
+
+Как перевести песню в другой формат?
+How do I convert a song to another format?
+
+Вкладка «Добавить» → «Перевести в другой формат»: найдите песню в библиотеке (или выберите файл), выберите M4A, FLAC или WAV и нажмите «Перевести». Если у файла неправильное расширение (например, «.ogg» у MP3), можно просто исправить его — звук не меняется. Старый файл уходит в корзину главной папки, а при любой ошибке ничего не меняется.
+The "Add" tab → "Convert to another format": find the song in the library (or pick a file), choose M4A, FLAC or WAV and tap "Convert". If the file has a wrong extension (say ".ogg" on an MP3), you can simply fix it — the sound does not change. The old file goes to the main folder's trash, and on any error nothing changes.
+
+Добавить песню по пути или файлом
+Add a song by path or file
+
+Такой песни нет: проверьте путь
+There is no such song: check the path
+
+Добавить песню
+Add a song
+
+Если плеер не заметил новую песню, добавьте её сами: впишите путь к файлу или к папке или выберите файлы в файловом менеджере. Файл копируется в главную папку, оригинал остаётся на месте.
+If the player has not noticed a new song, add it yourself: type the path to a file or a folder, or pick files in the file manager. The file is copied into the main folder; the original stays where it is.
+
+Путь к песне или к папке
+Path to a song or a folder
+
+Добавить по пути
+Add by path
+
+Выбрать файлы…
+Pick files…
+
+Чтобы добавлять по пути, плееру нужен «Доступ ко всем файлам». Кнопка «Выбрать файлы…» работает и без него.
+To add by path the player needs "All files access". The "Pick files…" button works without it.
+
+Пути бывают такими: память телефона — /storage/emulated/0/ (то же самое — /sdcard/), загрузки — /storage/emulated/0/Download/, SD-карта — /storage/1234-ABCD/ (у каждой карты своё имя). Можно короче: «Download/песня.mp3». Папка — добавятся все песни из неё.
+Paths look like this: the phone's storage is /storage/emulated/0/ (the same as /sdcard/), downloads are /storage/emulated/0/Download/, an SD card is /storage/1234-ABCD/ (each card has its own name). Shorter works too: "Download/song.mp3". A folder adds all songs in it.
+
+Перевести в другой формат
+Convert to another format
+
+Выберите песню — из библиотеки, файлом с телефона или по пути выше — и формат. Песня из библиотеки заменяется новой, старый файл уходит в корзину главной папки. Файл не из библиотеки остаётся на месте, а в главную папку добавляется переведённая копия. Если что-то пойдёт не так, ничего не меняется, а здесь будет написано почему.
+Choose a song — from the library, a file on the phone or the path above — and a format. A song of the library is replaced by the new one, the old file goes to the main folder's trash. A file from elsewhere stays where it is, and the converted copy is added to the main folder. If anything goes wrong, nothing changes, and the reason is shown here.
+
+Найти песню в библиотеке
+Find a song in the library
+
+Файл с телефона…
+A file on the phone…
+
+Взять путь выше
+Use the path above
+
+Песня из библиотеки
+A song of the library
+
+Файл не из библиотеки
+A file from outside the library
+
+Во что перевести
+Convert to
+
+Только исправить расширение → .{}
+Only fix the extension → .{}
+
+FLAC недоступен: в этом телефоне нет его кодировщика.
+FLAC is not available: this phone has no FLAC encoder.
+
+MP3 не предлагается: в Android нет кодировщика MP3. M4A (AAC) звучит так же хорошо и занимает меньше места.
+MP3 is not offered: Android has no MP3 encoder. M4A (AAC) sounds just as good and takes less space.
+
+Перевод песни в другой формат
+Converting a song to another format
+
+Исправить
+Fix
+
+Перевести
+Convert
+
+Исходный файл не тронут.
+The original file is untouched.
+
+Вкладка «Добавить»
+The "Add" tab
+
+Песню, которую плеер не заметил, можно добавить самому: путь к файлу или к папке, или выбор в файловом менеджере. Там же песню можно перевести в M4A, FLAC или WAV, или просто исправить неправильное расширение.
+A song the player has not noticed can be added by hand: a path to a file or a folder, or a pick in the file manager. There a song can also be converted to M4A, FLAC or WAV, or just get its wrong extension fixed.
+
+Визуализатор: расположение и плавность
+Visualizer: arrangement and smoothness
+
+Новые расположения полос: басы в центре, или по силе — самые громкие в середине, слева или справа. Скорость появления и исчезания настраивается, по умолчанию — «Волна».
+New arrangements of the bars: the bass in the middle, or by strength — the loudest in the middle, on the left or on the right. How fast it appears and fades can be set; "Wave" is the default.
+
+История поиска и эффекты
+Search history and effects
+
+Под пустым полем поиска — недавние запросы (и в «Онлайн»). В «Оформлении» — «Эффекты»: анимации интерфейса, тени-градиенты и размытие (выключено, пока не включите).
+Under an empty search field there are recent searches (in "Online" too). In "Look" there are "Effects": interface animations, gradient shadows and blur (off until you switch it on).
+
+К эффектам
+To the effects
+
+Лучший момент и вкладки
+Best moment and tabs
+
+Ползунок встаёт на черту лучшего момента, только если задержать его рядом на пару секунд. Таблетка вкладок больше не возвращается назад и не догоняет вкладку, когда появляется клавиатура.
+The thumb lands on the best-moment notch only when held near it for a couple of seconds. The tab pill no longer jumps back and no longer chases its tab when the keyboard appears.
 

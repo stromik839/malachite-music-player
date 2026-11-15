@@ -9,6 +9,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
@@ -38,6 +40,7 @@ import androidx.compose.material.icons.filled.HourglassBottom
 import androidx.compose.material.icons.filled.QuestionMark
 import app.malachite.player.ui.help.tourTarget
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Person
@@ -115,17 +118,25 @@ fun Tab.icon(): ImageVector = when (this) {
     Tab.ONLINE -> Icons.Filled.Public
     Tab.PROCESSES -> Icons.Filled.HourglassBottom
     Tab.STATS -> Icons.Filled.BarChart
+    Tab.ADD -> Icons.Filled.LibraryAdd
 }
 
 /** Background of a menu part with the user's colour, transparency and optional frosted cover. */
 @Composable
 fun PartBackground(style: PartStyle, default: Color, cover: Bitmap?, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val fx by MalachiteApp.graph.settings.state.collectAsState()
     val base = style.color?.let { Color(it.toInt()) } ?: default
+    // frosted glass: the part's own switch or the one for all parts (Settings → Look → Effects)
+    val frosted = (style.blur || fx.blur) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     Box(modifier) {
-        if (style.blur && cover != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (frosted && cover != null) {
             Image(cover.asImageBitmap(), null, Modifier.matchParentSize().blur(28.dp), contentScale = ContentScale.Crop)
         }
-        Box(Modifier.matchParentSize().background(base.copy(alpha = style.alpha.coerceIn(0f, 1f))))
+        // with the frosted look for all parts the colour lets the blurred cover show through
+        val alpha = style.alpha.coerceIn(0f, 1f).let { if (frosted && fx.blur && cover != null) kotlin.math.min(it, 0.72f) else it }
+        Box(Modifier.matchParentSize().background(base.copy(alpha = alpha)))
+        // a faint sheen from above
+        if (fx.gradients) Box(Modifier.matchParentSize().background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.04f), Color.Transparent))))
         content()
     }
 }
@@ -163,7 +174,7 @@ fun MainScaffold() {
         val tabs = settings.tabs.filter { it != Tab.ONLINE || settings.onlineEnabled }
         TabBar(
             tabs, nav.currentTab, navPosition, settings.navStyle, settings.showTabLabels, cover,
-            settings.tabSlide, settings.tabSlideDelayMs, settings.tabSlideAnim,
+            settings.tabSlide, settings.tabSlideDelayMs, if (settings.animations) settings.tabSlideAnim else app.malachite.player.data.TabSlideAnim.NONE,
         ) { nav.openTab(it) }
     }
     val mini: @Composable () -> Unit = {
@@ -199,6 +210,8 @@ fun MainScaffold() {
                             280, easing = androidx.compose.animation.core.FastOutSlowInEasing,
                         )
                         when {
+                            // the animations switch is off: the new screen is simply there
+                            !settings.animations -> androidx.compose.animation.EnterTransition.None togetherWith androidx.compose.animation.ExitTransition.None
                             sameTab && targetState.depth > initialState.depth ->
                                 (androidx.compose.animation.slideInHorizontally(glide) { it / 8 } +
                                     androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220, delayMillis = 30))) togetherWith
@@ -217,6 +230,8 @@ fun MainScaffold() {
                         androidx.compose.runtime.CompositionLocalProvider(app.malachite.player.ui.components.LocalScreenKey provides place.key) { ScreenContent(place.screen) }
                     }
                 }
+                // soft shadows where the screen meets the bars and the tab panel
+                if (settings.gradients) EdgeShadows(navPosition)
             }
         }
     }
@@ -258,12 +273,27 @@ fun MainScaffold() {
     }
     AnimatedVisibility(
         visible = nav.playerOpen && current != null,
-        enter = slideInVertically { it },
-        exit = slideOutVertically { it },
+        enter = if (settings.animations) slideInVertically { it } else androidx.compose.animation.EnterTransition.None,
+        exit = if (settings.animations) slideOutVertically { it } else androidx.compose.animation.ExitTransition.None,
     ) {
         NowPlayingScreen()
     }
     DialogHost()
+}
+
+/** Gradient shadows along the edges of the screen area: under the top bar, above the bottom bars, beside a side panel. */
+@Composable
+private fun androidx.compose.foundation.layout.BoxScope.EdgeShadows(navPosition: NavPosition) {
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val shade = Color.Black.copy(alpha = if (dark) 0.3f else 0.12f)
+    val depth = 10.dp
+    Box(Modifier.align(Alignment.TopCenter).fillMaxWidth().height(depth).background(Brush.verticalGradient(listOf(shade, Color.Transparent))))
+    Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(depth).background(Brush.verticalGradient(listOf(Color.Transparent, shade))))
+    when (navPosition) {
+        NavPosition.RIGHT -> Box(Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(depth).background(Brush.horizontalGradient(listOf(Color.Transparent, shade))))
+        NavPosition.LEFT -> Box(Modifier.align(Alignment.CenterStart).fillMaxHeight().width(depth).background(Brush.horizontalGradient(listOf(shade, Color.Transparent))))
+        else -> {}
+    }
 }
 
 /** Where the navigation stands: the screen shown, its tab and how deep in the tab it is (for the direction of a transition). */
@@ -284,6 +314,7 @@ private fun ScreenContent(screen: Screen) {
             Tab.ONLINE -> app.malachite.player.ui.screens.OnlineScreen()
             Tab.PROCESSES -> app.malachite.player.ui.screens.ProcessesScreen()
             Tab.STATS -> app.malachite.player.ui.screens.StatsScreen()
+            Tab.ADD -> app.malachite.player.ui.screens.AddScreen()
         }
         is Screen.ArtistDetail -> ArtistDetailScreen(screen.key)
         is Screen.AlbumDetail -> AlbumDetailScreen(screen.key)

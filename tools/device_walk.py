@@ -563,7 +563,10 @@ def convert(to_ru, label):
         missing.append(f"convert to {label}")
 
 
-if step("Tab «Add»", "Добавить", lowest=True, optional=True):
+# the search above ends with "back" twice, which can leave the app: open it again
+adb("shell", "am", "start", "-n", f"{PKG}/.MainActivity")
+time.sleep(5)
+if step("Tab «Add»", "Добавить", lowest=True, optional=True, wait=20):
     time.sleep(2)
     screen("add")
     convert("M4A (AAC) — маленький файл, играет везде", "M4A")

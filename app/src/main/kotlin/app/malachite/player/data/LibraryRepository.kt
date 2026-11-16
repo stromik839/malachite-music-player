@@ -245,8 +245,30 @@ class LibraryRepository(private val context: Context, private val settings: Sett
             val saved = runCatching { st.updateLibrary(f) }
                 .onFailure { AppLog.w("library", "user data not written", it) }
                 .getOrNull()
-            if (pendingDataWrites.decrementAndGet() == 0 && saved != null && store === st) _data.value = saved
+            if (pendingDataWrites.decrementAndGet() == 0 && saved != null && store === st) publish(saved)
         }
+    }
+
+    /**
+     * The data as read back from the file, shown without upsetting the screen: a song whose data
+     * did not change keeps the very object the screen already has. The file's version is all new
+     * objects; shown as it was, every list on the screen compared all the songs field by field
+     * on the main thread (after each song played, to count it) – a stutter while scrolling.
+     * Done here, off the main thread; nothing is shown when nothing changed.
+     */
+    private fun publish(fromFile: LibraryData) {
+        val started = android.os.SystemClock.uptimeMillis()
+        val now = _data.value
+        val tracks = fromFile.tracks.mapValues { (path, u) -> now.tracks[path]?.takeIf { it == u } ?: u }
+        val shared = fromFile.copy(
+            tracks = if (tracks == now.tracks) now.tracks else tracks,
+            importedSources = if (fromFile.importedSources == now.importedSources) now.importedSources else fromFile.importedSources,
+            ignoredSources = if (fromFile.ignoredSources == now.ignoredSources) now.ignoredSources else fromFile.ignoredSources,
+            dislikedArtists = if (fromFile.dislikedArtists == now.dislikedArtists) now.dislikedArtists else fromFile.dislikedArtists,
+        )
+        if (shared != now) _data.value = shared
+        val took = android.os.SystemClock.uptimeMillis() - started
+        if (took >= 20 || FrameWatch.isOn) AppLog.i("library", "данные из файла сверены за $took мс (${fromFile.tracks.size} песен), ${if (shared != now) "показаны изменения" else "без изменений"}")
     }
 
 
@@ -284,7 +306,10 @@ class LibraryRepository(private val context: Context, private val settings: Sett
     }
 
     fun markPlayed(path: String) = scope.launch {
-        if (!isOnline(path)) updateData { it.update(path) { u -> u.copy(playCount = u.playCount + 1, lastPlayed = System.currentTimeMillis()) } }
+        // one moment for the screen's copy and the file's: two readings of the clock made the two
+        // differ, and the file's version (all new objects) was then shown after every song
+        val at = System.currentTimeMillis()
+        if (!isOnline(path)) updateData { it.update(path) { u -> u.copy(playCount = u.playCount + 1, lastPlayed = at) } }
     }
 
     fun rememberSpeed(path: String, speed: Float?, pitch: Float?) {
@@ -480,7 +505,8 @@ class LibraryRepository(private val context: Context, private val settings: Sett
                 http.download(item.coverUrl!!)?.let { AndroidImagePrep.prepare(it, square = true) }?.let { sf.writeTags(target, TagEdit(artwork = it), r) }
             }
             val path = target.relativeTo(r).invariantSeparatorsPath
-            updateData { it.update(path) { u -> u.copy(addedAt = System.currentTimeMillis(), coverSource = item.source, coverChosen = false) } }
+            val at = System.currentTimeMillis()
+            updateData { it.update(path) { u -> u.copy(addedAt = at, coverSource = item.source, coverChosen = false) } }
             refreshTrack(path)
             notifySystem(listOf(target))
             AppLog.i("online", "Скачано из ${item.source}: $path")

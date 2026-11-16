@@ -204,3 +204,53 @@ fun rememberGlidingColor(color: Color, animate: Boolean): State<Color> {
     }
     return glide.asState()
 }
+
+/**
+ * Whether something on the screen is being scrolled: the app's root hears every scroll of every
+ * list (also a fling running on by itself after the finger left).
+ */
+object ScrollActivity {
+    @Volatile private var last = 0L
+
+    val connection = object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+        override fun onPostScroll(
+            consumed: androidx.compose.ui.geometry.Offset,
+            available: androidx.compose.ui.geometry.Offset,
+            source: androidx.compose.ui.input.nestedscroll.NestedScrollSource,
+        ): androidx.compose.ui.geometry.Offset {
+            last = android.os.SystemClock.uptimeMillis()
+            return androidx.compose.ui.geometry.Offset.Zero
+        }
+
+        override suspend fun onPostFling(consumed: androidx.compose.ui.unit.Velocity, available: androidx.compose.ui.unit.Velocity): androidx.compose.ui.unit.Velocity {
+            last = android.os.SystemClock.uptimeMillis()
+            return androidx.compose.ui.unit.Velocity.Zero
+        }
+    }
+
+    /** Nothing has scrolled for [ms]. */
+    fun quietFor(ms: Long) = android.os.SystemClock.uptimeMillis() - last >= ms
+}
+
+/**
+ * [target] taken on only while nothing scrolls: a change of the theme's colours composes the whole
+ * screen again (a theme reaches every element), which in the middle of a scroll was a jerk. The
+ * colours change a moment after the list stops (the backgrounds then glide, see
+ * [rememberGlidingColor]); the frosted cover behind changes at once, it costs nothing.
+ */
+@Composable
+fun rememberSettledScheme(target: ColorScheme?): ColorScheme? {
+    val shown = remember { mutableStateOf(target) }
+    LaunchedEffect(target) {
+        val asked = android.os.SystemClock.uptimeMillis()
+        while (!ScrollActivity.quietFor(SETTLE_MS)) kotlinx.coroutines.delay(SETTLE_MS / 3)
+        if (shown.value !== target && app.malachite.player.data.FrameWatch.isOn) {
+            app.malachite.player.data.AppLog.i("theme", "цвета темы сменены" + (if (target == null) " на цвета из настроек" else " на цвета обложки") +
+                "; ждали, пока список остановится, ${android.os.SystemClock.uptimeMillis() - asked} мс")
+        }
+        shown.value = target
+    }
+    return shown.value
+}
+
+private const val SETTLE_MS = 300L

@@ -67,6 +67,7 @@ class PlaybackService : MediaSessionService() {
         return -1
     }
 
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
         graph.openLibraryIfPossible()
@@ -88,8 +89,21 @@ class PlaybackService : MediaSessionService() {
             .setSessionActivity(activityIntent)
             .setCallback(SessionCallback())
             .setCustomLayout(modeButtons())
+            .setBitmapLoader(artworkLoader())
             .build()
         setMediaNotificationProvider(CoverColorNotificationProvider(this) { graph.settings.value.notificationCoverColors })
+        // the detailed log: what the player did, one line for each batch of its events
+        player.addListener(object : Player.Listener {
+            override fun onEvents(p: Player, events: Player.Events) {
+                if (!app.malachite.player.data.FrameWatch.isOn) return
+                val names = (0 until events.size()).joinToString(", ") { eventName(events.get(it)) }
+                app.malachite.player.data.AppLog.i(
+                    "player",
+                    "события: $names; песня ${p.currentMediaItemIndex + 1} из ${p.mediaItemCount} «${p.mediaMetadata.title ?: ""}», " +
+                        (if (p.isPlaying) "играет" else "не играет") + ", состояние ${p.playbackState}",
+                )
+            }
+        })
 
         // switching "equal loudness" on or off applies at once, not from the next song
         levelWatch = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Main).launch {
@@ -308,6 +322,9 @@ class PlaybackService : MediaSessionService() {
      */
     @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     private fun buildPlayer(): ExoPlayer = ExoPlayer.Builder(this, sounding())
+        // the standard bandwidth meter asks the phone's mobile network for its country at once,
+        // a third of a second of the main thread at every start; songs here are files
+        .setBandwidthMeter(QuietBandwidthMeter)
         // songs from the internet that were heard are kept for playing without it (files of the main folder are read as they are)
         .setMediaSourceFactory(androidx.media3.exoplayer.source.DefaultMediaSourceFactory(OnlineCache.dataSourceFactory(this)))
         .setAudioAttributes(
@@ -417,10 +434,22 @@ class PlaybackService : MediaSessionService() {
             val result = MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                 .setAvailableSessionCommands(commands)
                 .setCustomLayout(modeButtons())
-            // Any app may connect. One that is neither this app nor trusted by Android (the system,
-            // the notification and lock screen, a watch's notification listener) can steer the
-            // playback and see the song playing, but not read the whole queue or change it.
-            if (!controller.isTrusted && controller.packageName != packageName) {
+            if (session.isMediaNotificationController(controller)) {
+                // The notification's own controller sets what Android's media session (the panel
+                // in the shade, the lock screen, Bluetooth) is told. Not the queue: with it, every
+                // change of the queue – also each song whose length became known – sent all the
+                // songs (a thousand and more) to the system from the main thread, up to a second
+                // each time, and the app stood still while songs were switched. The notification
+                // itself still sees the song playing, and its buttons come from the player.
+                result.setAvailablePlayerCommands(
+                    MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS.buildUpon()
+                        .remove(Player.COMMAND_GET_TIMELINE)
+                        .build(),
+                )
+            } else if (!controller.isTrusted && controller.packageName != packageName) {
+                // Any app may connect. One that is neither this app nor trusted by Android (the
+                // system, the notification and lock screen, a watch's notification listener) can
+                // steer the playback and see the song playing, but not read the whole queue or change it.
                 result.setAvailablePlayerCommands(
                     MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS.buildUpon()
                         .removeAll(Player.COMMAND_GET_TIMELINE, Player.COMMAND_SET_MEDIA_ITEM, Player.COMMAND_CHANGE_MEDIA_ITEMS)
@@ -564,7 +593,29 @@ class PlaybackService : MediaSessionService() {
         return buildItem(t, Uri.fromFile(f))
     }
 
+    /**
+     * Pictures for Android's media session and the notification, at most 512 px on a side, read
+     * on a thread of their own. The cover embedded in a file (often 1500–3000 px) went to the
+     * system as it was: Android scaled it down and copied it on the main thread, up to half a
+     * second at each song.
+     */
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+    private fun artworkLoader(): androidx.media3.common.util.BitmapLoader =
+        androidx.media3.session.CacheBitmapLoader(TimedBitmapLoader(
+            androidx.media3.datasource.DataSourceBitmapLoader(
+                com.google.common.util.concurrent.MoreExecutors.listeningDecorator(
+                    java.util.concurrent.Executors.newSingleThreadExecutor { r ->
+                        Thread(r, "malachite-artwork").apply { isDaemon = true; priority = Thread.NORM_PRIORITY - 1 }
+                    },
+                ),
+                androidx.media3.datasource.DefaultDataSource.Factory(this),
+                null,
+                ARTWORK_MAX_PX,
+            ),
+        ))
+
     companion object {
+        private const val ARTWORK_MAX_PX = 512
         private const val MAX_FAILURES_IN_A_ROW = 12
         private const val BUFFER_TO_START_MS = 500
         private const val BUFFER_AFTER_STALL_MS = 2000
@@ -698,10 +749,24 @@ private class CoverColorNotificationProvider(
         actionFactory: MediaNotification.ActionFactory,
         onNotificationChangedCallback: MediaNotification.Provider.Callback,
     ): MediaNotification {
+        val started = android.os.SystemClock.uptimeMillis()
         val n = base.createNotification(mediaSession, customLayout, actionFactory) { updated ->
-            onNotificationChangedCallback.onNotificationChanged(tinted(updated))
+            val again = android.os.SystemClock.uptimeMillis()
+            val t = tinted(updated)
+            timing("уведомление с обложкой", again, t)
+            onNotificationChangedCallback.onNotificationChanged(t)
         }
-        return tinted(n)
+        return tinted(n).also { timing("уведомление", started, it) }
+    }
+
+    /** The detailed log: how long the notification took to make, and the picture in it. */
+    private fun timing(what: String, started: Long, n: MediaNotification) {
+        if (!app.malachite.player.data.FrameWatch.isOn) return
+        val icon = runCatching { (n.notification.getLargeIcon()?.loadDrawable(context) as? BitmapDrawable)?.bitmap }.getOrNull()
+        app.malachite.player.data.AppLog.i(
+            "notify",
+            "$what собрано за ${android.os.SystemClock.uptimeMillis() - started} мс" + (icon?.let { ", картинка ${it.width}×${it.height}" } ?: ", без картинки"),
+        )
     }
 
     override fun handleCustomCommand(session: MediaSession, action: String, extras: Bundle): Boolean =
@@ -731,6 +796,65 @@ private class CoverColorNotificationProvider(
         lastColor = c.takeIf { it != 0 }
         return lastColor
     }
+}
+
+/** A player event by name, for the detailed log. */
+private fun eventName(e: Int): String = when (e) {
+    Player.EVENT_TIMELINE_CHANGED -> "очередь"
+    Player.EVENT_MEDIA_ITEM_TRANSITION -> "другая песня"
+    Player.EVENT_TRACKS_CHANGED -> "дорожки"
+    Player.EVENT_IS_LOADING_CHANGED -> "загрузка"
+    Player.EVENT_PLAYBACK_STATE_CHANGED -> "состояние"
+    Player.EVENT_PLAY_WHEN_READY_CHANGED -> "играть/пауза"
+    Player.EVENT_IS_PLAYING_CHANGED -> "играет?"
+    Player.EVENT_REPEAT_MODE_CHANGED -> "повтор"
+    Player.EVENT_SHUFFLE_MODE_ENABLED_CHANGED -> "перемешать"
+    Player.EVENT_PLAYER_ERROR -> "ошибка"
+    Player.EVENT_POSITION_DISCONTINUITY -> "скачок позиции"
+    Player.EVENT_PLAYBACK_PARAMETERS_CHANGED -> "скорость"
+    Player.EVENT_AVAILABLE_COMMANDS_CHANGED -> "команды"
+    Player.EVENT_MEDIA_METADATA_CHANGED -> "теги"
+    Player.EVENT_PLAYLIST_METADATA_CHANGED -> "теги очереди"
+    Player.EVENT_AUDIO_ATTRIBUTES_CHANGED -> "звук"
+    Player.EVENT_VOLUME_CHANGED -> "громкость"
+    else -> "#$e"
+}
+
+/** The artwork loader, telling the detailed log how long each picture took and how big it came out. */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+private class TimedBitmapLoader(private val inner: androidx.media3.common.util.BitmapLoader) : androidx.media3.common.util.BitmapLoader {
+    override fun supportsMimeType(mimeType: String): Boolean = inner.supportsMimeType(mimeType)
+
+    override fun decodeBitmap(data: ByteArray): ListenableFuture<Bitmap> = timed("из файла, ${data.size / 1024} КБ") { inner.decodeBitmap(data) }
+
+    override fun loadBitmap(uri: Uri): ListenableFuture<Bitmap> = timed("по адресу") { inner.loadBitmap(uri) }
+
+    private fun timed(what: String, start: () -> ListenableFuture<Bitmap>): ListenableFuture<Bitmap> {
+        val started = android.os.SystemClock.uptimeMillis()
+        val future = start()
+        if (app.malachite.player.data.FrameWatch.isOn) {
+            future.addListener({
+                val b = runCatching { Futures.getDone(future) }.getOrNull()
+                app.malachite.player.data.AppLog.i(
+                    "artwork",
+                    "обложка $what: ${b?.let { "${it.width}×${it.height}" } ?: "не прочиталась"} за ${android.os.SystemClock.uptimeMillis() - started} мс",
+                )
+            }, com.google.common.util.concurrent.MoreExecutors.directExecutor())
+        }
+        return future
+    }
+}
+
+/**
+ * A bandwidth meter that measures nothing: the songs are files (or one stream at a time), and the
+ * standard one asked the mobile network for its country on the main thread when the player was made.
+ */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+internal object QuietBandwidthMeter : androidx.media3.exoplayer.upstream.BandwidthMeter {
+    override fun getBitrateEstimate(): Long = 1_000_000L
+    override fun getTransferListener(): androidx.media3.datasource.TransferListener? = null
+    override fun addEventListener(eventHandler: Handler, eventListener: androidx.media3.exoplayer.upstream.BandwidthMeter.EventListener) = Unit
+    override fun removeEventListener(eventListener: androidx.media3.exoplayer.upstream.BandwidthMeter.EventListener) = Unit
 }
 
 /** Songs that failed to play in this run: "Повреждённые файлы" in healing lists them for a look. */

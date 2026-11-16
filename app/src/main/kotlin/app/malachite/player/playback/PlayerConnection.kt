@@ -182,10 +182,15 @@ class PlayerConnection(
     fun playPaths(paths: List<String>, start: Int = 0, shuffle: Boolean = false) =
         play(paths.mapNotNull { library.track(it) }, start, shuffle)
 
-    fun toggle() = withController { it.playPause() }
-    fun next() = withController { it.seekToNextMediaItem() }
-    fun previous() = withController { c -> if (c.currentPosition > 3000) c.seekTo(0) else c.seekToPreviousMediaItem() }
-    fun seekTo(ms: Long) = withController { it.seekTo(ms.coerceAtLeast(0)) }
+    fun toggle() = withController { mark("пауза / игра"); it.playPause() }
+    fun next() = withController { mark("следующая песня"); it.seekToNextMediaItem() }
+    fun previous() = withController { c -> mark("предыдущая песня"); if (c.currentPosition > 3000) c.seekTo(0) else c.seekToPreviousMediaItem() }
+    fun seekTo(ms: Long) = withController { mark("перемотка на ${ms / 1000} с"); it.seekTo(ms.coerceAtLeast(0)) }
+
+    /** The detailed log: what the user asked the player for, to find it among the other lines. */
+    private fun mark(what: String) {
+        if (app.malachite.player.data.FrameWatch.isOn) app.malachite.player.data.AppLog.i("player", "команда: $what")
+    }
     fun skipTo(index: Int) = withController { it.seekTo(index, 0) }
     fun setShuffle(on: Boolean) = withController { it.shuffleModeEnabled = on }
     fun cycleRepeat() = withController { c ->

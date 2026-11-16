@@ -27,7 +27,8 @@ object AppLog {
     private const val LOG_NAME = "Malachite-log.txt"
     private const val OLD_NAME = "Malachite-log.old.txt"
     private const val CRASH_NAME = "last-crash.txt"
-    private const val MAX_BYTES = 3_000_000L
+    /** The detailed log writes a lot (stacks of every slow piece of work): room for a long session. */
+    private const val MAX_BYTES = 8_000_000L
 
     @Volatile var enabled = false
         private set

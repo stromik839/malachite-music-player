@@ -52,6 +52,7 @@ import app.malachite.player.data.CoverLoader
 import app.malachite.player.data.coverKey
 import app.malachite.player.data.Frost
 import app.malachite.player.ui.theme.LastLook
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -76,17 +77,22 @@ fun rememberCoverState(track: TrackInfo?, sizePx: Int = 300): CoverState {
     // new title was already shown. Not ready in this size: the same cover in another size that is
     // in memory stands in, and "no cover" is only said when it is known.
     val state = remember(track?.path, track?.lastModified, revision) {
-        val exact = onlineCover?.let { CoverLoader.cachedUrl(it, sizePx) } ?: file?.let { CoverLoader.cached(it, sizePx) }
+        // the file's time from the library's index: no call to the storage while a list scrolls
+        val modified = track?.lastModified ?: 0L
+        fun exactOf(f: File) = if (modified > 0) CoverLoader.cached(f, modified, sizePx) else CoverLoader.cached(f, sizePx)
+        fun missingOf(f: File) = if (modified > 0) CoverLoader.isKnownMissing(f, modified) else CoverLoader.isKnownMissing(f)
+        fun anyOf(f: File) = if (modified > 0) CoverLoader.cachedAny(f, modified, sizePx) else CoverLoader.cachedAny(f, sizePx)
+        val exact = onlineCover?.let { CoverLoader.cachedUrl(it, sizePx) } ?: file?.let(::exactOf)
         val none = when {
             track == null -> true
             onlineCover != null -> CoverLoader.isKnownMissingUrl(onlineCover, sizePx)
-            else -> file == null || CoverLoader.isKnownMissing(file)
+            else -> file == null || missingOf(file)
         }
         mutableStateOf(
             when {
                 exact != null -> CoverState(exact, true)
                 none -> CoverState(null, true)
-                else -> CoverState(onlineCover?.let { CoverLoader.cachedUrlAny(it, sizePx) } ?: file?.let { CoverLoader.cachedAny(it, sizePx) }, false)
+                else -> CoverState(onlineCover?.let { CoverLoader.cachedUrlAny(it, sizePx) } ?: file?.let(::anyOf), false)
             },
         )
     }

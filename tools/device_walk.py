@@ -400,6 +400,16 @@ else:
         if not offered:
             print(f"::warning::Android API {API}: on the last song the system does not offer «next»")
             missing.append("next on the last song")
+        # Android's media session must not carry the whole queue: sending it on every change of
+        # the queue (a thousand songs and more) held the main thread up to a second at each song
+        dump_ms = adb("shell", "dumpsys", "media_session", timeout=20)
+        at_pkg = dump_ms.find("package=" + PKG)
+        qm = re.search(r"queueTitle=[^\n]*?size=(\d+)", dump_ms[at_pkg:] if at_pkg >= 0 else dump_ms)
+        qsize = int(qm.group(1)) if qm else None
+        print(f"  the queue Android's media session holds: {qsize if qsize is not None else 'not shown by this Android'}")
+        if qsize is not None and qsize > 1:
+            print(f"::warning::Android API {API}: Android's media session holds the whole queue ({qsize} songs)")
+            missing.append("no queue in the system's media session")
         tap(nxt)
         time.sleep(2)
         acts, now = media_info()

@@ -89,13 +89,24 @@ object CoverLoader {
 
     private val missing = LruCache<String, Boolean>(2000)
 
-    fun key(file: File, size: Int) = "${file.absolutePath}|${file.lastModified()}|$size"
+    fun key(file: File, size: Int) = key(file, file.lastModified(), size)
+
+    /**
+     * The key with the file's time already known ([modified], from the library's index): asking the
+     * file for it is a call to the storage (slow through Android's storage layer), and the screen
+     * did it three times for every cover of a list while it scrolled.
+     */
+    fun key(file: File, modified: Long, size: Int) = "${file.absolutePath}|$modified|$size"
 
     fun cached(file: File, size: Int): Bitmap? = store(size).get(key(file, size))
 
+    fun cached(file: File, modified: Long, size: Int): Bitmap? = store(size).get(key(file, modified, size))
+
     /** The cover of [file] in [size] when it is in memory, otherwise in the nearest size that is (bigger ones first). */
-    fun cachedAny(file: File, size: Int): Bitmap? {
-        val base = "${file.absolutePath}|${file.lastModified()}|"
+    fun cachedAny(file: File, size: Int): Bitmap? = cachedAny(file, file.lastModified(), size)
+
+    fun cachedAny(file: File, modified: Long, size: Int): Bitmap? {
+        val base = "${file.absolutePath}|$modified|"
         return nearest(size) { s -> store(s).get(base + s) }
     }
 
@@ -108,7 +119,9 @@ object CoverLoader {
         return null
     }
 
-    fun isKnownMissing(file: File) = missing.get("${file.absolutePath}|${file.lastModified()}") == true
+    fun isKnownMissing(file: File) = isKnownMissing(file, file.lastModified())
+
+    fun isKnownMissing(file: File, modified: Long) = missing.get("${file.absolutePath}|$modified") == true
 
     /** Raw embedded picture bytes (Android's own reader first, our tag reader as fallback). */
     fun embeddedBytes(file: File): ByteArray? {

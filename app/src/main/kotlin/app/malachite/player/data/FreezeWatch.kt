@@ -14,7 +14,7 @@ object FreezeWatch {
     /** A stall shorter than this is not noted (a frame is 16 ms; a person notices ~0.3 s); half of it in the detailed log. */
     private val STUCK_MS get() = if (details) 150L else 300L
     private const val PAUSE_MS = 150L
-    private val MAX_NOTES get() = if (details) 120 else 40
+    private val MAX_NOTES get() = if (details) 1000 else 100
     @Volatile private var details = false
 
     private val main = Handler(Looper.getMainLooper())

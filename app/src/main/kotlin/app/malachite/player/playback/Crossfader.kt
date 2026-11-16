@@ -129,6 +129,7 @@ internal class Crossfader(
     private fun prepareTail(item: MediaItem, at: Long, key: String) {
         // the tail sounds through the same mixer knobs as the main player (no visualizer)
         val t = tail ?: ExoPlayer.Builder(context, Mixer.renderers(context, withSpectrum = false))
+            .setBandwidthMeter(QuietBandwidthMeter)
             // the main player has the audio focus; the tail only finishes what it was playing
             .setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), false)
             .setUsePlatformDiagnostics(false)

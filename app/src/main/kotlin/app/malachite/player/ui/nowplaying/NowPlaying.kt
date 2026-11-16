@@ -144,7 +144,9 @@ fun NowPlayingScreen() {
     // the colours were worked out ahead (CoverPrefetch), never here while the screen slides in:
     // that work, the cover read only now and the blur together held the opening up for a fifth of
     // a second, and the screen showed "no cover" in the settings' colours in the meantime
-    val scheme = rememberCoverScheme(t, settings.shade(dark), settings.coverColorsInPlayer || settings.coverColorsEverywhere)
+    val scheme = app.malachite.player.ui.theme.rememberSettledScheme(
+        rememberCoverScheme(t, settings.shade(dark), settings.coverColorsInPlayer || settings.coverColorsEverywhere),
+    )
     MalachiteTheme(settings, scheme) {
         // the background glides to the next song's colour while drawing; nothing is composed again
         val background = rememberGlidingColor(MaterialTheme.colorScheme.background, settings.animations)

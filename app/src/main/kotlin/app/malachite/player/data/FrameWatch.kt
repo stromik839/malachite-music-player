@@ -17,11 +17,18 @@ import android.view.Window
  */
 object FrameWatch {
     private const val REPORT_EVERY_MS = 6_000L
-    private const val SLOW_MESSAGE_MS = 64L
-    private const val MAX_SLOW_MESSAGES = 150
+    /** A piece of main-thread work this long goes into the log (a frame at 90 Hz is 11 ms). */
+    private const val SLOW_MESSAGE_MS = 40L
+    private const val MAX_SLOW_MESSAGES = 3000
     private const val MEMORY_EVERY_MS = 60_000L
+    /** While a piece of work runs longer than this, the main thread's stack is read again and again. */
+    private const val SAMPLE_AFTER_MS = 12L
+    private const val SAMPLE_EVERY_MS = 6L
 
     @Volatile private var on = false
+
+    /** The detailed log is on: other parts add their own details (player events, timings). */
+    val isOn: Boolean get() = on
     private var window: Window? = null
     private var thread: HandlerThread? = null
     private var handler: Handler? = null
@@ -40,7 +47,7 @@ object FrameWatch {
         on = value
         val w = window
         if (value) {
-            AppLog.i("frames", "Подробный журнал включён")
+            AppLog.i("frames", "Подробный журнал включён: " + deviceLine())
             if (w != null) start(w)
             watchMainThread(true)
         } else {
@@ -73,6 +80,10 @@ object FrameWatch {
         var worstNs = 0L
         var worst: LongArray? = null
         val intervals = ArrayList<Long>()
+        var over50 = 0
+        var over100 = 0
+        /** The slowest frames of the period: [total, input, animation, layout, draw, sync+issue+swap, gpu, unknown delay]. */
+        val slowest = ArrayList<LongArray>()
     }
 
     private var period = Period()
@@ -125,6 +136,24 @@ object FrameWatch {
             }
         }
         p.lastVsync = vsync
+        if (total > 50_000_000L) p.over50++
+        if (total > 100_000_000L) p.over100++
+        if (total > budget * 2) {
+            val parts = longArrayOf(
+                total,
+                m.getMetric(FrameMetrics.INPUT_HANDLING_DURATION),
+                m.getMetric(FrameMetrics.ANIMATION_DURATION),
+                m.getMetric(FrameMetrics.LAYOUT_MEASURE_DURATION),
+                m.getMetric(FrameMetrics.DRAW_DURATION),
+                m.getMetric(FrameMetrics.SYNC_DURATION) + m.getMetric(FrameMetrics.COMMAND_ISSUE_DURATION) + m.getMetric(FrameMetrics.SWAP_BUFFERS_DURATION),
+                if (Build.VERSION.SDK_INT >= 31) m.getMetric(FrameMetrics.GPU_DURATION) else -1L,
+                m.getMetric(FrameMetrics.UNKNOWN_DELAY_DURATION),
+                vsync,
+            )
+            p.slowest += parts
+            p.slowest.sortByDescending { it[0] }
+            if (p.slowest.size > 5) p.slowest.removeAt(p.slowest.size - 1)
+        }
         if (total > p.worstNs) {
             p.worstNs = total
             p.worst = longArrayOf(
@@ -164,12 +193,20 @@ object FrameWatch {
                 "ввод ${ms(w[0])}", "анимация ${ms(w[1])}", "разметка ${ms(w[2])}", "рисование ${ms(w[3])}",
                 "отправка ${ms(w[4])}", if (w[5] >= 0) "GPU ${ms(w[5])}" else null, "ожидание ${ms(w[6])}",
             ).joinToString(", ")
+            val clock = java.text.SimpleDateFormat("HH:mm:ss.SSS", java.util.Locale.US)
+            val slow = if (p.slowest.isEmpty()) "" else "\n  самые долгие кадры:" + p.slowest.joinToString("") { f ->
+                // the frame's own moment on the log's clock, to be found among the other lines
+                val wall = System.currentTimeMillis() - (System.nanoTime() - f[8]) / 1_000_000
+                "\n    ${clock.format(java.util.Date(wall))}: ${ms(f[0])} мс — " +
+                    "ввод ${ms(f[1])}, анимация ${ms(f[2])}, разметка ${ms(f[3])}, рисование ${ms(f[4])}, отправка ${ms(f[5])}" +
+                    (if (f[6] >= 0) ", GPU ${ms(f[6])}" else "") + ", ожидание ${ms(f[7])}"
+            }
             AppLog.i(
                 "frames",
                 "«$screen»: ${p.frames} кадров за ${"%.1f".format(secs)} с; в движении ${"%.0f".format(fps)} к/с" +
                     (if (hz > 0) ", кадр обычно через ${"%.1f".format(typical / 1e6)} мс (≈${"%.0f".format(hz)} Гц)" else "") +
-                    "; опоздали ${p.late} (${p.late * 100 / p.frames}%), сильно ${p.veryLate}; худший ${ms(p.worstNs)} мс" +
-                    (if (parts.isNotEmpty()) " ($parts)" else ""),
+                    "; опоздали ${p.late} (${p.late * 100 / p.frames}%), сильно ${p.veryLate}, дольше 50 мс ${p.over50}, дольше 100 мс ${p.over100}" +
+                    "; худший ${ms(p.worstNs)} мс" + (if (parts.isNotEmpty()) " ($parts)" else "") + slow,
             )
         }
         if (now - lastMemory >= MEMORY_EVERY_MS) {
@@ -204,32 +241,137 @@ object FrameWatch {
     // ------------------------------------------------------------------ the main thread
 
     private var slowMessages = 0
-    private var dispatchStart = 0L
-    private var dispatchWhat = ""
+    /** The main thread's piece of work now: its number, when it started (0: none), what it is. */
+    @Volatile private var taskSeq = 0L
+    @Volatile private var taskStart = 0L
+    @Volatile private var taskWhat = ""
+    private class Ended(val seq: Long, val took: Long, val what: String, val at: Long)
+    private val ended = java.util.concurrent.ConcurrentLinkedQueue<Ended>()
+    /** Stacks read while a piece of work ran long, by its number. */
+    private val samples = java.util.concurrent.ConcurrentHashMap<Long, MutableList<Array<StackTraceElement>>>()
+    private var sampler: Thread? = null
 
     /**
-     * Each piece of work of the main thread is timed; the long ones go into the log with what
-     * they were ("Choreographer" is drawing a frame, "MediaSession" the notification, …).
+     * Each piece of work of the main thread is timed. While one runs long, another thread reads the
+     * main thread's stack every few milliseconds; when it ends, the log gets how long it took, what
+     * it was ("Choreographer" is a frame, "MediaSession" the notification…) and where the time went:
+     * the stacks seen most often, with how many times each was seen. One stack read at a random
+     * moment (as before) often showed only where the work happened to be, not what took the time.
      */
+    @Synchronized
     private fun watchMainThread(enable: Boolean) {
         val looper = Looper.getMainLooper()
-        if (!enable) { looper.setMessageLogging(null); return }
+        if (!enable) {
+            looper.setMessageLogging(null)
+            sampler?.interrupt()
+            sampler = null
+            return
+        }
         slowMessages = 0
         looper.setMessageLogging { line ->
             if (line.startsWith(">")) {
-                dispatchStart = SystemClock.uptimeMillis()
-                dispatchWhat = line
-            } else if (line.startsWith("<") && dispatchStart > 0) {
-                val took = SystemClock.uptimeMillis() - dispatchStart
-                dispatchStart = 0
-                if (took >= SLOW_MESSAGE_MS && slowMessages < MAX_SLOW_MESSAGES) {
-                    slowMessages++
-                    // ">>>>> Dispatching to Handler (android.view.Choreographer$FrameHandler) {…} android.view.Choreographer$FrameDisplayEventReceiver@…: 0"
-                    val what = dispatchWhat.substringAfter("Handler (", dispatchWhat).replace(ADDRESS, "").take(200)
-                    AppLog.i("main", "главный поток занят $took мс: $what")
-                    if (slowMessages == MAX_SLOW_MESSAGES) AppLog.i("main", "дальше долгие задачи не записываются до следующего запуска")
-                }
+                taskSeq++
+                taskWhat = line
+                taskStart = SystemClock.uptimeMillis()
+            } else if (line.startsWith("<") && taskStart > 0) {
+                val now = SystemClock.uptimeMillis()
+                val took = now - taskStart
+                taskStart = 0
+                if (took >= SLOW_MESSAGE_MS) ended.offer(Ended(taskSeq, took, taskWhat, now))
+            }
+        }
+        if (sampler == null) {
+            sampler = Thread(::sample, "malachite-main-sampler").apply {
+                isDaemon = true
+                priority = Thread.MAX_PRIORITY - 1
+                start()
             }
         }
     }
+
+    private fun sample() {
+        val me = Thread.currentThread()
+        val main = Looper.getMainLooper().thread
+        try {
+            while (!me.isInterrupted) {
+                val start = taskStart
+                val seq = taskSeq
+                if (start > 0 && SystemClock.uptimeMillis() - start >= SAMPLE_AFTER_MS) {
+                    val stack = main.stackTrace
+                    if (taskSeq == seq && taskStart == start) {
+                        val list = samples.getOrPut(seq) { ArrayList() }
+                        if (list.size < 400) list += stack
+                    }
+                    Thread.sleep(SAMPLE_EVERY_MS)
+                } else {
+                    Thread.sleep(3)
+                }
+                while (true) {
+                    val e = ended.poll() ?: break
+                    val got = samples.remove(e.seq)
+                    if (slowMessages < MAX_SLOW_MESSAGES) {
+                        slowMessages++
+                        runCatching { reportTask(e, got.orEmpty()) }
+                        if (slowMessages == MAX_SLOW_MESSAGES) AppLog.i("main", "записано $MAX_SLOW_MESSAGES долгих задач, дальше до следующего запуска не записываются")
+                    }
+                }
+                // stacks of work that ended quickly enough are not needed
+                if (samples.size > 4) samples.keys.filter { it < taskSeq - 2 }.forEach { samples.remove(it) }
+            }
+        } catch (_: InterruptedException) {
+        }
+    }
+
+    /** Frames that say nothing about what the work was. */
+    private fun boring(f: StackTraceElement): Boolean {
+        val c = f.className
+        return c.startsWith("android.os.Looper") || c.startsWith("android.app.ActivityThread") ||
+            c.startsWith("com.android.internal.os.") || c.startsWith("java.lang.reflect.Method")
+    }
+
+    private fun reportTask(e: Ended, stacks: List<Array<StackTraceElement>>) {
+        // ">>>>> Dispatching to Handler (android.view.Choreographer$FrameHandler) {…} android.view.Choreographer$FrameDisplayEventReceiver@…: 0"
+        val what = e.what.substringAfter("Handler (", e.what).replace(ADDRESS, "").take(200)
+        val sb = StringBuilder("главный поток занят ${e.took} мс: $what")
+        if (stacks.isEmpty()) {
+            AppLog.i("main", sb.toString())
+            return
+        }
+        sb.append("; снимков стека ${stacks.size} (каждые $SAMPLE_EVERY_MS мс)")
+        // the same place in the code: the top frames, the boring bottom cut off
+        val trimmed = stacks.map { st -> st.takeWhile { !boring(it) }.ifEmpty { st.toList() } }
+        val groups = trimmed.groupBy { st -> st.take(10).joinToString("|") { "${it.className}.${it.methodName}:${it.lineNumber}" } }
+            .values.sortedByDescending { it.size }
+        for (g in groups.take(4)) {
+            val pct = g.size * 100 / stacks.size
+            sb.append("\n  ${g.size}× ($pct%):")
+            for (f in g.first().take(28)) sb.append("\n    at ").append(f)
+        }
+        if (groups.size > 4) sb.append("\n  …и ещё ${groups.size - 4} мест по ${groups.drop(4).sumOf { it.size }} снимков")
+        // which of the app's own code was on the stack, and how often (anywhere in it)
+        val own = HashMap<String, Int>()
+        for (st in trimmed) {
+            st.filter { it.className.startsWith("app.malachite") }
+                .map { it.className.substringAfterLast('.').substringBefore('$') + "." + it.methodName }
+                .distinct().forEach { own[it] = (own[it] ?: 0) + 1 }
+        }
+        if (own.isNotEmpty()) {
+            sb.append("\n  свой код в снимках: ")
+            sb.append(own.entries.sortedByDescending { it.value }.take(12).joinToString(", ") { "${it.key} ×${it.value}" })
+        }
+        AppLog.i("main", sb.toString())
+    }
+
+    /** The phone and its state, at the start of the detailed log. */
+    private fun deviceLine(): String = runCatching {
+        val ctx = app.malachite.player.MalachiteApp.graph.context
+        val pm = ctx.getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager
+        val am = ctx.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        val mem = android.app.ActivityManager.MemoryInfo().also { am.getMemoryInfo(it) }
+        val thermal = if (Build.VERSION.SDK_INT >= 29) ", нагрев ${pm.currentThermalStatus} (0 — норма)" else ""
+        "${Build.MANUFACTURER} ${Build.MODEL} (${Build.DEVICE}), Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}), " +
+            "${Build.SUPPORTED_ABIS.firstOrNull()}, ядер ${Runtime.getRuntime().availableProcessors()}, " +
+            "память ${mem.availMem / 1_048_576} свободно из ${mem.totalMem / 1_048_576} МБ${if (mem.lowMemory) " (мало!)" else ""}, " +
+            "экономия энергии ${if (pm.isPowerSaveMode) "включена" else "выключена"}$thermal"
+    }.getOrDefault("")
 }

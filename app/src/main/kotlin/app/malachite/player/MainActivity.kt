@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.toArgb
 import app.malachite.player.data.Storage
 import app.malachite.player.ui.LocalNavigator
@@ -74,9 +75,12 @@ class MainActivity : ComponentActivity() {
             val playingTrack = playingPath?.let { graph.library.track(it) }
             // until the player says which song it has, the colours shown last (not the settings' green);
             // not while the data is locked: the screen asking for the password stays in the settings' colours
-            val coverColours = app.malachite.player.ui.theme.rememberCoverScheme(
-                playingTrack, settings.shade(androidx.compose.foundation.isSystemInDarkTheme()), settings.coverColorsEverywhere,
-                waiting = !playerReady && lockedRoot == null,
+            // and they change only while no list is moving (see rememberSettledScheme)
+            val coverColours = app.malachite.player.ui.theme.rememberSettledScheme(
+                app.malachite.player.ui.theme.rememberCoverScheme(
+                    playingTrack, settings.shade(androidx.compose.foundation.isSystemInDarkTheme()), settings.coverColorsEverywhere,
+                    waiting = !playerReady && lockedRoot == null,
+                ),
             )
             MalachiteTheme(settings, coverColours) {
                 // the window behind the app (seen during transitions, behind the keyboard) follows the theme too
@@ -102,7 +106,8 @@ class MainActivity : ComponentActivity() {
                         color = androidx.compose.ui.graphics.Color.Transparent,
                         contentColor = MaterialTheme.colorScheme.onBackground,
                     ) {
-                    Box(Modifier.fillMaxSize()) {
+                    // every scroll of every list passes here: the theme waits for the lists to stop
+                    Box(Modifier.fillMaxSize().nestedScroll(app.malachite.player.ui.theme.ScrollActivity.connection)) {
                         when {
                             // before anything else: what this app is, who made it, and the agreement
                             settings.termsAccepted < app.malachite.player.ui.screens.Terms.VERSION -> app.malachite.player.ui.screens.FirstRunFlow()

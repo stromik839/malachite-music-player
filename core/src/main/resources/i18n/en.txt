@@ -5091,3 +5091,15 @@ Covers in FLAC and OGG
 
 «Найти и вшить в файл», исцеление обложек и перевод песни в FLAC теперь вшивают обложку и в файлы FLAC и OGG. Раньше на телефоне это не получалось из-за ошибки в библиотеке тегов.
 "Find and embed into the file", healing of covers and converting a song to FLAC now embed the cover into FLAC and OGG files too. On a phone this used to fail because of a fault in the tag library.
+
+Без рывков при смене песен
+No jerks when switching songs
+
+Песни переключались с остановками до секунды: плеер каждый раз отправлял Android всю очередь и обложку в полном размере, и всё это шло через главный поток. Теперь система получает только играющую песню и обложку до 512 точек, а цвета темы меняются, когда список не листается.
+Switching songs stalled for up to a second: each time the player sent Android the whole queue and the full-size cover, all through the main thread. Now the system gets only the song playing and a cover of at most 512 pixels, and the theme colours change when the list is not being scrolled.
+
+Подробный журнал глубже
+A deeper detailed log
+
+В подробном журнале теперь видно, на что ушло время в каждой долгой задаче: стек снимается каждые 6 мс. Там же события плеера, сборка уведомления, загрузка обложек и смена цветов темы.
+The detailed log now shows where the time went in every long task: the stack is read every 6 ms. It also has the player's events, the building of the notification, the loading of covers and the changes of the theme colours.

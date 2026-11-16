@@ -86,6 +86,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -288,15 +289,20 @@ private fun NowPlayingContent(t: TrackInfo, st: PlayerUiState) {
             }
         }
     }
-    // the best moment: marked by the user, or the chorus found in the synced lyrics
+    // the best moment: marked by the user, or the chorus found in the synced lyrics. Kept for each
+    // song apart: the previous song's chorus used to stay on the new song's bar until the new one was found
     val marked = data.user(t.path).bestMomentMs
-    val chorus by androidx.compose.runtime.produceState<Long?>(null, t.path, data.user(t.path).lyricsId, data.user(t.path).lyricsOffsetMs) {
-        value = if (online != null) null else kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+    val lyricsId = data.user(t.path).lyricsId
+    val lyricsOffset = data.user(t.path).lyricsOffsetMs
+    val chorusState = remember(t.path) { mutableStateOf<Long?>(null) }
+    LaunchedEffect(t.path, lyricsId, lyricsOffset) {
+        chorusState.value = if (online != null) null else kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             runCatching { g.library.loadLyrics(t)?.let { app.malachite.core.lyrics.BestMoment.guess(it) } }.getOrNull()
         }
     }
+    val chorus = chorusState.value
     val seek: @Composable () -> Unit = {
-        SeekBar({ pos.longValue }, st.durationMs, best = marked ?: chorus) { g.player.seekTo(it) }
+        SeekBar(t.path, { pos.longValue }, st.durationMs, best = marked ?: chorus, animate = settings.animations) { g.player.seekTo(it) }
     }
     val transport: @Composable () -> Unit = {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
@@ -435,7 +441,7 @@ private fun CoverArea(t: TrackInfo, onLyrics: () -> Unit) {
 }
 
 @Composable
-private fun SeekBar(position: () -> Long, duration: Long, best: Long? = null, onSeek: (Long) -> Unit) {
+private fun SeekBar(song: String, position: () -> Long, duration: Long, best: Long? = null, animate: Boolean, onSeek: (Long) -> Unit) {
     // where a finger holds the bar (0..1), or -1
     var held by remember { mutableFloatStateOf(-1f) }
     // Where the bar was let go: shown until the player has got there (or a moment has passed).
@@ -450,49 +456,158 @@ private fun SeekBar(position: () -> Long, duration: Long, best: Long? = null, on
         }
         target = -1L
     }
-    val pos = when {
-        held >= 0f -> (held * duration).toLong()
-        target >= 0 -> target
-        else -> position()
+    val durationNow = androidx.compose.runtime.rememberUpdatedState(duration)
+    val positionNow = androidx.compose.runtime.rememberUpdatedState(position)
+    val animateNow = androidx.compose.runtime.rememberUpdatedState(animate)
+    // The place the bar stands for. It is read while drawing, every frame: the bar itself is not
+    // composed again sixty times a second, only the time under it, once a second.
+    val place: () -> Long = {
+        when {
+            held >= 0f -> (held * durationNow.value).toLong()
+            target >= 0 -> target
+            else -> positionNow.value()
+        }
     }
-    val frac = if (duration > 0) (pos.toFloat() / duration).coerceIn(0f, 1f) else 0f
+    val live: () -> Float = { durationNow.value.let { d -> if (d > 0) (place().toFloat() / d).coerceIn(0f, 1f) else 0f } }
+    val seconds by remember { androidx.compose.runtime.derivedStateOf { place() / 1000 } }
+
+    // A jump – the next song, "to the start", a seek from the notification or the headset, a tap on
+    // the bar – is not shown as a jump: the thumb glides there and keeps up with the music meanwhile.
+    // A finger holding the bar always wins at once.
+    val glide = remember { androidx.compose.animation.core.Animatable(1f) }
+    val drawn = remember { SeekGlide(song, if (best != null && duration > 0) song else null) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    fun startGlide(ms: Int = SEEK_GLIDE_MS) {
+        if (!animateNow.value) return
+        drawn.from = drawn.shown
+        // started at once, not at the next turn of the main thread: no frame shows the jump itself
+        scope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+            glide.snapTo(0f)
+            glide.animateTo(1f, androidx.compose.animation.core.tween(ms, easing = androidx.compose.animation.core.FastOutSlowInEasing))
+        }
+    }
+    LaunchedEffect(song) {
+        if (drawn.song != song) {
+            drawn.song = song
+            startGlide()
+        }
+    }
+    LaunchedEffect(Unit) {
+        var last = positionNow.value()
+        androidx.compose.runtime.snapshotFlow { positionNow.value() }.collect { now ->
+            // the position moved by more than the music could have: a seek made elsewhere (or the next song)
+            if (held < 0f && target < 0 && kotlin.math.abs(now - last) > SEEK_JUMP_MS) startGlide()
+            last = now
+        }
+    }
+    val shown: () -> Float = {
+        val l = live()
+        val g = glide.value
+        val f = if (g < 1f && held < 0f) drawn.from + (l - drawn.from) * g else l
+        drawn.shown = f
+        f
+    }
+
+    // The best moment's notch: at another song it fades out where it was and fades in at the new
+    // place (it used to stay a moment on the new song's bar at the old song's place, then jump);
+    // marked anew in the same song, it moves there.
+    val bestFraction = if (best != null && duration > 0) (best.toFloat() / duration).coerceIn(0f, 1f) else -1f
+    val notchAlpha = remember { androidx.compose.animation.core.Animatable(if (bestFraction >= 0f) 1f else 0f) }
+    val notchAt = remember { androidx.compose.animation.core.Animatable(bestFraction.coerceAtLeast(0f)) }
+    LaunchedEffect(song, bestFraction, animate) {
+        val fadeOut = androidx.compose.animation.core.tween<Float>(NOTCH_OUT_MS)
+        val fadeIn = androidx.compose.animation.core.tween<Float>(NOTCH_IN_MS)
+        when {
+            bestFraction < 0f -> if (animate) notchAlpha.animateTo(0f, fadeOut) else notchAlpha.snapTo(0f)
+            drawn.notchSong == song && notchAlpha.value > 0.01f -> if (animate) {
+                kotlinx.coroutines.coroutineScope {
+                    launch { notchAt.animateTo(bestFraction, androidx.compose.animation.core.tween(NOTCH_MOVE_MS, easing = androidx.compose.animation.core.FastOutSlowInEasing)) }
+                    launch { notchAlpha.animateTo(1f, fadeIn) }
+                }
+            } else {
+                notchAt.snapTo(bestFraction)
+                notchAlpha.snapTo(1f)
+            }
+            else -> {
+                if (animate && notchAlpha.value > 0.01f) notchAlpha.animateTo(0f, fadeOut)
+                notchAt.snapTo(bestFraction)
+                drawn.notchSong = song
+                if (animate) notchAlpha.animateTo(1f, fadeIn) else notchAlpha.snapTo(1f)
+            }
+        }
+    }
+
     Column {
         SeekTrack(
-            fraction = frac,
+            fraction = shown,
+            a11yFraction = if (duration > 0) (seconds * 1000f / duration).coerceIn(0f, 1f) else 0f,
             enabled = duration > 0,
+            animate = animate,
             onMove = { held = it },
             onDone = { f ->
                 val to = (f * duration).toLong()
                 target = to
                 held = -1f
+                // a tap far from the thumb: it runs there quickly (let go after a drag, it is there already)
+                startGlide(SEEK_TAP_GLIDE_MS)
                 onSeek(to)
             },
             onCancel = { held = -1f },
-            best = if (best != null && duration > 0) (best.toFloat() / duration).coerceIn(0f, 1f) else -1f,
+            best = bestFraction,
+            notchAt = { notchAt.value },
+            notchAlpha = { notchAlpha.value },
         )
         Row(Modifier.fillMaxWidth()) {
-            Text(formatTime(pos), style = MaterialTheme.typography.labelSmall)
+            Text(formatTime(seconds * 1000), style = MaterialTheme.typography.labelSmall)
             Spacer(Modifier.weight(1f))
             Text(formatTime(duration), style = MaterialTheme.typography.labelSmall)
         }
     }
 }
 
+/** What the seek bar keeps between frames: the song it showed, where the thumb was drawn, where a glide started. */
+private class SeekGlide(var song: String, var notchSong: String?) {
+    var shown = 0f
+    var from = 0f
+}
+
+/** The thumb glides this long after a jump (another song, "to the start"), and this long to a tapped place. */
+private const val SEEK_GLIDE_MS = 420
+private const val SEEK_TAP_GLIDE_MS = 240
+/** A move of the position larger than this between two frames is a jump, not the music playing on. */
+private const val SEEK_JUMP_MS = 1500L
+private const val NOTCH_OUT_MS = 180
+private const val NOTCH_IN_MS = 320
+private const val NOTCH_MOVE_MS = 360
+
 /**
  * The seek bar itself, drawn like the standard one. The standard slider sometimes ended a tap
  * without reporting the new place, and the song then jumped to where the previous seek had gone
  * ("it jumps back"). Here every tap and every drag takes the place under the finger itself, so
  * nothing from an earlier touch can be used. Seen by TalkBack (and by the device checks) as a
- * seek bar that can be set.
+ * seek bar that can be set. Everything that moves ([fraction], the notch, the colours) is read
+ * while drawing.
  */
 @Composable
-private fun SeekTrack(fraction: Float, enabled: Boolean, onMove: (Float) -> Unit, onDone: (Float) -> Unit, onCancel: () -> Unit, best: Float = -1f) {
-    val active = MaterialTheme.colorScheme.primary
+private fun SeekTrack(
+    fraction: () -> Float,
+    a11yFraction: Float,
+    enabled: Boolean,
+    animate: Boolean,
+    onMove: (Float) -> Unit,
+    onDone: (Float) -> Unit,
+    onCancel: () -> Unit,
+    best: Float = -1f,
+    notchAt: () -> Float = { -1f },
+    notchAlpha: () -> Float = { 0f },
+) {
+    // the colours glide to the next song's ones together with the backgrounds
+    val active = rememberGlidingColor(MaterialTheme.colorScheme.primary, animate)
     // the best moment: the accent mixed with the text colour – of the theme, yet unlike the progress
-    val mark = androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onSurface, 0.6f)
+    val mark = rememberGlidingColor(androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onSurface, 0.6f), animate)
+    val inactive = rememberGlidingColor(MaterialTheme.colorScheme.secondaryContainer, animate)
     val bestNow by androidx.compose.runtime.rememberUpdatedState(best)
     val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
-    val inactive = MaterialTheme.colorScheme.secondaryContainer
     val move by androidx.compose.runtime.rememberUpdatedState(onMove)
     val done by androidx.compose.runtime.rememberUpdatedState(onDone)
     val cancel by androidx.compose.runtime.rememberUpdatedState(onCancel)
@@ -532,7 +647,7 @@ private fun SeekTrack(fraction: Float, enabled: Boolean, onMove: (Float) -> Unit
                     enabled
                 }
             }
-            .progressSemantics(fraction)
+            .progressSemantics(a11yFraction)
             .pointerInput(enabled) {
                 if (!enabled) return@pointerInput
                 detectTapGestures(onTap = { done(at(it.x, size.width)) })
@@ -572,7 +687,9 @@ private fun SeekTrack(fraction: Float, enabled: Boolean, onMove: (Float) -> Unit
         val thumbH = 44.dp.toPx()
         val gap = 6.dp.toPx()
         val cy = size.height / 2
-        val x = inset + (size.width - 2 * inset) * fraction
+        val track = size.width - 2 * inset
+        val x = inset + track * fraction()
+        val activeColor = active.value
         val outer = androidx.compose.ui.geometry.CornerRadius(trackH / 2)
         val inner = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx())
         fun part(from: Float, to: Float, leftR: androidx.compose.ui.geometry.CornerRadius, rightR: androidx.compose.ui.geometry.CornerRadius, color: androidx.compose.ui.graphics.Color) {
@@ -584,31 +701,41 @@ private fun SeekTrack(fraction: Float, enabled: Boolean, onMove: (Float) -> Unit
             )
             drawPath(androidx.compose.ui.graphics.Path().apply { addRoundRect(r) }, color)
         }
-        part(0f, x - thumbW / 2 - gap, outer, inner, active)
+        part(0f, x - thumbW / 2 - gap, outer, inner, activeColor)
         val restFrom = x + thumbW / 2 + gap
-        part(restFrom, size.width, inner, outer, inactive)
+        part(restFrom, size.width, inner, outer, inactive.value)
         // the small dot at the end of the track, as on the standard bar
-        if (size.width - restFrom > trackH) drawCircle(active, radius = 2.dp.toPx(), center = androidx.compose.ui.geometry.Offset(size.width - trackH / 2, cy))
-        // the best moment: a slim notch across the track; the thumb jumps onto it when held still near it
-        if (best in 0f..1f && kotlin.math.abs(best - fraction) * (size.width - 2 * inset) > thumbW / 2 + gap) {
-            val bx = inset + (size.width - 2 * inset) * best
-            val w = 3.dp.toPx()
-            val h = trackH + 12.dp.toPx()
-            drawRoundRect(
-                mark,
-                topLeft = androidx.compose.ui.geometry.Offset(bx - w / 2, cy - h / 2),
-                size = androidx.compose.ui.geometry.Size(w, h),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(w / 2),
-            )
+        if (size.width - restFrom > trackH) drawCircle(activeColor, radius = 2.dp.toPx(), center = androidx.compose.ui.geometry.Offset(size.width - trackH / 2, cy))
+        // the best moment: a slim notch across the track; the thumb jumps onto it when held still near
+        // it. It fades as the thumb comes close and back as the thumb has passed, instead of blinking.
+        val shownAlpha = notchAlpha()
+        val b = notchAt()
+        if (shownAlpha > 0.01f && b in 0f..1f) {
+            val bx = inset + track * b
+            val clear = ((kotlin.math.abs(bx - x) - thumbW / 2 - gap) / NOTCH_CLEAR.toPx()).coerceIn(0f, 1f)
+            if (clear > 0f) {
+                val w = 3.dp.toPx()
+                val h = trackH + 12.dp.toPx()
+                drawRoundRect(
+                    mark.value,
+                    topLeft = androidx.compose.ui.geometry.Offset(bx - w / 2, cy - h / 2),
+                    size = androidx.compose.ui.geometry.Size(w, h),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(w / 2),
+                    alpha = shownAlpha * clear,
+                )
+            }
         }
         drawRoundRect(
-            active,
+            activeColor,
             topLeft = androidx.compose.ui.geometry.Offset(x - thumbW / 2, cy - thumbH / 2),
             size = androidx.compose.ui.geometry.Size(thumbW, thumbH),
             cornerRadius = androidx.compose.ui.geometry.CornerRadius(thumbW / 2),
         )
     }
 }
+
+/** How far from the thumb the notch is fully seen: closer it fades. */
+private val NOTCH_CLEAR = 6.dp
 
 private val SEEK_THUMB_W = 4.dp
 

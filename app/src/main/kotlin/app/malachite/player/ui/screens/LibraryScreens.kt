@@ -152,8 +152,12 @@ fun TrackList(
 ) {
     val g = MalachiteApp.graph
     val nav = LocalNavigator.current
-    val player by g.player.state.collectAsState()
-    val data by g.library.data.collectAsState()
+    // Each row follows only its own "playing" and "favourite". The list used to read the whole
+    // player state and the whole data: each of the five to eight player events of one "next"
+    // composed every row on the screen again (with its menu), and the list stuttered.
+    val playerState = g.player.state.collectAsState()
+    val playingPath = remember { androidx.compose.runtime.derivedStateOf { playerState.value.currentPath } }
+    val dataState = g.library.data.collectAsState()
     val sel = app.malachite.player.ui.components.rememberSelection("songs")
     val keys = remember(tracks) { tracks.map { it.path } }
     androidx.compose.runtime.LaunchedEffect(keys) { sel.retain(keys) }
@@ -173,16 +177,19 @@ fun TrackList(
                 if (header != null) item { header() }
                 itemsIndexed(tracks, key = { _, t -> t.path }) { i, t ->
                     val choosing = sel.active
+                    val playing by remember(t.path) { androidx.compose.runtime.derivedStateOf { playingPath.value == t.path } }
+                    val favorite by remember(t.path) { androidx.compose.runtime.derivedStateOf { dataState.value.user(t.path).favorite } }
                     TrackRow(
                         track = t,
-                        playing = t.path == player.currentPath,
-                        favorite = data.user(t.path).favorite,
+                        playing = playing,
+                        favorite = favorite,
                         onClick = if (choosing) ({ sel.toggle(t.path) }) else ({ g.player.play(tracks, i) }),
-                        actions = if (choosing) emptyList() else trackActions(nav, t, tracks) { sel.start(t.path) },
+                        actions = emptyList(),
                         number = if (numbered) t.track else null,
                         selected = if (choosing) t.path in sel else null,
                         onLongPressChoosing = { if (t.path !in sel) sel.toggle(t.path) },
-                        menuActions = if (choosing) batch else null,
+                        // the menu is made when it opens, not with every row
+                        menuActions = if (choosing) batch else ({ trackActions(nav, t, tracks) { sel.start(t.path) } }),
                     )
                 }
             }
@@ -230,6 +237,18 @@ enum class SongFilter(val title: String) {
         NO_COVER -> !t.hasArtwork
         NO_ALBUM -> t.album.isBlank()
     }
+}
+
+/** What of the player's data [sort] and [filters] read: the list is made again only when it changed. */
+fun songsDataKey(data: app.malachite.core.library.LibraryData, sort: SongSort, filters: Set<SongFilter>): Any {
+    val parts = ArrayList<Any>(4)
+    if (sort == SongSort.ADDED) parts += data.tracks.mapValues { it.value.addedAt }
+    if (sort == SongSort.PLAYS) parts += data.tracks.mapValues { it.value.playCount }
+    if (SongFilter.FAVORITE in filters) parts += data.tracks.filterValues { it.favorite }.keys
+    if (SongFilter.WITH_LYRICS in filters || SongFilter.NO_LYRICS in filters) {
+        parts += data.tracks.mapValues { (it.value.lyricsId != null) to it.value.noLyrics }
+    }
+    return parts
 }
 
 fun sortSongs(tracks: List<TrackInfo>, sort: SongSort, data: app.malachite.core.library.LibraryData): List<TrackInfo> = when (sort) {
@@ -294,8 +313,13 @@ fun SongsScreen() {
         }
         return
     }
-    val sorted = remember(tracks, sort, data, filters) {
-        sortSongs(tracks.filter { t -> filters.all { f -> f.accepts(t, data.user(t.path)) } }, sort, data)
+    // Sorted again only when what the order and the filters read changed: after every song the
+    // data changes (its play count, the time), and all the songs were filtered and sorted again on
+    // the main thread – into a new list, so every row on the screen was composed anew.
+    val dataKey = remember(data, sort, filters) { songsDataKey(data, sort, filters) }
+    val sorted = remember(tracks, sort, dataKey, filters) {
+        if (filters.isEmpty() && sort == SongSort.TITLE) tracks
+        else sortSongs(tracks.filter { t -> filters.all { f -> f.accepts(t, data.user(t.path)) } }, sort, data)
     }
     Column {
         if (scan.running) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -663,11 +687,14 @@ fun PlaylistDetailScreen(name: String) {
     val g = MalachiteApp.graph
     val playlists by g.library.playlists.collectAsState()
     val tracks by g.library.tracks.collectAsState()
-    val player by g.player.state.collectAsState()
+    // only the song playing (each row follows its own), not every change of the player
+    val playerState = g.player.state.collectAsState()
+    val playingPath = remember { androidx.compose.runtime.derivedStateOf { playerState.value.currentPath } }
     val nav = LocalNavigator.current
     val p = playlists.firstOrNull { it.name == name } ?: run { EmptyState(Icons.Filled.QueueMusic, tr("Плейлист не найден"), ""); return }
     val byPath = remember(tracks) { tracks.associateBy { it.path } }
-    val stored = p.entries.mapNotNull { byPath[it.relativePath] }
+    // the same list as long as the playlist is the same: a new one made every rows composed anew
+    val stored = remember(p.entries, byPath) { p.entries.mapNotNull { byPath[it.relativePath] } }
     // a song carried to another place: shown there at once, while the playlist file is written in the background
     var moved by remember(p.entries) { mutableStateOf<List<TrackInfo>?>(null) }
     val list = moved ?: stored
@@ -826,13 +853,15 @@ fun PlaylistDetailScreen(name: String) {
                     alpha = if (carried) 0f else 1f
                 },
             ) {
+            val playing by remember(t.path) { androidx.compose.runtime.derivedStateOf { playingPath.value == t.path } }
             TrackRow(
-                track = t, playing = t.path == player.currentPath, favorite = false,
+                track = t, playing = playing, favorite = false,
                 onClick = if (choosing) ({ sel.toggle("$i|${t.path}") }) else ({ g.player.play(list, i) }),
                 selected = if (choosing) "$i|${t.path}" in sel else null,
                 onLongPressChoosing = { if ("$i|${t.path}" !in sel) sel.toggle("$i|${t.path}") },
-                menuActions = if (choosing) batch else null,
-                actions = if (choosing) emptyList() else rowActions(i, t),
+                // the menu is made when it opens, not with every row
+                menuActions = if (choosing) batch else ({ rowActions(i, t) }),
+                actions = emptyList(),
                 // holding is handled by the list: carry the song, or its menu when it is not carried
                 onLongClick = {},
             )
@@ -854,7 +883,7 @@ fun PlaylistDetailScreen(name: String) {
                 }
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest),
         ) {
-            TrackRow(track = t, playing = t.path == player.currentPath, favorite = false, onClick = {}, actions = emptyList(), onLongClick = {})
+            TrackRow(track = t, playing = t.path == playingPath.value, favorite = false, onClick = {}, actions = emptyList(), onLongClick = {})
         }
     }
     }

@@ -237,7 +237,7 @@ fun TrackRow(
                 color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                listOf(track.displayArtist, track.album).filter { it.isNotBlank() }.joinToString(" • ").ifEmpty { tr("Неизвестно") },
+                remember(track) { listOf(track.displayArtist, track.album).filter { it.isNotBlank() }.joinToString(" • ") }.ifEmpty { tr("Неизвестно") },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodySmall,
@@ -251,8 +251,9 @@ fun TrackRow(
             else IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, tr("Ещё")) }
         }
     }
-    ActionSheet(
-        menu, { menu = false }, track.displayTitle,
+    // composed only while open (its texts and menu are not made for every row of a list)
+    if (menu) ActionSheet(
+        true, { menu = false }, track.displayTitle,
         listOf(track.displayArtist, track.album).filter { it.isNotBlank() }.joinToString(" • "),
         leading = { CoverImage(track, size = 44.dp) },
     ) { menuActions?.invoke() ?: actions }

@@ -32,9 +32,16 @@ data class TrackInfo(
     val fileName get() = path.substringAfterLast('/')
     val extension get() = fileName.substringAfterLast('.', "").lowercase()
 
-    /** Title to show (falls back to the file name). */
-    val displayTitle get() = app.malachite.core.text.Mojibake.fixOrSelf(title).ifBlank { fileName.substringBeforeLast('.') }
-    val displayArtist get() = app.malachite.core.text.Mojibake.fixOrSelf(artist.ifBlank { albumArtist })
+    /**
+     * Title to show (falls back to the file name). Worked out once: the check for broken encodings
+     * ran at every look, and a list of songs looked at each title several times per row.
+     */
+    val displayTitle: String by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        app.malachite.core.text.Mojibake.fixOrSelf(title).ifBlank { fileName.substringBeforeLast('.') }
+    }
+    val displayArtist: String by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        app.malachite.core.text.Mojibake.fixOrSelf(artist.ifBlank { albumArtist })
+    }
     /** The artist the album belongs to (album artist if present). */
     val groupArtist get() = albumArtist.ifBlank { artist }
 

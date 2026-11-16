@@ -66,12 +66,25 @@ import java.util.concurrent.Executors
  * are shown are set in the app's settings.
  */
 class MusicWidget : AppWidgetProvider() {
-    override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) = WidgetUpdater.requestUpdate(context)
+    override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
+        // a widget was just put on a home screen (or the launcher asks to draw them again)
+        WidgetUpdater.widgetsChanged(context)
+        WidgetUpdater.requestUpdate(context)
+    }
 
     override fun onAppWidgetOptionsChanged(context: Context, manager: AppWidgetManager, id: Int, newOptions: Bundle) =
         WidgetUpdater.requestUpdate(context)
 
-    override fun onEnabled(context: Context) = WidgetUpdater.requestUpdate(context)
+    override fun onEnabled(context: Context) {
+        WidgetUpdater.widgetsChanged(context)
+        WidgetUpdater.requestUpdate(context)
+    }
+
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) = WidgetUpdater.widgetsChanged(context)
+
+    override fun onDisabled(context: Context) = WidgetUpdater.widgetsChanged(context)
+
+    override fun onRestored(context: Context, oldWidgetIds: IntArray, newWidgetIds: IntArray) = WidgetUpdater.widgetsChanged(context)
 }
 
 /** Handles taps on widget buttons. Runs on the main thread, talks to the player directly. */
@@ -175,11 +188,43 @@ object WidgetUpdater {
 
 
 
-    fun hasWidgets(context: Context): Boolean = ids(context).isNotEmpty()
+    /**
+     * The widgets on the home screens, asked from Android once and then kept. Asking is a call into
+     * another process: it used to be made on the main thread at every switch of songs, and on a busy
+     * phone such a call can take tens of milliseconds. [MusicWidget] says when widgets come and go.
+     */
+    @Volatile private var knownIds: IntArray? = null
 
-    private fun ids(context: Context): IntArray =
-        runCatching { AppWidgetManager.getInstance(context).getAppWidgetIds(ComponentName(context, MusicWidget::class.java)) }
-            .getOrDefault(IntArray(0))
+    /** A widget was added, removed or restored: the kept list is asked for again (off the main thread). */
+    fun widgetsChanged(context: Context) {
+        val app = context.applicationContext
+        knownIds = null
+        io.execute { freshIds(app) }
+        // a widget put on the home screen while music plays gets its lyric lines at once
+        PlaybackService.instance?.widgetsChanged()
+    }
+
+    /**
+     * Whether there is a widget to draw. Never asks Android on the calling thread: while the list is
+     * not known yet the answer is "yes", and the worker thread (which asks) then finds out.
+     */
+    fun hasWidgets(context: Context): Boolean {
+        val known = knownIds
+        if (known != null) return known.isNotEmpty()
+        val app = context.applicationContext
+        io.execute { ids(app) }
+        return true
+    }
+
+    /** Worker thread only: the kept list, asked for when not known. */
+    private fun ids(context: Context): IntArray = knownIds ?: freshIds(context)
+
+    /** Worker thread only: the list asked from Android now, and kept. */
+    private fun freshIds(context: Context): IntArray {
+        val fresh = runCatching { AppWidgetManager.getInstance(context).getAppWidgetIds(ComponentName(context, MusicWidget::class.java)) }.getOrNull()
+        if (fresh != null) knownIds = fresh
+        return fresh ?: IntArray(0)
+    }
 
     private fun snapshot(): Snapshot {
         val p = PlaybackService.instance?.player
@@ -210,9 +255,12 @@ object WidgetUpdater {
         lastLine = lyrics.takeIf { lyricsPath == snap.path && it?.synced == true }?.let { lineAt(it, snap.position, snap.speed, snap.playing) } ?: -1
         lastWord = -1
         io.execute {
+            // asked again here, on the worker thread: the kept list corrects itself at every full update
+            val all = freshIds(app)
+            if (all.isEmpty()) return@execute
             prepareAssets(app, snap.path)
             val manager = AppWidgetManager.getInstance(app)
-            for (id in ids(app)) {
+            for (id in all) {
                 runCatching { manager.updateAppWidget(id, build(app, manager, id, snap)) }
                     .onFailure { AppLog.e("widget", "Виджет $id не обновился", it) }
             }

@@ -247,6 +247,8 @@ class PlaybackService : MediaSessionService() {
         handler.removeCallbacks(saveRunnable)
         saveQueue(now = true)
         stopTicker()
+        handler.removeCallbacks(notifyLater)
+        waitingSession = null
         instance = null
         AudioEffects.release()
         session?.run {
@@ -372,6 +374,8 @@ class PlaybackService : MediaSessionService() {
 
     private val ticker = object : Runnable {
         override fun run() {
+            // no widget on any home screen (the list kept by WidgetUpdater says so): nothing to wake for
+            if (!WidgetUpdater.hasWidgets(this@PlaybackService)) return
             // the widget asks to be woken exactly when the next lyric line (or word) starts;
             // with the screen off nobody sees it, so nothing is drawn
             // nor while the player itself is on the screen: the widget is hidden behind it, and
@@ -390,6 +394,61 @@ class PlaybackService : MediaSessionService() {
     }
 
     private fun stopTicker() = handler.removeCallbacks(ticker)
+
+    /** Widgets came or went (main thread): while music plays the widget's lyric clock starts again. */
+    fun widgetsChanged() {
+        if (shownPlaying == true) startTicker()
+    }
+
+    // ------------------------------------------------------------------ the notification, at most 4 times a second
+
+    /*
+     * Media3 renews the notification at each batch of the player's events, and one switch of songs
+     * brings several within a fraction of a second (the song, its tags, loading, playing). Each
+     * renewal is a call into the system made on the main thread, and pressing "next" a few times
+     * in a row made a dozen of them. The first one goes at once; those that follow within 250 ms
+     * wait, and only the newest of them is shown when the time is up. A move into the foreground or
+     * out of it always goes at once: Android wants that right away.
+     */
+    private var notifiedAt = -NOTIFY_EVERY_MS
+    private var notifiedForeground: Boolean? = null
+    private var waitingSession: MediaSession? = null
+    private var waitingForeground = false
+    private var merged = 0
+    private val notifyLater = Runnable {
+        val s = waitingSession ?: return@Runnable
+        waitingSession = null
+        if (app.malachite.player.data.FrameWatch.isOn) {
+            app.malachite.player.data.AppLog.i("player", "уведомление обновлено один раз вместо ${merged + 1}")
+        }
+        merged = 0
+        runCatching { notifyNow(s, waitingForeground) }
+            .onFailure { app.malachite.player.data.AppLog.e("player", "Уведомление не обновилось", it) }
+    }
+
+    override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {
+        val now = android.os.SystemClock.uptimeMillis()
+        if (startInForegroundRequired != notifiedForeground || now - notifiedAt >= NOTIFY_EVERY_MS) {
+            handler.removeCallbacks(notifyLater)
+            waitingSession = null
+            merged = 0
+            notifyNow(session, startInForegroundRequired)
+            return
+        }
+        if (waitingSession != null) merged++
+        waitingSession = session
+        waitingForeground = startInForegroundRequired
+        handler.removeCallbacks(notifyLater)
+        handler.postAtTime(notifyLater, notifiedAt + NOTIFY_EVERY_MS)
+    }
+
+    private fun notifyNow(session: MediaSession, foreground: Boolean) {
+        notifiedAt = android.os.SystemClock.uptimeMillis()
+        super.onUpdateNotification(session, foreground)
+        // remembered only once it went through: a start in the foreground that Android refused is
+        // tried again, at once, the next time
+        notifiedForeground = foreground
+    }
 
     // ------------------------------------------------------------------ repeat / shuffle in the notification
 
@@ -620,6 +679,8 @@ class PlaybackService : MediaSessionService() {
         private const val BUFFER_TO_START_MS = 500
         private const val BUFFER_AFTER_STALL_MS = 2000
         private const val STATS_EVERY_MS = 30_000L
+        /** The notification is renewed at most this often (the first renewal always at once). */
+        private const val NOTIFY_EVERY_MS = 250L
 
         @Volatile
         var instance: PlaybackService? = null

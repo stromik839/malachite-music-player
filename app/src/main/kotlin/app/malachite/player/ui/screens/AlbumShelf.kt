@@ -328,7 +328,9 @@ fun NoAlbumScreen() {
     val g = MalachiteApp.graph
     val nav = LocalNavigator.current
     val all by g.library.albums.collectAsState()
-    val player by g.player.state.collectAsState()
+    // only the song playing (each tile follows its own), not every change of the player
+    val playerState = g.player.state.collectAsState()
+    val playingPath = remember { androidx.compose.runtime.derivedStateOf { playerState.value.currentPath } }
     val songs = remember(all) { all.filter { it.hasNoAlbum() }.flatMap { it.tracks }.sortedBy { TextFold.strictKey(it.displayTitle) } }
     if (songs.isEmpty()) {
         EmptyState(Icons.Filled.Album, tr("Песен без альбома нет"), tr("У каждой песни в главной папке есть свой альбом."))
@@ -353,6 +355,7 @@ fun NoAlbumScreen() {
         item(span = { GridItemSpan(maxLineSpan) }) { PlayButtons(songs) }
         itemsIndexed(songs, key = { _, t -> t.path }) { i, t ->
             var menu by remember { mutableStateOf(false) }
+            val playing by remember(t.path) { androidx.compose.runtime.derivedStateOf { playingPath.value == t.path } }
             val chosen = if (sel.active) t.path in sel else null
             Box {
                 Column(Modifier.combinedClickable(
@@ -365,13 +368,13 @@ fun NoAlbumScreen() {
                     }
                     Text(
                         t.displayTitle, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold,
-                        color = if (t.path == player.currentPath) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                        color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(top = 6.dp),
                     )
                     Text(t.displayArtist, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                if (chosen == null) app.malachite.player.ui.components.ActionSheet(
-                    menu, { menu = false }, t.displayTitle, t.displayArtist,
+                if (chosen == null && menu) app.malachite.player.ui.components.ActionSheet(
+                    true, { menu = false }, t.displayTitle, t.displayArtist,
                     leading = { CoverImage(t, size = 44.dp) },
                 ) { trackActions(nav, t, songs) { sel.start(t.path) } }
             }

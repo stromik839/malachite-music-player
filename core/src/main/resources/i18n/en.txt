@@ -5103,3 +5103,15 @@ A deeper detailed log
 
 В подробном журнале теперь видно, на что ушло время в каждой долгой задаче: стек снимается каждые 6 мс. Там же события плеера, сборка уведомления, загрузка обложек и смена цветов темы.
 The detailed log now shows where the time went in every long task: the stack is read every 6 ms. It also has the player's events, the building of the notification, the loading of covers and the changes of the theme colours.
+
+Плавный ползунок
+Smooth seek bar
+
+При смене песни ползунок и полоска прогресса плавно возвращаются к началу, а не прыгают. Отметка «Лучший момент» гаснет на старом месте и появляется на новом — раньше она на миг оставалась там, где была у прошлой песни. По касанию полосы ползунок быстро добегает до нового места.
+When the song changes, the seek bar and the progress line glide back to the start instead of jumping. The "Best moment" mark fades out where it was and fades in at its new place — it used to stay for a moment where the previous song had it. Tap the bar and the thumb runs quickly to the new place.
+
+Списки не дёргаются при смене песни
+Lists stay smooth when the song changes
+
+При смене песни список больше не перерисовывается целиком: меняются только строка, которая играла, и строка, которая играет теперь. Названия песен готовятся один раз, меню строки — только когда его открывают. Виджет и уведомление больше не обращаются к системе лишний раз при каждом переключении.
+A song change no longer redraws the whole list: only the row that was playing and the row playing now change. Song names are prepared once, and a row's menu only when it is opened. The widget and the notification no longer call the system needlessly at every switch.

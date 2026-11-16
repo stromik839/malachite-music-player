@@ -59,7 +59,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -154,10 +153,14 @@ fun MainScaffold() {
     val graph = MalachiteApp.graph
     val nav = LocalNavigator.current
     val settings by graph.settings.state.collectAsState()
-    val player by graph.player.state.collectAsState()
-    val current = player.currentPath?.let { graph.library.track(it) }
+    // only the song playing and whether the player is there: the shell of the app is not composed
+    // again at each of the player's events (several at every switch of songs)
+    val playerState = graph.player.state.collectAsState()
+    val currentPath by remember { androidx.compose.runtime.derivedStateOf { playerState.value.currentPath } }
+    val connected by remember { androidx.compose.runtime.derivedStateOf { playerState.value.connected } }
+    val current = currentPath?.let { graph.library.track(it) }
     // the cover of the song playing, blurred beforehand: the frosted glass of the window and the panels
-    val frost = rememberFrost(current, waiting = !player.connected)
+    val frost = rememberFrost(current, waiting = !connected)
     val heal by graph.healing.state.collectAsState()
 
     LaunchedEffect(nav.snackbar) {
@@ -187,7 +190,7 @@ fun MainScaffold() {
         ) { nav.openTab(it) }
     }
     val mini: @Composable () -> Unit = {
-        if (current != null) Box(Modifier.tourTarget("mini")) { MiniPlayer(settings.miniPlayerStyle, frost) }
+        if (current != null) Box(Modifier.tourTarget("mini")) { MiniPlayer(settings.miniPlayerStyle, frost, settings.animations) }
     }
     // the AcoustID key failed during healing: one window, wherever the user is
     app.malachite.player.ui.heal.SoundKeyProblemDialog()
@@ -428,23 +431,34 @@ private fun TopBar(style: PartStyle, frost: Bitmap?) {
 
 
 @Composable
-private fun MiniPlayer(style: PartStyle, frost: Bitmap?) {
+private fun MiniPlayer(style: PartStyle, frost: Bitmap?, animate: Boolean) {
     val graph = MalachiteApp.graph
     val nav = LocalNavigator.current
     val st by graph.player.state.collectAsState()
     val t = st.currentPath?.let { graph.library.track(it) } ?: return
     val scale = style.scale.coerceIn(0.7f, 1.6f)
-    val pos = remember { mutableLongStateOf(0L) }
-    LaunchedEffect(st.isPlaying, st.currentPath) {
+    fun fractionNow(duration: Long) = if (duration > 0) (graph.player.positionMs().toFloat() / duration).coerceIn(0f, 1f) else 0f
+    // The thin progress line, renewed twice a second (read only while drawing). A jump – the next
+    // song, a seek – glides instead of jumping: the line used to flick back to the start at once.
+    val progress = remember { androidx.compose.animation.core.Animatable(fractionNow(st.durationMs)) }
+    LaunchedEffect(st.currentPath, st.durationMs, animate) {
+        val duration = st.durationMs
         while (true) {
-            pos.longValue = graph.player.positionMs()
+            val f = fractionNow(duration)
+            val gap = kotlin.math.abs(f - progress.value)
+            val jump = if (duration > 0) gap * duration > MINI_JUMP_MS else gap > 0.01f
+            if (animate && jump) {
+                progress.animateTo(f, androidx.compose.animation.core.tween(MINI_GLIDE_MS, easing = androidx.compose.animation.core.FastOutSlowInEasing))
+            } else {
+                progress.snapTo(f)
+            }
             delay(500)
         }
     }
     PartBackground(style, MaterialTheme.colorScheme.surfaceContainerHigh, frost, Modifier.fillMaxWidth().clickable { nav.playerOpen = true }) {
         Column {
             LinearProgressIndicator(
-                progress = { if (st.durationMs > 0) (pos.longValue.toFloat() / st.durationMs).coerceIn(0f, 1f) else 0f },
+                progress = { progress.value },
                 modifier = Modifier.fillMaxWidth().height(2.dp),
             )
             Row(Modifier.fillMaxWidth().height(62.dp * scale).padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -462,3 +476,7 @@ private fun MiniPlayer(style: PartStyle, frost: Bitmap?) {
         }
     }
 }
+
+/** The mini player's line: a move larger than this between two looks is a jump (glided), not the music playing on. */
+private const val MINI_JUMP_MS = 2000L
+private const val MINI_GLIDE_MS = 450

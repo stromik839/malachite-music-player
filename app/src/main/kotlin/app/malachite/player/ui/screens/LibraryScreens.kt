@@ -241,12 +241,13 @@ enum class SongFilter(val title: String) {
 
 /** What of the player's data [sort] and [filters] read: the list is made again only when it changed. */
 fun songsDataKey(data: app.malachite.core.library.LibraryData, sort: SongSort, filters: Set<SongFilter>): Any {
+    // each part is one element of the key (a map or a set as a whole, never spread into the list)
     val parts = ArrayList<Any>(4)
-    if (sort == SongSort.ADDED) parts += data.tracks.mapValues { it.value.addedAt }
-    if (sort == SongSort.PLAYS) parts += data.tracks.mapValues { it.value.playCount }
-    if (SongFilter.FAVORITE in filters) parts += data.tracks.filterValues { it.favorite }.keys
+    if (sort == SongSort.ADDED) parts.add(data.tracks.mapValues { it.value.addedAt })
+    if (sort == SongSort.PLAYS) parts.add(data.tracks.mapValues { it.value.playCount })
+    if (SongFilter.FAVORITE in filters) parts.add(data.tracks.filterValues { it.favorite }.keys)
     if (SongFilter.WITH_LYRICS in filters || SongFilter.NO_LYRICS in filters) {
-        parts += data.tracks.mapValues { (it.value.lyricsId != null) to it.value.noLyrics }
+        parts.add(data.tracks.mapValues { (it.value.lyricsId != null) to it.value.noLyrics })
     }
     return parts
 }

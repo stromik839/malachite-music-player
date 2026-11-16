@@ -803,6 +803,7 @@ private class CoverColorNotificationProvider(
     private val base = DefaultMediaNotificationProvider(context).apply { setSmallIcon(R.drawable.ic_notification) }
     private var lastCover: Bitmap? = null
     private var lastColor: Int? = null
+    private var kept: KeptActions? = null
 
     override fun createNotification(
         mediaSession: MediaSession,
@@ -811,7 +812,9 @@ private class CoverColorNotificationProvider(
         onNotificationChangedCallback: MediaNotification.Provider.Callback,
     ): MediaNotification {
         val started = android.os.SystemClock.uptimeMillis()
-        val n = base.createNotification(mediaSession, customLayout, actionFactory) { updated ->
+        // the buttons' intents are made once, not at every renewal (see KeptActions)
+        val actions = kept?.takeIf { it.inner === actionFactory } ?: KeptActions(context, actionFactory).also { kept = it }
+        val n = base.createNotification(mediaSession, customLayout, actions) { updated ->
             val again = android.os.SystemClock.uptimeMillis()
             val t = tinted(updated)
             timing("уведомление с обложкой", again, t)
@@ -856,6 +859,78 @@ private class CoverColorNotificationProvider(
         lastCover = bmp
         lastColor = c.takeIf { it != 0 }
         return lastColor
+    }
+}
+
+/**
+ * Media3's notification buttons, their intents kept. Making a PendingIntent is a call into the
+ * system on the main thread, and Media3 made one for every button (and one more for swiping the
+ * notification away) at every renewal: six calls each time, several renewals at each switch of
+ * songs, and every custom button got a new intent record in the system each time. What an intent
+ * does depends only on its command – and for "play" on whether the player is meant to play (the
+ * "play" of a paused player may start the service in the foreground) – so each is made once.
+ */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+private class KeptActions(private val context: Context, val inner: MediaNotification.ActionFactory) : MediaNotification.ActionFactory {
+    private data class Key(val session: MediaSession, val what: Any)
+
+    private val intents = HashMap<Key, PendingIntent>()
+
+    private fun keep(key: Key, intent: PendingIntent) {
+        if (intents.size >= MAX_KEPT) intents.clear()
+        intents[key] = intent
+    }
+
+    override fun createMediaActionPendingIntent(mediaSession: MediaSession, command: Long): PendingIntent {
+        val what: Any = if (command == Player.COMMAND_PLAY_PAUSE.toLong()) "play/" + mediaSession.player.playWhenReady else command
+        val key = Key(mediaSession, what)
+        intents[key]?.let { return it }
+        return inner.createMediaActionPendingIntent(mediaSession, command).also { keep(key, it) }
+    }
+
+    override fun createMediaAction(
+        mediaSession: MediaSession,
+        icon: androidx.core.graphics.drawable.IconCompat,
+        title: CharSequence,
+        command: Int,
+    ): androidx.core.app.NotificationCompat.Action =
+        androidx.core.app.NotificationCompat.Action(icon, title, createMediaActionPendingIntent(mediaSession, command.toLong()))
+
+    override fun createCustomAction(
+        mediaSession: MediaSession,
+        icon: androidx.core.graphics.drawable.IconCompat,
+        title: CharSequence,
+        customAction: String,
+        extras: Bundle,
+    ): androidx.core.app.NotificationCompat.Action {
+        // an intent with extras is made anew each time: what is in them is not compared here
+        if (!extras.isEmpty) return inner.createCustomAction(mediaSession, icon, title, customAction, extras)
+        val key = Key(mediaSession, "custom/$customAction")
+        intents[key]?.let { return androidx.core.app.NotificationCompat.Action(icon, title, it) }
+        return inner.createCustomAction(mediaSession, icon, title, customAction, extras).also { a -> a.getActionIntent()?.let { keep(key, it) } }
+    }
+
+    override fun createCustomActionFromCustomCommandButton(
+        mediaSession: MediaSession,
+        customCommandButton: CommandButton,
+    ): androidx.core.app.NotificationCompat.Action {
+        val command = customCommandButton.sessionCommand
+        if (command == null || !command.customExtras.isEmpty || customCommandButton.iconResId == 0) {
+            return inner.createCustomActionFromCustomCommandButton(mediaSession, customCommandButton)
+        }
+        val key = Key(mediaSession, "custom/" + command.customAction)
+        intents[key]?.let {
+            return androidx.core.app.NotificationCompat.Action(
+                androidx.core.graphics.drawable.IconCompat.createWithResource(context, customCommandButton.iconResId),
+                customCommandButton.displayName,
+                it,
+            )
+        }
+        return inner.createCustomActionFromCustomCommandButton(mediaSession, customCommandButton).also { a -> a.getActionIntent()?.let { keep(key, it) } }
+    }
+
+    private companion object {
+        const val MAX_KEPT = 32
     }
 }
 

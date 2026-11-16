@@ -51,6 +51,7 @@ import app.malachite.player.MalachiteApp
 import app.malachite.player.data.CoverLoader
 import app.malachite.player.data.coverKey
 import app.malachite.player.data.Frost
+import app.malachite.player.ui.theme.LastLook
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -108,10 +109,11 @@ fun rememberCover(track: TrackInfo?, sizePx: Int = 300): Bitmap? = rememberCover
 /**
  * The cover of [track] blurred beforehand into a small picture (see [Frost]): the frosted glass
  * behind the window, the panels and the song screen. While the next song's one is made the
- * previous one stays; a song without a cover has none.
+ * previous one stays; a song without a cover has none. [waiting]: the player has not said yet
+ * which song it has (the app has just started): the glass shown last stands in (see LastLook).
  */
 @Composable
-fun rememberFrost(track: TrackInfo?): Bitmap? {
+fun rememberFrost(track: TrackInfo?, waiting: Boolean = false): Bitmap? {
     val key = track?.let { coverKey(it.path, it.lastModified) }
     val cover = rememberCoverState(track, 200)
     val ready = key?.let { Frost.cached(it) }
@@ -125,21 +127,24 @@ fun rememberFrost(track: TrackInfo?): Bitmap? {
             cover.settled -> null
             else -> made.value
         }
+        // kept for the next start of the app
+        if (key != null && (ready != null || pic != null || cover.settled)) LastLook.keepFrost(key, made.value)
     }
     return when {
-        key == null -> null
+        key == null -> if (waiting) LastLook.frost() else null
         ready != null -> ready
-        else -> made.value
+        cover.settled && cover.bitmap == null -> null
+        else -> made.value ?: LastLook.frost()
     }
 }
 
 /**
- * The frosted cover of [track] filling the place, at [opacity]; the next song's one comes in softly
- * ([animate]). Drawn as a ready picture, never blurred while drawing: light even on weak phones.
+ * The frosted cover [frost] (see [rememberFrost]) filling the place, at [opacity]; the next song's
+ * one comes in softly ([animate]). Drawn as a ready picture, never blurred while drawing: light
+ * even on weak phones.
  */
 @Composable
-fun FrostLayer(track: TrackInfo?, opacity: Float, animate: Boolean, modifier: Modifier = Modifier.fillMaxSize()) {
-    val frost = rememberFrost(track)
+fun FrostLayer(frost: Bitmap?, opacity: Float, animate: Boolean, modifier: Modifier = Modifier.fillMaxSize()) {
     androidx.compose.animation.Crossfade(
         frost,
         animationSpec = if (animate) androidx.compose.animation.core.tween(450) else androidx.compose.animation.core.snap(),

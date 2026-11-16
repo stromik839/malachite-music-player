@@ -70,9 +70,13 @@ class MainActivity : ComponentActivity() {
             // (only the song is followed here: nothing else of the player recomposes the whole app)
             val playerState = graph.player.state.collectAsState()
             val playingPath by remember { androidx.compose.runtime.derivedStateOf { playerState.value.currentPath } }
+            val playerReady by remember { androidx.compose.runtime.derivedStateOf { playerState.value.connected } }
             val playingTrack = playingPath?.let { graph.library.track(it) }
+            // until the player says which song it has, the colours shown last (not the settings' green);
+            // not while the data is locked: the screen asking for the password stays in the settings' colours
             val coverColours = app.malachite.player.ui.theme.rememberCoverScheme(
                 playingTrack, settings.shade(androidx.compose.foundation.isSystemInDarkTheme()), settings.coverColorsEverywhere,
+                waiting = !playerReady && lockedRoot == null,
             )
             MalachiteTheme(settings, coverColours) {
                 // the window behind the app (seen during transitions, behind the keyboard) follows the theme too

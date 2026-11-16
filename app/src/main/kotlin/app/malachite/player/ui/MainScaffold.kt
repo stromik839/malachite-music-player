@@ -157,7 +157,7 @@ fun MainScaffold() {
     val player by graph.player.state.collectAsState()
     val current = player.currentPath?.let { graph.library.track(it) }
     // the cover of the song playing, blurred beforehand: the frosted glass of the window and the panels
-    val frost = rememberFrost(current)
+    val frost = rememberFrost(current, waiting = !player.connected)
     val heal by graph.healing.state.collectAsState()
 
     LaunchedEffect(nav.snackbar) {
@@ -254,7 +254,7 @@ fun MainScaffold() {
     val hideWhenCovered = Modifier.drawWithContent { if (!covered) drawContent() }
 
     // the frosted glass behind the whole window, the screens and the panels alike
-    if (settings.blur) FrostLayer(current, 0.32f, settings.animations, hideWhenCovered.fillMaxSize())
+    if (settings.blur) FrostLayer(frost, 0.32f, settings.animations, hideWhenCovered.fillMaxSize())
     Box(Modifier.fillMaxSize().then(hideWhenCovered).windowInsetsPadding(WindowInsets.safeDrawing)) {
         when (navPosition) {
             NavPosition.BOTTOM -> Column(Modifier.fillMaxSize()) {

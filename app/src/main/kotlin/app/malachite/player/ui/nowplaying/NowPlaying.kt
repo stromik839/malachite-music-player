@@ -110,6 +110,7 @@ import app.malachite.player.ui.theme.MalachiteTheme
 import app.malachite.player.ui.theme.rememberCoverScheme
 import app.malachite.player.ui.theme.rememberGlidingColor
 import app.malachite.player.ui.components.FrostLayer
+import app.malachite.player.ui.components.rememberFrost
 import app.malachite.player.ui.components.rememberCoverState
 import app.malachite.player.ui.theme.shade
 
@@ -154,7 +155,7 @@ fun NowPlayingScreen() {
             contentColor = MaterialTheme.colorScheme.onBackground,
         ) {
         Box(Modifier.fillMaxSize().clickable(enabled = false) {}) {
-            if (settings.coverColorsInPlayer) FrostLayer(t, 0.25f, settings.animations)
+            if (settings.coverColorsInPlayer) FrostLayer(rememberFrost(t), 0.25f, settings.animations)
             NowPlayingContent(t, st)
         }
         }

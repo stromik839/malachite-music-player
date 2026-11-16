@@ -97,19 +97,7 @@ fun AppSettings.menuScheme(systemDark: Boolean): ColorScheme = schemeFromSeed(
     customSurface?.let { Color(it.toInt()) },
 )
 
-/** Colours taken from the album cover for the full-screen player. */
-private val schemes = android.util.LruCache<String, ColorScheme>(24)
-
-/**
- * [coverScheme], kept per cover picture: the colours of the next and previous song are worked out
- * ahead (CoverPrefetch), so a new song gets its colours at once instead of a moment later.
- */
-fun coverSchemeCached(bitmap: Bitmap, shade: Shade): ColorScheme? {
-    val key = "${System.identityHashCode(bitmap)}|${bitmap.generationId}|$shade"
-    schemes.get(key)?.let { return it }
-    return coverScheme(bitmap, shade)?.also { schemes.put(key, it) }
-}
-
+/** Colours taken from the album cover (kept per song by [CoverColors]). */
 fun coverScheme(bitmap: Bitmap, shade: Shade): ColorScheme? {
     val p = runCatching { Palette.from(bitmap).maximumColorCount(16).generate() }.getOrNull() ?: return null
     val seedInt = p.vibrantSwatch?.rgb ?: p.lightVibrantSwatch?.rgb ?: p.dominantSwatch?.rgb ?: return null
@@ -179,9 +167,11 @@ private fun Typography.withFont(family: FontFamily, scale: Float): Typography {
 @Composable
 fun MalachiteTheme(settings: AppSettings, scheme: ColorScheme? = null, content: @Composable () -> Unit) {
     val dark = isSystemInDarkTheme()
-    val colors = scheme ?: remember(settings.themeMode, settings.accent, settings.customAccent, settings.customBackground, settings.customSurface, dark) {
+    val menu = remember(settings.themeMode, settings.accent, settings.customAccent, settings.customBackground, settings.customSurface, dark) {
         settings.menuScheme(dark)
     }
+    // a new set of colours (the next song's cover, another accent) comes in softly
+    val colors = animatedScheme(scheme ?: menu, settings.animations)
     val typography = remember(settings.menuFont, settings.menuFontFile, settings.fontScale) {
         Typography().withFont(fontFamily(settings.menuFont, settings.menuFontFile), settings.fontScale.coerceIn(0.8f, 1.4f))
     }

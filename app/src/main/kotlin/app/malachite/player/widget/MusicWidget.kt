@@ -345,7 +345,11 @@ object WidgetUpdater {
     private fun computeColors(settings: app.malachite.player.data.AppSettings, dark: Boolean): Palette3 {
         val ws = settings.widget
         val shade = settings.shade(dark)
-        val scheme = (if (ws.useCoverColors) cover?.let { app.malachite.player.ui.theme.coverSchemeCached(it, shade) } else null) ?: settings.menuScheme(dark)
+        val scheme = (if (ws.useCoverColors) cover?.let { pic ->
+            val p = coverPath ?: return@let null
+            val modified = MalachiteApp.graph.library.track(p)?.lastModified ?: 0L
+            app.malachite.player.ui.theme.CoverColors.compute(app.malachite.player.data.coverKey(p, modified), pic, shade)
+        } else null) ?: settings.menuScheme(dark)
         val custom = ws.backgroundColor?.takeIf { !ws.useCoverColors }?.toInt()
         if (custom != null) {
             // own background colour: text colour follows its brightness

@@ -28,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -47,32 +49,104 @@ import androidx.compose.ui.unit.dp
 import app.malachite.core.library.TrackInfo
 import app.malachite.player.MalachiteApp
 import app.malachite.player.data.CoverLoader
+import app.malachite.player.data.coverKey
+import app.malachite.player.data.Frost
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/**
+ * A song's cover on its way: [bitmap] (for a moment perhaps a smaller copy that was already in
+ * memory, until the size asked for is read), and [settled] once the file has been read – only then
+ * is a missing [bitmap] really "no cover".
+ */
+@Immutable
+class CoverState(val bitmap: Bitmap?, val settled: Boolean)
+
 /** Loads the cover embedded in the song file (cached, off the main thread). */
 @Composable
-fun rememberCover(track: TrackInfo?, sizePx: Int = 300): Bitmap? {
+fun rememberCoverState(track: TrackInfo?, sizePx: Int = 300): CoverState {
     val revision by MalachiteApp.graph.library.revision.collectAsState()
     // a song played from the internet has no file: its cover comes from the catalogue
     val onlineCover = MalachiteApp.graph.library.onlineItem(track?.path)?.coverUrl
     val file = if (onlineCover != null) null else track?.let { MalachiteApp.graph.library.file(it) }
     // A new song starts from what is ready for it (usually loaded ahead, see CoverPrefetch), never
     // from the previous song's cover: that one stayed on the screen, with its colours, while the
-    // new title was already shown.
+    // new title was already shown. Not ready in this size: the same cover in another size that is
+    // in memory stands in, and "no cover" is only said when it is known.
     val state = remember(track?.path, track?.lastModified, revision) {
-        mutableStateOf(onlineCover?.let { CoverLoader.cachedUrl(it, sizePx) } ?: file?.let { CoverLoader.cached(it, sizePx) })
+        val exact = onlineCover?.let { CoverLoader.cachedUrl(it, sizePx) } ?: file?.let { CoverLoader.cached(it, sizePx) }
+        val none = when {
+            track == null -> true
+            onlineCover != null -> CoverLoader.isKnownMissingUrl(onlineCover, sizePx)
+            else -> file == null || CoverLoader.isKnownMissing(file)
+        }
+        mutableStateOf(
+            when {
+                exact != null -> CoverState(exact, true)
+                none -> CoverState(null, true)
+                else -> CoverState(onlineCover?.let { CoverLoader.cachedUrlAny(it, sizePx) } ?: file?.let { CoverLoader.cachedAny(it, sizePx) }, false)
+            },
+        )
     }
     LaunchedEffect(track?.path, track?.lastModified, revision) {
-        if (state.value != null) return@LaunchedEffect
-        state.value = when {
+        if (state.value.settled) return@LaunchedEffect
+        val loaded = when {
             onlineCover != null -> withContext(Dispatchers.IO) { CoverLoader.loadUrl(onlineCover, sizePx) }
             file == null -> null
             else -> withContext(Dispatchers.IO) { CoverLoader.load(file, sizePx) }
         }
+        state.value = CoverState(loaded ?: state.value.bitmap, true)
     }
     return state.value
+}
+
+/** The cover of the song file (cached, off the main thread); null while it is read and when there is none. */
+@Composable
+fun rememberCover(track: TrackInfo?, sizePx: Int = 300): Bitmap? = rememberCoverState(track, sizePx).bitmap
+
+/**
+ * The cover of [track] blurred beforehand into a small picture (see [Frost]): the frosted glass
+ * behind the window, the panels and the song screen. While the next song's one is made the
+ * previous one stays; a song without a cover has none.
+ */
+@Composable
+fun rememberFrost(track: TrackInfo?): Bitmap? {
+    val key = track?.let { coverKey(it.path, it.lastModified) }
+    val cover = rememberCoverState(track, 200)
+    val ready = key?.let { Frost.cached(it) }
+    val made = remember { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(key, cover.bitmap, cover.settled) {
+        val pic = cover.bitmap
+        made.value = when {
+            key == null -> null
+            ready != null -> ready
+            pic != null -> withContext(Dispatchers.Default) { Frost.of(key, pic) }
+            cover.settled -> null
+            else -> made.value
+        }
+    }
+    return when {
+        key == null -> null
+        ready != null -> ready
+        else -> made.value
+    }
+}
+
+/**
+ * The frosted cover of [track] filling the place, at [opacity]; the next song's one comes in softly
+ * ([animate]). Drawn as a ready picture, never blurred while drawing: light even on weak phones.
+ */
+@Composable
+fun FrostLayer(track: TrackInfo?, opacity: Float, animate: Boolean, modifier: Modifier = Modifier.fillMaxSize()) {
+    val frost = rememberFrost(track)
+    androidx.compose.animation.Crossfade(
+        frost,
+        animationSpec = if (animate) androidx.compose.animation.core.tween(450) else androidx.compose.animation.core.snap(),
+        label = "frost",
+    ) { f ->
+        if (f != null) Image(f.asImageBitmap(), null, modifier.graphicsLayer { alpha = opacity }, contentScale = ContentScale.Crop)
+    }
 }
 
 @Composable

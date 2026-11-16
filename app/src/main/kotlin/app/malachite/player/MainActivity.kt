@@ -26,6 +26,7 @@ import app.malachite.player.ui.Navigator
 import app.malachite.player.ui.screens.FolderProblemScreen
 import app.malachite.player.ui.screens.OnboardingScreen
 import app.malachite.player.ui.theme.MalachiteTheme
+import app.malachite.player.ui.theme.shade
 
 class MainActivity : ComponentActivity() {
 
@@ -65,7 +66,13 @@ class MainActivity : ComponentActivity() {
             val lockedRoot by graph.lockedRootState.collectAsState()
             val nav = remember { Navigator(settings.tabs.firstOrNull() ?: app.malachite.player.data.Tab.SONGS).also { navigator = it } }
             LaunchedEffect(Unit) { if (openPlayer) nav.playerOpen = true }
-            MalachiteTheme(settings) {
+            // "colours from the cover everywhere": the whole app takes the colours of the song playing
+            val playing by graph.player.state.collectAsState()
+            val playingTrack = playing.currentPath?.let { graph.library.track(it) }
+            val coverColours = app.malachite.player.ui.theme.rememberCoverScheme(
+                playingTrack, settings.shade(androidx.compose.foundation.isSystemInDarkTheme()), settings.coverColorsEverywhere,
+            )
+            MalachiteTheme(settings, coverColours) {
                 // the window behind the app (seen during transitions, behind the keyboard) follows the theme too
                 val windowBg = MaterialTheme.colorScheme.background.toArgb()
                 // dark icons of the status / navigation bar on a light theme and the other way round

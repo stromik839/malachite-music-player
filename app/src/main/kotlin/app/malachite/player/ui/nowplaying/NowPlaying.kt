@@ -88,8 +88,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -107,9 +105,10 @@ import app.malachite.player.ui.DialogRequest
 import app.malachite.player.ui.LocalNavigator
 import app.malachite.player.ui.Screen
 import app.malachite.player.ui.components.formatTime
-import app.malachite.player.ui.components.rememberCover
 import app.malachite.player.ui.theme.MalachiteTheme
-import app.malachite.player.ui.theme.coverSchemeCached
+import app.malachite.player.ui.theme.rememberCoverScheme
+import app.malachite.player.ui.components.FrostLayer
+import app.malachite.player.ui.components.rememberCoverState
 import app.malachite.player.ui.theme.shade
 
 /**
@@ -138,11 +137,11 @@ fun NowPlayingScreen() {
     val settings by g.settings.state.collectAsState()
     val st by g.player.state.collectAsState()
     val t = st.currentPath?.let { g.library.track(it) } ?: return
-    val cover = rememberCover(t, 900)
     val dark = isSystemInDarkTheme()
-    val scheme = remember(cover, settings.coverColorsInPlayer, settings.themeMode, dark) {
-        if (settings.coverColorsInPlayer && cover != null) coverSchemeCached(cover, settings.shade(dark)) else null
-    }
+    // the colours were worked out ahead (CoverPrefetch), never here while the screen slides in:
+    // that work, the cover read only now and the blur together held the opening up for a fifth of
+    // a second, and the screen showed "no cover" in the settings' colours in the meantime
+    val scheme = rememberCoverScheme(t, settings.shade(dark), settings.coverColorsInPlayer || settings.coverColorsEverywhere)
     MalachiteTheme(settings, scheme) {
         // Surface: text and icons take the readable colour of this (cover) theme, never default black.
         androidx.compose.material3.Surface(
@@ -151,13 +150,7 @@ fun NowPlayingScreen() {
             contentColor = MaterialTheme.colorScheme.onBackground,
         ) {
         Box(Modifier.fillMaxSize().clickable(enabled = false) {}) {
-            if (cover != null && settings.coverColorsInPlayer) {
-                Image(
-                    cover.asImageBitmap(), null,
-                    Modifier.fillMaxSize().blur(60.dp).alpha(0.25f),
-                    contentScale = ContentScale.Crop,
-                )
-            }
+            if (settings.coverColorsInPlayer) FrostLayer(t, 0.25f, settings.animations)
             NowPlayingContent(t, st)
         }
         }
@@ -380,35 +373,55 @@ private fun NowPlayingContent(t: TrackInfo, st: PlayerUiState) {
     if (sleepDialog) SleepDialog(st) { sleepDialog = false }
 }
 
+/** What the cover place shows while the file is still read, and when it is known there is no cover. */
+private object CoverReading
+private object CoverMissing
+
 @Composable
 private fun CoverArea(t: TrackInfo, onLyrics: () -> Unit) {
     val nav = LocalNavigator.current
-    val cover = rememberCover(t, 900)
+    val animate = MalachiteApp.graph.settings.state.collectAsState().value.animations
+    val cover = rememberCoverState(t, 900)
+    // The picture (for a moment a smaller copy while the big one is read), a quiet empty square
+    // while the file is still read, and "no cover" only once it is known there is none – it used to
+    // flash up on every opening before the picture came.
+    val look: Any = cover.bitmap ?: if (cover.settled) CoverMissing else CoverReading
     // the biggest square that fits: also when the place is wider than it is tall
     Box(Modifier.aspectRatio(1f).padding(8.dp), contentAlignment = Alignment.Center) {
-        if (cover != null) {
-            Image(
-                cover.asImageBitmap(), tr("Обложка"),
-                Modifier.fillMaxSize().clip(RoundedCornerShape(22.dp)).clickable(onClick = onLyrics),
-                contentScale = ContentScale.Crop,
-            )
-        } else {
-            // No cover in the file: offer to find one and embed it into the file itself.
-            Card(
-                Modifier.fillMaxSize(), shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-            ) {
-                Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                    Icon(Icons.Filled.MusicNote, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                    Spacer(Modifier.height(10.dp))
-                    Text(tr("В файле нет обложки"), style = MaterialTheme.typography.titleMedium)
-                    Text(tr("Найти обложку?"), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(12.dp))
-                    Button(onClick = { nav.show(DialogRequest.FindCover(listOf(t))) }) {
-                        Icon(Icons.Filled.ImageSearch, null); Spacer(Modifier.width(6.dp)); Text(tr("Найти и вшить в файл"))
+        androidx.compose.animation.Crossfade(
+            look,
+            animationSpec = if (animate) androidx.compose.animation.core.tween(260) else androidx.compose.animation.core.snap(),
+            label = "cover",
+        ) { shown ->
+            when (shown) {
+                is android.graphics.Bitmap -> Image(
+                    shown.asImageBitmap(), tr("Обложка"),
+                    Modifier.fillMaxSize().clip(RoundedCornerShape(22.dp)).clickable(onClick = onLyrics),
+                    contentScale = ContentScale.Crop,
+                )
+                CoverMissing -> {
+                    // No cover in the file: offer to find one and embed it into the file itself.
+                    Card(
+                        Modifier.fillMaxSize(), shape = RoundedCornerShape(22.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                    ) {
+                        Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                            Icon(Icons.Filled.MusicNote, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Spacer(Modifier.height(10.dp))
+                            Text(tr("В файле нет обложки"), style = MaterialTheme.typography.titleMedium)
+                            Text(tr("Найти обложку?"), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.height(12.dp))
+                            Button(onClick = { nav.show(DialogRequest.FindCover(listOf(t))) }) {
+                                Icon(Icons.Filled.ImageSearch, null); Spacer(Modifier.width(6.dp)); Text(tr("Найти и вшить в файл"))
+                            }
+                            TextButton(onClick = onLyrics) { Text(tr("Показать текст")) }
+                        }
                     }
-                    TextButton(onClick = onLyrics) { Text(tr("Показать текст")) }
                 }
+                else -> Box(
+                    Modifier.fillMaxSize().clip(RoundedCornerShape(22.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
+                )
             }
         }
     }

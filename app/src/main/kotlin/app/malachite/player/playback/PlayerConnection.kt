@@ -133,21 +133,24 @@ class PlayerConnection(
     }
 
     /**
-     * The covers of the songs "next" and "previous" lead to are made ready while this one plays
-     * (asked again after a change of the queue or of shuffle; the same songs are not loaded twice).
+     * The covers (with their colours and frosted glass) of the song playing and of the songs "next"
+     * and "previous" lead to are made ready while it plays: the song screen then opens with its
+     * cover and colours at once (asked again after a change of the queue or of shuffle; the same
+     * songs are not loaded twice).
      */
     private fun prefetchCovers(c: MediaController) {
         val now = c.currentMediaItem?.mediaId ?: return
-        if (c.mediaItemCount < 2) return
         val count = c.mediaItemCount
-        // the order "next" really follows (shuffle, repeat); at the ends the buttons wrap round
-        val next = c.nextMediaItemIndex.takeIf { it != androidx.media3.common.C.INDEX_UNSET } ?: 0
-        val prev = c.previousMediaItemIndex.takeIf { it != androidx.media3.common.C.INDEX_UNSET } ?: (count - 1)
-        val paths = listOf(next, prev).distinct().filter { it in 0 until count }.map { c.getMediaItemAt(it).mediaId }.filter { it != now }
+        val around = if (count < 2) emptyList() else {
+            // the order "next" really follows (shuffle, repeat); at the ends the buttons wrap round
+            val next = c.nextMediaItemIndex.takeIf { it != androidx.media3.common.C.INDEX_UNSET } ?: 0
+            val prev = c.previousMediaItemIndex.takeIf { it != androidx.media3.common.C.INDEX_UNSET } ?: (count - 1)
+            listOf(next, prev).distinct().filter { it in 0 until count }.map { c.getMediaItemAt(it).mediaId }.filter { it != now }
+        }
         val s = settings.value
         val dark = (context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
             android.content.res.Configuration.UI_MODE_NIGHT_YES
-        app.malachite.player.data.CoverPrefetch.around(paths, s.shade(dark), s.coverColorsInPlayer)
+        app.malachite.player.data.CoverPrefetch.around(listOf(now) + around, s.shade(dark), s.coverColorsInPlayer || s.coverColorsEverywhere)
     }
 
     /**

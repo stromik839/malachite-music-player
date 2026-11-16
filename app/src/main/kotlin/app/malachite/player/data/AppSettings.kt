@@ -144,7 +144,7 @@ data class PartStyle(
     /** ARGB, null = from theme. */
     val color: Long? = null,
     val alpha: Float = 1f,
-    /** Frosted look: the blurred cover of the current song behind the part (Android 12+). */
+    /** Frosted look: the blurred cover of the current song behind the part. */
     val blur: Boolean = false,
     /** Relative size of the part (0.7 .. 1.6). */
     val scale: Float = 1f,
@@ -345,8 +345,13 @@ data class AppSettings(
     val animations: Boolean = true,
     /** Soft shadows (gradients) at the edges of the bars and panels. */
     val gradients: Boolean = true,
-    /** Frosted glass: the blurred cover behind the top bar, the tab panel and the mini player (Android 12+). */
+    /** Frosted glass: the blurred cover of the song playing behind the whole window, the panels clear layers over it. */
     val blur: Boolean = false,
+    /**
+     * The colours of the whole app (accent, background, panels) taken from the cover of the song
+     * playing, changing softly with it – they then go with the frosted glass. Off until switched on.
+     */
+    val coverColorsEverywhere: Boolean = false,
     /** Bars that move with the music on the song screen. */
     val visualizer: Boolean = true,
     val visualizerStyle: VisualizerStyle = VisualizerStyle.WAVE,

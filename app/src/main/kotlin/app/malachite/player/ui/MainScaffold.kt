@@ -2,7 +2,6 @@ package app.malachite.player.ui
 
 import app.malachite.core.i18n.tr
 import android.graphics.Bitmap
-import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
@@ -64,9 +63,10 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import app.malachite.player.ui.components.rememberFrost
+import app.malachite.player.ui.components.FrostLayer
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -79,7 +79,6 @@ import app.malachite.player.data.NavPosition
 import app.malachite.player.data.PartStyle
 import app.malachite.player.data.Tab
 import app.malachite.player.ui.components.CoverImage
-import app.malachite.player.ui.components.rememberCover
 import app.malachite.player.ui.dialogs.DialogHost
 import app.malachite.player.ui.heal.HealScreen
 import app.malachite.player.ui.nowplaying.NowPlayingScreen
@@ -122,19 +121,23 @@ fun Tab.icon(): ImageVector = when (this) {
     Tab.ADD -> Icons.Filled.LibraryAdd
 }
 
-/** Background of a menu part with the user's colour, transparency and optional frosted cover. */
+/**
+ * Background of a menu part with the user's colour, transparency and optional frosted cover
+ * ([frost]: the cover of the song playing, blurred beforehand – see Frost).
+ */
 @Composable
-fun PartBackground(style: PartStyle, default: Color, cover: Bitmap?, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+fun PartBackground(style: PartStyle, default: Color, frost: Bitmap?, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val fx by MalachiteApp.graph.settings.state.collectAsState()
-    val base = style.color?.let { Color(it.toInt()) } ?: default
-    val canBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && cover != null
+    // with "colours from the cover" the parts take the cover's colours too, not their own
+    val base = style.color?.takeIf { !fx.coverColorsEverywhere }?.let { Color(it.toInt()) } ?: default
+    val canBlur = frost != null
     // "Размытие" for everything (Look → Effects): one frosted picture lies behind the whole window
-    // (see [FrostedBackdrop]) and the parts are clear layers over it, the same glass as the rest.
+    // (see FrostLayer in [MainScaffold]) and the parts are clear layers over it, the same glass as the rest.
     val glass = fx.blur && canBlur
     // the part's own frosted look (Menu and tabs) when the one for everything is off
     val own = style.blur && !fx.blur && canBlur
     Box(modifier) {
-        if (own) Image(cover!!.asImageBitmap(), null, Modifier.matchParentSize().blur(28.dp), contentScale = ContentScale.Crop)
+        if (own) Image(frost!!.asImageBitmap(), null, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
         val alpha = style.alpha.coerceIn(0f, 1f).let { a -> if (glass) kotlin.math.min(a, 0.5f) else if (own) kotlin.math.min(a, 0.72f) else a }
         Box(Modifier.matchParentSize().background(base.copy(alpha = alpha)))
         // a faint sheen from above
@@ -150,7 +153,8 @@ fun MainScaffold() {
     val settings by graph.settings.state.collectAsState()
     val player by graph.player.state.collectAsState()
     val current = player.currentPath?.let { graph.library.track(it) }
-    val cover = rememberCover(current, 400)
+    // the cover of the song playing, blurred beforehand: the frosted glass of the window and the panels
+    val frost = rememberFrost(current)
     val heal by graph.healing.state.collectAsState()
 
     LaunchedEffect(nav.snackbar) {
@@ -175,12 +179,12 @@ fun MainScaffold() {
         // the "online" tab exists only while the online section is switched on
         val tabs = settings.tabs.filter { it != Tab.ONLINE || settings.onlineEnabled }
         TabBar(
-            tabs, nav.currentTab, navPosition, settings.navStyle, settings.showTabLabels, cover,
+            tabs, nav.currentTab, navPosition, settings.navStyle, settings.showTabLabels, frost,
             settings.tabSlide, settings.tabSlideDelayMs, if (settings.animations) settings.tabSlideAnim else app.malachite.player.data.TabSlideAnim.NONE,
         ) { nav.openTab(it) }
     }
     val mini: @Composable () -> Unit = {
-        if (current != null) Box(Modifier.tourTarget("mini")) { MiniPlayer(settings.miniPlayerStyle, cover) }
+        if (current != null) Box(Modifier.tourTarget("mini")) { MiniPlayer(settings.miniPlayerStyle, frost) }
     }
     // the AcoustID key failed during healing: one window, wherever the user is
     app.malachite.player.ui.heal.SoundKeyProblemDialog()
@@ -192,7 +196,7 @@ fun MainScaffold() {
     }
     val content: @Composable () -> Unit = {
         Column(Modifier.fillMaxSize()) {
-            TopBar(settings.topBarStyle, cover)
+            TopBar(settings.topBarStyle, frost)
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 val key = nav.currentKey
                 // which screen the detailed log reports frames for
@@ -238,9 +242,17 @@ fun MainScaffold() {
         }
     }
 
+    // The song screen slides over everything; once it covers the window, what lies under it is not
+    // drawn at all (it stays as it was, scroll positions too): the frosted glass and the lists under
+    // it were drawn with every frame of the visualizer for nothing.
+    val playerShown = remember { androidx.compose.animation.core.MutableTransitionState(false) }
+    playerShown.targetState = nav.playerOpen && current != null
+    val covered = playerShown.isIdle && playerShown.currentState
+    val hideWhenCovered = Modifier.drawWithContent { if (!covered) drawContent() }
+
     // the frosted glass behind the whole window, the screens and the panels alike
-    if (settings.blur) FrostedBackdrop(cover)
-    Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+    if (settings.blur) FrostLayer(current, 0.32f, settings.animations, hideWhenCovered.fillMaxSize())
+    Box(Modifier.fillMaxSize().then(hideWhenCovered).windowInsetsPadding(WindowInsets.safeDrawing)) {
         when (navPosition) {
             NavPosition.BOTTOM -> Column(Modifier.fillMaxSize()) {
                 if (settings.miniPlayerOnTop) mini()
@@ -271,30 +283,21 @@ fun MainScaffold() {
                 navBar()
             }
         }
-        nav.snackbar?.let { msg ->
-            Snackbar(Modifier.align(Alignment.BottomCenter).padding(16.dp).padding(bottom = 120.dp)) { Text(msg) }
-        }
     }
     AnimatedVisibility(
-        visible = nav.playerOpen && current != null,
+        visibleState = playerShown,
         enter = if (settings.animations) slideInVertically { it } else androidx.compose.animation.EnterTransition.None,
         exit = if (settings.animations) slideOutVertically { it } else androidx.compose.animation.ExitTransition.None,
     ) {
         NowPlayingScreen()
     }
-    DialogHost()
-}
-
-/**
- * The playing song's cover, blurred and dimmed, behind the whole window (Android 12+): screens and
- * panels lie on the same frosted glass instead of blurred panels beside a sharp screen.
- */
-@Composable
-private fun FrostedBackdrop(cover: Bitmap?) {
-    if (cover == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
-    androidx.compose.animation.Crossfade(cover, label = "backdrop") { c ->
-        Image(c.asImageBitmap(), null, Modifier.fillMaxSize().blur(48.dp).alpha(0.32f), contentScale = ContentScale.Crop)
+    // above the song screen too: what was said from it ("best moment marked"…) used to stay hidden under it
+    nav.snackbar?.let { msg ->
+        Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+            Snackbar(Modifier.align(Alignment.BottomCenter).padding(16.dp).padding(bottom = 120.dp)) { Text(msg) }
+        }
     }
+    DialogHost()
 }
 
 /** Gradient shadows along the edges of the screen area: under the top bar, above the bottom bars, beside a side panel. */
@@ -396,10 +399,10 @@ private fun titleOf(s: Screen): String = when (s) {
 }
 
 @Composable
-private fun TopBar(style: PartStyle, cover: Bitmap?) {
+private fun TopBar(style: PartStyle, frost: Bitmap?) {
     val nav = LocalNavigator.current
     val scale = style.scale.coerceIn(0.7f, 1.6f)
-    PartBackground(style, MaterialTheme.colorScheme.background, cover, Modifier.fillMaxWidth()) {
+    PartBackground(style, MaterialTheme.colorScheme.background, frost, Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().height(56.dp * scale).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             if (nav.stack.size > 1) {
                 IconButton(onClick = { nav.back() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, tr("Назад")) }
@@ -422,7 +425,7 @@ private fun TopBar(style: PartStyle, cover: Bitmap?) {
 
 
 @Composable
-private fun MiniPlayer(style: PartStyle, cover: Bitmap?) {
+private fun MiniPlayer(style: PartStyle, frost: Bitmap?) {
     val graph = MalachiteApp.graph
     val nav = LocalNavigator.current
     val st by graph.player.state.collectAsState()
@@ -435,7 +438,7 @@ private fun MiniPlayer(style: PartStyle, cover: Bitmap?) {
             delay(500)
         }
     }
-    PartBackground(style, MaterialTheme.colorScheme.surfaceContainerHigh, cover, Modifier.fillMaxWidth().clickable { nav.playerOpen = true }) {
+    PartBackground(style, MaterialTheme.colorScheme.surfaceContainerHigh, frost, Modifier.fillMaxWidth().clickable { nav.playerOpen = true }) {
         Column {
             LinearProgressIndicator(
                 progress = { if (st.durationMs > 0) (pos.longValue.toFloat() / st.durationMs).coerceIn(0f, 1f) else 0f },

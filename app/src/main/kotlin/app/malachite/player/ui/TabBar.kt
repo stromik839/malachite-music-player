@@ -73,7 +73,8 @@ fun TabBar(
     position: NavPosition,
     style: PartStyle,
     labels: Boolean,
-    cover: Bitmap?,
+    /** The frosted cover of the song playing (see Frost), for a panel with its own frosted look. */
+    frost: Bitmap?,
     slide: Boolean,
     slideDelayMs: Int,
     slideAnim: TabSlideAnim,
@@ -216,7 +217,7 @@ fun TabBar(
         }
     }
     if (vertical) {
-        PartBackground(style, bg, cover, Modifier.fillMaxHeight().width(84.dp * scale).tourTarget("nav")) {
+        PartBackground(style, bg, frost, Modifier.fillMaxHeight().width(84.dp * scale).tourTarget("nav")) {
             // scrolls when the window is too low for all tabs (a phone on its side)
             Column(
                 Modifier.fillMaxHeight().verticalScroll(rememberScrollState()).then(panelPlace).then(pillDraw).then(gesture).padding(vertical = 12.dp),
@@ -226,7 +227,7 @@ fun TabBar(
             }
         }
     } else {
-        PartBackground(style, bg, cover, Modifier.fillMaxWidth().tourTarget("nav")) {
+        PartBackground(style, bg, frost, Modifier.fillMaxWidth().tourTarget("nav")) {
             Row(Modifier.fillMaxWidth().then(panelPlace).then(pillDraw).then(gesture).padding(horizontal = 4.dp, vertical = 2.dp)) {
                 tabs.forEachIndexed { i, t -> item(i, t, Modifier.weight(1f)) }
             }

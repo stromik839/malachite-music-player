@@ -1741,9 +1741,6 @@ Opacity
 Размытие (обложка за панелью)
 Blur (the cover behind the panel)
 
-Матовое стекло из обложки текущей песни; Android 12+
-Frosted glass made of the current song's cover; Android 12+
-
 Главная папка
 Main folder
 
@@ -4759,12 +4756,6 @@ Soft shadows at the edges of the top bar, the mini player and the tab panel, and
 Размытие
 Blur
 
-Матовое стекло: размытая обложка играющей песни лежит под всем окном — и под экранами, и под панелями, а панели становятся прозрачнее. Чуть больше работы для телефона
-Frosted glass: the blurred cover of the playing song lies under the whole window — under the screens and the panels alike, and the panels become clearer. A little more work for the phone
-
-Нужен Android 12 или новее: на этом телефоне размытие не видно
-Needs Android 12 or newer: on this phone the blur is not visible
-
 Добавить
 Add
 
@@ -5059,3 +5050,38 @@ The blurred cover now lies under the whole window, and the panels are clear laye
 Не удалось дописать заголовок FLAC
 Could not put the FLAC header in place
 
+Матовое стекло: размытая обложка играющей песни лежит под всем окном — и под экранами, и под панелями, а панели становятся прозрачнее. Обложка размывается заранее, один раз на песню, так что телефону это почти ничего не стоит
+Frosted glass: the blurred cover of the song playing lies under the whole window — under the screens and the panels alike, and the panels become clearer. The cover is blurred beforehand, once per song, so it costs the phone almost nothing
+
+Цвета из обложки везде
+Cover colours everywhere
+
+Акцент, фон и панели всего приложения берут оттенки обложки играющей песни и плавно меняются вместе с ней — тогда тема подходит к размытому фону. Свои цвета панелей на это время отдыхают; нет песни или обложки — цвета из настроек
+The accent, the background and the panels of the whole app take the shades of the playing song's cover and change softly with it — the theme then goes with the blurred background. Your own panel colours rest meanwhile; with no song or no cover, the colours of the settings
+
+Матовое стекло из обложки текущей песни
+Frosted glass from the cover of the current song
+
+Как сделать, чтобы цвета приложения подходили к обложке?
+How do I make the app's colours go with the cover?
+
+Оформление → «Эффекты» → «Цвета из обложки везде». Акцент, фон и панели берут оттенки обложки играющей песни и плавно меняются вместе с ней. Вместе с «Размытием» получается матовое стекло в тон обложке. Экран песни берёт цвета обложки и без этого переключателя — его можно выключить в «Экран открытой песни».
+Appearance → "Effects" → "Cover colours everywhere". The accent, the background and the panels take the shades of the playing song's cover and change softly with it. Together with "Blur" this makes frosted glass in the tone of the cover. The song screen takes the cover's colours even without this switch — that can be turned off in "Screen of the open song".
+
+Экран песни открывается ровно
+The song screen opens smoothly
+
+Обложка песни и её цвета готовятся заранее, пока она играет: экран песни выезжает плавно и сразу с обложкой — без «В файле нет обложки» на миг и без рывка. При смене песни обложка и цвета перетекают мягко. И сообщения с экрана песни («Лучший момент отмечен»…) теперь видны.
+A song's cover and its colours are made ready while it plays: the song screen slides in smoothly and with its cover at once — no "The file has no cover" for a moment and no jerk. When the song changes, the cover and the colours blend softly. And messages from the song screen ("Best moment marked"…) can be seen now.
+
+Открыть песню
+Open the song
+
+Новый переключатель в Оформление → «Эффекты»: акцент, фон и панели всего приложения берут оттенки обложки играющей песни — тема подходит к размытому фону. Выключен, пока не включите.
+A new switch in Appearance → "Effects": the accent, the background and the panels of the whole app take the shades of the playing song's cover — the theme goes with the blurred background. Off until you switch it on.
+
+Размытие легче и на любом Android
+A lighter blur, on any Android
+
+Обложка размывается заранее, один раз на песню, а не в каждом кадре: слабым телефонам так легче. И размытие теперь есть на Android 8–11.
+The cover is blurred beforehand, once per song, not in every frame: easier for weak phones. And the blur now works on Android 8–11 too.

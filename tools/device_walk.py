@@ -513,6 +513,27 @@ if step("Settings", "Настройки", desc=True, optional=True):
                     print(f"::error::Android API {API}: the app is gone while the mixer played")
             back()
         back()
+    # the frosted glass and the cover's colours for the whole app: on for the rest of the walk
+    # (the first song has a cover, so both have a picture to work with)
+    scroll_top()
+    if step("Settings: theme, colours and language", "Тема, цвета и язык", optional=True, scroll=3):
+        time.sleep(1)
+        for sw in ["Размытие", "Цвета из обложки везде"]:
+            if not step(f"Switch on «{EN.get(sw, sw)}»", sw, optional=True, scroll=8):
+                missing.append(f"switch {EN.get(sw, sw)}")
+            time.sleep(1)
+        screen("blur and cover colours on")
+        give_up_if_dead("switching on the blur and the cover colours")
+        back()
+        # the song screen with them: it slides in with its cover and colours
+        if step("Open the song screen with the cover colours", regex=r"^First Song$", lowest=True, optional=True, wait=10):
+            time.sleep(2)
+            nodes = screen("song screen with the cover colours")
+            if not find(nodes, regex=r"^Cover$", desc=True):
+                print(f"::warning::Android API {API}: no cover on the song screen — on the screen: {words(nodes)}")
+                missing.append("cover on the song screen")
+            give_up_if_dead("the song screen with the cover colours")
+            back()
     scroll_top()
     if step("Settings: recognition by sound", "Узнавание песен по звуку", optional=True, scroll=4):
         screen("settings sound recognition")

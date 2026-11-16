@@ -123,6 +123,11 @@ fun helpItems(): List<HelpItem> = listOf(
         screen(Screen.NoAlbum), tr("Открыть «Без альбома»"),
     ),
     HelpItem(
+        tr("Как сделать, чтобы цвета приложения подходили к обложке?"),
+        tr("Оформление → «Эффекты» → «Цвета из обложки везде». Акцент, фон и панели берут оттенки обложки играющей песни и плавно меняются вместе с ней. Вместе с «Размытием» получается матовое стекло в тон обложке. Экран песни берёт цвета обложки и без этого переключателя — его можно выключить в «Экран открытой песни»."),
+        screen(Screen.SettingsAppearance), tr("К эффектам"),
+    ),
+    HelpItem(
         tr("Как поменять вид меню: где панель вкладок, какие вкладки и в каком порядке?"),
         tr("Настройки → «Меню и вкладки». Там положение панели (снизу, сверху, сбоку), список вкладок с порядком, мини-плеер, цвет, прозрачность и размытие панелей."),
         screen(Screen.SettingsMenu), tr("Открыть «Меню и вкладки»"),
@@ -299,6 +304,7 @@ fun settingEntries(): List<SettingEntry> {
         SettingEntry(tr("Язык интерфейса"), look, screen(Screen.SettingsAppearance), "language язык english русский"),
         SettingEntry(tr("Тема меню"), look, screen(Screen.SettingsAppearance), "тёмная светлая amoled dark light theme"),
         SettingEntry(tr("Эффекты"), look, screen(Screen.SettingsAppearance), "анимации градиенты тени блюр размытие стекло animations gradients shadows blur glass"), // i18n:off
+        SettingEntry(tr("Цвета из обложки везде"), look, screen(Screen.SettingsAppearance), "цвет тема адаптация под обложку фон акцент colours theme adapt cover"), // i18n:off
         SettingEntry(tr("Цвет акцента"), look, screen(Screen.SettingsAppearance), "цвет colour color accent"),
         SettingEntry(tr("Значок приложения"), look, screen(Screen.SettingsAppearance), "иконка icon"),
         SettingEntry(tr("Шрифт меню"), look, screen(Screen.SettingsAppearance), "font размер текста"),

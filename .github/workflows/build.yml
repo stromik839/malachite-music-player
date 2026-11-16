@@ -139,7 +139,10 @@ jobs:
           sudo apt-get update -qq > /dev/null && sudo apt-get install -y -qq ffmpeg > /dev/null
           mkdir -p device-songs
           song() { ffmpeg -loglevel error -f lavfi -i "sine=frequency=$1:duration=45" -metadata artist="$2" -metadata album="$3" -metadata title="$4" -metadata track="$5" -b:a 64k "device-songs/$2 - $4.mp3"; }
-          song 440 "Test Artist" "Test Album" "First Song" 1
+          # the first song has a cover, drawn here (ffmpeg's own test pattern): the song screen, the
+          # cover's colours and the frosted glass get a picture to work with
+          ffmpeg -loglevel error -f lavfi -i "testsrc2=size=640x640" -frames:v 1 cover.jpg
+          ffmpeg -loglevel error -f lavfi -i "sine=frequency=440:duration=45" -i cover.jpg -map 0:a -map 1:v -c:v copy -id3v2_version 3 -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (front)" -metadata artist="Test Artist" -metadata album="Test Album" -metadata title="First Song" -metadata track="1" -b:a 64k "device-songs/Test Artist - First Song.mp3"
           song 523 "Test Artist" "Test Album" "Second Song" 2
           song 659 "Another Artist" "Other Album" "Third Song" 1
           ls -la device-songs

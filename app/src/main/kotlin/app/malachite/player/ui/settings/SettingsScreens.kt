@@ -165,9 +165,12 @@ fun SettingsAppearanceScreen() {
             ) { v -> up { it.copy(gradients = v) } }
             SwitchRow(
                 tr("Размытие"), s.blur,
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) tr("Матовое стекло: размытая обложка играющей песни лежит под всем окном — и под экранами, и под панелями, а панели становятся прозрачнее. Чуть больше работы для телефона")
-                else tr("Нужен Android 12 или новее: на этом телефоне размытие не видно"),
+                tr("Матовое стекло: размытая обложка играющей песни лежит под всем окном — и под экранами, и под панелями, а панели становятся прозрачнее. Обложка размывается заранее, один раз на песню, так что телефону это почти ничего не стоит"),
             ) { v -> up { it.copy(blur = v) } }
+            SwitchRow(
+                tr("Цвета из обложки везде"), s.coverColorsEverywhere,
+                tr("Акцент, фон и панели всего приложения берут оттенки обложки играющей песни и плавно меняются вместе с ней — тогда тема подходит к размытому фону. Свои цвета панелей на это время отдыхают; нет песни или обложки — цвета из настроек"),
+            ) { v -> up { it.copy(coverColorsEverywhere = v) } }
         }
         Group(tr("Тема меню")) {
             RadioRow(tr("Тёмная (по умолчанию)"), s.themeMode, ThemeMode.DARK) { v -> up { it.copy(themeMode = v) } }
@@ -359,7 +362,7 @@ private fun PartEditor(title: String, style: PartStyle, onChange: (PartStyle) ->
         ColorSetting(tr("Цвет"), style.color) { c -> onChange(style.copy(color = c)) }
         SliderRow(tr("Непрозрачность"), style.alpha, 0f..1f, { "%.0f%%".format(it * 100) }) { v -> onChange(style.copy(alpha = v)) }
         SliderRow(tr("Размер"), style.scale, 0.7f..1.6f, { "%.0f%%".format(it * 100) }) { v -> onChange(style.copy(scale = v)) }
-        SwitchRow(tr("Размытие (обложка за панелью)"), style.blur, tr("Матовое стекло из обложки текущей песни; Android 12+")) { v -> onChange(style.copy(blur = v)) }
+        SwitchRow(tr("Размытие (обложка за панелью)"), style.blur, tr("Матовое стекло из обложки текущей песни")) { v -> onChange(style.copy(blur = v)) }
     }
 }
 

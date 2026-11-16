@@ -84,6 +84,37 @@ class SafeTagWriteTest {
         }
     }
 
+    /**
+     * The same as on a phone: the tag library switched to Android, where its own way of making a
+     * FLAC or Ogg picture block throws. Every taggable format must still take a cover (a PNG one
+     * too, and one whose type was not given).
+     */
+    @Test
+    fun embedsCoverTheAndroidWay() {
+        val options = org.jaudiotagger.tag.TagOptionSingleton.getInstance()
+        val was = options.isAndroid
+        options.isAndroid = true
+        try {
+            val jpeg = resource("cover.jpg")
+            val png = resource("cover.png")
+            for (name in listOf("sine.flac", "sine.ogg", "sine.mp3", "sine.m4a", "sine.wav", "sine.aiff", "sine.opus")) {
+                for ((picture, mime) in listOf(jpeg to "image/jpeg", png to "")) {
+                    val f = fixture(name)
+                    val format = AudioFormat.detect(f)
+                    val before = AudioPayload.fingerprint(f, format)
+                    val r = safe.writeTags(f, TagEdit(title = "Перевод", artwork = TagEdit.Artwork(picture, mime)), dir)
+                    assertTrue(r.isOk, "$name ($mime): $r")
+                    assertEquals(before, AudioPayload.fingerprint(f, format), "audio changed in $name")
+                    assertContentEquals(picture, TagIO.readArtwork(f, format), "cover in $name ($mime)")
+                    assertEquals("Перевод", TagIO.read(f, format)!!.title, name)
+                    f.delete()
+                }
+            }
+        } finally {
+            options.isAndroid = was
+        }
+    }
+
     @Test
     fun renamingAFieldKeepsOtherFields() {
         val f = fixture("sine.mp3")

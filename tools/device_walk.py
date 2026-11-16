@@ -593,6 +593,10 @@ def convert(to_ru, label, now):
     if not said or not said.startswith("Done:"):
         print(f"::warning::Android API {API}: converting a song to {label} did not finish well: {said}")
         missing.append(f"convert to {label}")
+    # the song has a cover: the tags and the cover must reach the new file too
+    elif "could not be carried over" in said:
+        print(f"::warning::Android API {API}: converting to {label}: the tags were not carried over: {said}")
+        missing.append(f"tags carried over to {label}")
 
 
 # the search above ends with "back" twice, which can leave the app: open it again

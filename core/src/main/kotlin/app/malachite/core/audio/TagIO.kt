@@ -11,6 +11,11 @@ import org.jaudiotagger.tag.TagOptionSingleton
 import org.jaudiotagger.tag.id3.ID3v23Tag
 import org.jaudiotagger.tag.id3.valuepair.TextEncoding
 import org.jaudiotagger.tag.images.ArtworkFactory
+import org.jaudiotagger.audio.flac.metadatablock.MetadataBlockDataPicture
+import org.jaudiotagger.tag.vorbiscomment.util.Base64Coder
+import org.jaudiotagger.tag.vorbiscomment.VorbisCommentFieldKey
+import org.jaudiotagger.tag.vorbiscomment.VorbisCommentTag
+import org.jaudiotagger.tag.flac.FlacTag
 import org.jaudiotagger.tag.reference.ID3V2Version
 import org.jaudiotagger.tag.wav.WavTag
 import java.io.File
@@ -276,20 +281,45 @@ object TagIO {
             try { tag.deleteArtworkField() } catch (e: Exception) { }
         }
         edit.artwork?.let { a ->
-            val art = ArtworkFactory.getNew()
-            art.binaryData = a.bytes
-            art.mimeType = a.mime
-            art.pictureType = 3
-            art.description = ""
-            art.width = a.width
-            art.height = a.height
-            tag.setField(art)
+            when (tag) {
+                // FLAC and Ogg Vorbis: the tag library's own way of making the picture block asks
+                // for desktop image classes and on Android always failed with
+                // UnsupportedOperationException – a cover was never embedded into these files
+                // (found, carried over to a FLAC made from a song). The block is made here.
+                is FlacTag -> tag.setField(pictureBlock(a))
+                is VorbisCommentTag -> tag.setField(
+                    tag.createField(VorbisCommentFieldKey.METADATA_BLOCK_PICTURE, String(Base64Coder.encode(pictureBlock(a).rawContent))),
+                )
+                else -> {
+                    val art = ArtworkFactory.getNew()
+                    art.binaryData = a.bytes
+                    art.mimeType = mimeOf(a)
+                    art.pictureType = 3
+                    art.description = ""
+                    art.width = a.width
+                    art.height = a.height
+                    tag.setField(art)
+                }
+            }
         }
         wavTag?.let {
             it.syncToInfoFromId3Overwrite()
             it.setExistingId3Tag(true)
         }
         af.commit()
+    }
+
+    /** A FLAC picture block (also what Ogg Vorbis keeps, in Base64): the front cover, no description. */
+    private fun pictureBlock(a: TagEdit.Artwork) = MetadataBlockDataPicture(a.bytes, 3, mimeOf(a), "", a.width.coerceAtLeast(0), a.height.coerceAtLeast(0), 0, 0)
+
+    /** The picture's type as given, or read from its first bytes when none was given. */
+    private fun mimeOf(a: TagEdit.Artwork): String = a.mime.ifBlank {
+        val b = a.bytes
+        when {
+            b.size >= 3 && b[0] == 0xFF.toByte() && b[1] == 0xD8.toByte() -> "image/jpeg"
+            b.size >= 4 && b[0] == 0x89.toByte() && b[1] == 'P'.code.toByte() && b[2] == 'N'.code.toByte() && b[3] == 'G'.code.toByte() -> "image/png"
+            else -> "image/jpeg"
+        }
     }
 
     private fun applyOpus(c0: OpusTags.Comments, e: TagEdit): OpusTags.Comments {

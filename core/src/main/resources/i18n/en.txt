@@ -5085,3 +5085,9 @@ A lighter blur, on any Android
 
 Обложка размывается заранее, один раз на песню, а не в каждом кадре: слабым телефонам так легче. И размытие теперь есть на Android 8–11.
 The cover is blurred beforehand, once per song, not in every frame: easier for weak phones. And the blur now works on Android 8–11 too.
+
+Обложки в FLAC и OGG
+Covers in FLAC and OGG
+
+«Найти и вшить в файл», исцеление обложек и перевод песни в FLAC теперь вшивают обложку и в файлы FLAC и OGG. Раньше на телефоне это не получалось из-за ошибки в библиотеке тегов.
+"Find and embed into the file", healing of covers and converting a song to FLAC now embed the cover into FLAC and OGG files too. On a phone this used to fail because of a fault in the tag library.

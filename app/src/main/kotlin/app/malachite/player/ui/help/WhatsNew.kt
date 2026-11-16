@@ -27,7 +27,7 @@ import app.malachite.player.data.Tab
  */
 object WhatsNew {
     /** Raised whenever the list below changes: the window is shown once more after such an update. */
-    const val ID = 5
+    const val ID = 6
 
     class Item(val title: String, val text: String, val open: ((Navigator) -> Unit)? = null, val openLabel: String = "")
 
@@ -45,6 +45,10 @@ object WhatsNew {
             tr("Цвета из обложки везде"),
             tr("Новый переключатель в Оформление → «Эффекты»: акцент, фон и панели всего приложения берут оттенки обложки играющей песни — тема подходит к размытому фону. Выключен, пока не включите."),
             { it.push(Screen.SettingsAppearance) }, tr("К эффектам"),
+        ),
+        Item(
+            tr("Обложки в FLAC и OGG"),
+            tr("«Найти и вшить в файл», исцеление обложек и перевод песни в FLAC теперь вшивают обложку и в файлы FLAC и OGG. Раньше на телефоне это не получалось из-за ошибки в библиотеке тегов."),
         ),
         Item(
             tr("Размытие легче и на любом Android"),

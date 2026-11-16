@@ -170,8 +170,9 @@ fun MalachiteTheme(settings: AppSettings, scheme: ColorScheme? = null, content: 
     val menu = remember(settings.themeMode, settings.accent, settings.customAccent, settings.customBackground, settings.customSurface, dark) {
         settings.menuScheme(dark)
     }
-    // a new set of colours (the next song's cover, another accent) comes in softly
-    val colors = animatedScheme(scheme ?: menu, settings.animations)
+    // Changed at once: every change of these composes the whole app again, so never step by step.
+    // The big surfaces glide to new colours while drawing instead (see rememberGlidingColor).
+    val colors = scheme ?: menu
     val typography = remember(settings.menuFont, settings.menuFontFile, settings.fontScale) {
         Typography().withFont(fontFamily(settings.menuFont, settings.menuFontFile), settings.fontScale.coerceIn(0.8f, 1.4f))
     }

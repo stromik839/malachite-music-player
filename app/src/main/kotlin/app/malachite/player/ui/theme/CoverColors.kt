@@ -1,18 +1,20 @@
 package app.malachite.player.ui.theme
 
 import android.graphics.Bitmap
+import androidx.compose.animation.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.Color
 import app.malachite.core.library.TrackInfo
 import app.malachite.player.data.coverKey
 import app.malachite.player.ui.components.rememberCoverState
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 /**
@@ -72,66 +74,17 @@ fun rememberCoverScheme(track: TrackInfo?, shade: Shade, enabled: Boolean): Colo
 }
 
 /**
- * [target] reached gradually, in about half a second, instead of every colour jumping at once: the
- * next song's cover colours, another accent, the cover colours switched on. In a dozen steps rather
- * than every frame – a change of the colours redraws the whole screen, and a dozen redraws stay light
- * where thirty in a row would be felt on a weak phone.
+ * [color] reached softly (about half a second) and meant to be read only while drawing (for
+ * instance in `drawBehind`): the big surfaces – the window, the panels, the song screen – glide to
+ * the next song's colours without anything being composed again. The colours of the theme itself
+ * change at once, in one go: they used to be stepped a dozen times, and each step composed the
+ * whole app again – a weak phone spent a tenth of a second on each, and everything stuttered.
  */
 @Composable
-fun animatedScheme(target: ColorScheme, animate: Boolean): ColorScheme {
-    val shown = remember { mutableStateOf(target) }
-    LaunchedEffect(target, animate) {
-        val from = shown.value
-        if (!animate || from === target) {
-            shown.value = target
-            return@LaunchedEffect
-        }
-        val steps = 12
-        for (i in 1..steps) {
-            delay(40)
-            shown.value = lerpScheme(from, target, FastOutSlowInEasing.transform(i / steps.toFloat()))
-        }
-        shown.value = target
+fun rememberGlidingColor(color: Color, animate: Boolean): State<Color> {
+    val glide = remember { Animatable(color) }
+    LaunchedEffect(color, animate) {
+        if (animate) glide.animateTo(color, tween(450, easing = FastOutSlowInEasing)) else glide.snapTo(color)
     }
-    return if (animate) shown.value else target
+    return glide.asState()
 }
-
-/** Every colour of [a] moved the part [t] of the way to [b]. */
-fun lerpScheme(a: ColorScheme, b: ColorScheme, t: Float): ColorScheme = a.copy(
-    primary = lerp(a.primary, b.primary, t),
-    onPrimary = lerp(a.onPrimary, b.onPrimary, t),
-    primaryContainer = lerp(a.primaryContainer, b.primaryContainer, t),
-    onPrimaryContainer = lerp(a.onPrimaryContainer, b.onPrimaryContainer, t),
-    inversePrimary = lerp(a.inversePrimary, b.inversePrimary, t),
-    secondary = lerp(a.secondary, b.secondary, t),
-    onSecondary = lerp(a.onSecondary, b.onSecondary, t),
-    secondaryContainer = lerp(a.secondaryContainer, b.secondaryContainer, t),
-    onSecondaryContainer = lerp(a.onSecondaryContainer, b.onSecondaryContainer, t),
-    tertiary = lerp(a.tertiary, b.tertiary, t),
-    onTertiary = lerp(a.onTertiary, b.onTertiary, t),
-    tertiaryContainer = lerp(a.tertiaryContainer, b.tertiaryContainer, t),
-    onTertiaryContainer = lerp(a.onTertiaryContainer, b.onTertiaryContainer, t),
-    background = lerp(a.background, b.background, t),
-    onBackground = lerp(a.onBackground, b.onBackground, t),
-    surface = lerp(a.surface, b.surface, t),
-    onSurface = lerp(a.onSurface, b.onSurface, t),
-    surfaceVariant = lerp(a.surfaceVariant, b.surfaceVariant, t),
-    onSurfaceVariant = lerp(a.onSurfaceVariant, b.onSurfaceVariant, t),
-    surfaceTint = lerp(a.surfaceTint, b.surfaceTint, t),
-    inverseSurface = lerp(a.inverseSurface, b.inverseSurface, t),
-    inverseOnSurface = lerp(a.inverseOnSurface, b.inverseOnSurface, t),
-    error = lerp(a.error, b.error, t),
-    onError = lerp(a.onError, b.onError, t),
-    errorContainer = lerp(a.errorContainer, b.errorContainer, t),
-    onErrorContainer = lerp(a.onErrorContainer, b.onErrorContainer, t),
-    outline = lerp(a.outline, b.outline, t),
-    outlineVariant = lerp(a.outlineVariant, b.outlineVariant, t),
-    scrim = lerp(a.scrim, b.scrim, t),
-    surfaceBright = lerp(a.surfaceBright, b.surfaceBright, t),
-    surfaceDim = lerp(a.surfaceDim, b.surfaceDim, t),
-    surfaceContainer = lerp(a.surfaceContainer, b.surfaceContainer, t),
-    surfaceContainerHigh = lerp(a.surfaceContainerHigh, b.surfaceContainerHigh, t),
-    surfaceContainerHighest = lerp(a.surfaceContainerHighest, b.surfaceContainerHighest, t),
-    surfaceContainerLow = lerp(a.surfaceContainerLow, b.surfaceContainerLow, t),
-    surfaceContainerLowest = lerp(a.surfaceContainerLowest, b.surfaceContainerLowest, t),
-)

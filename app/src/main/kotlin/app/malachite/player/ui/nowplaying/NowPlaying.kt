@@ -89,6 +89,7 @@ import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -107,6 +108,7 @@ import app.malachite.player.ui.Screen
 import app.malachite.player.ui.components.formatTime
 import app.malachite.player.ui.theme.MalachiteTheme
 import app.malachite.player.ui.theme.rememberCoverScheme
+import app.malachite.player.ui.theme.rememberGlidingColor
 import app.malachite.player.ui.components.FrostLayer
 import app.malachite.player.ui.components.rememberCoverState
 import app.malachite.player.ui.theme.shade
@@ -143,10 +145,12 @@ fun NowPlayingScreen() {
     // a second, and the screen showed "no cover" in the settings' colours in the meantime
     val scheme = rememberCoverScheme(t, settings.shade(dark), settings.coverColorsInPlayer || settings.coverColorsEverywhere)
     MalachiteTheme(settings, scheme) {
+        // the background glides to the next song's colour while drawing; nothing is composed again
+        val background = rememberGlidingColor(MaterialTheme.colorScheme.background, settings.animations)
         // Surface: text and icons take the readable colour of this (cover) theme, never default black.
         androidx.compose.material3.Surface(
-            Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background,
+            Modifier.fillMaxSize().drawBehind { drawRect(background.value) },
+            color = androidx.compose.ui.graphics.Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onBackground,
         ) {
         Box(Modifier.fillMaxSize().clickable(enabled = false) {}) {

@@ -14,10 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.toArgb
 import app.malachite.player.data.Storage
 import app.malachite.player.ui.LocalNavigator
@@ -67,8 +67,10 @@ class MainActivity : ComponentActivity() {
             val nav = remember { Navigator(settings.tabs.firstOrNull() ?: app.malachite.player.data.Tab.SONGS).also { navigator = it } }
             LaunchedEffect(Unit) { if (openPlayer) nav.playerOpen = true }
             // "colours from the cover everywhere": the whole app takes the colours of the song playing
-            val playing by graph.player.state.collectAsState()
-            val playingTrack = playing.currentPath?.let { graph.library.track(it) }
+            // (only the song is followed here: nothing else of the player recomposes the whole app)
+            val playerState = graph.player.state.collectAsState()
+            val playingPath by remember { androidx.compose.runtime.derivedStateOf { playerState.value.currentPath } }
+            val playingTrack = playingPath?.let { graph.library.track(it) }
             val coverColours = app.malachite.player.ui.theme.rememberCoverScheme(
                 playingTrack, settings.shade(androidx.compose.foundation.isSystemInDarkTheme()), settings.coverColorsEverywhere,
             )
@@ -79,16 +81,23 @@ class MainActivity : ComponentActivity() {
                 // (they used to follow the system mode even when the app theme was different)
                 val lightTheme = androidx.core.graphics.ColorUtils.calculateLuminance(windowBg) > 0.5
                 LaunchedEffect(settings.highRefreshRate) { preferRefreshRate(settings.highRefreshRate) }
-                SideEffect {
-                    window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(windowBg))
+                // told to the window only when they change (each song can bring new colours)
+                LaunchedEffect(windowBg) { window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(windowBg)) }
+                LaunchedEffect(lightTheme) {
                     androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).apply {
                         isAppearanceLightStatusBars = lightTheme
                         isAppearanceLightNavigationBars = lightTheme
                     }
                 }
+                // the background glides to a new song's colour while drawing, nothing composed again
+                val background = app.malachite.player.ui.theme.rememberGlidingColor(MaterialTheme.colorScheme.background, settings.animations)
                 CompositionLocalProvider(LocalNavigator provides nav) {
                     // Surface sets the default text/icon colour from the theme (otherwise it is black).
-                    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground) {
+                    Surface(
+                        Modifier.fillMaxSize().drawBehind { drawRect(background.value) },
+                        color = androidx.compose.ui.graphics.Color.Transparent,
+                        contentColor = MaterialTheme.colorScheme.onBackground,
+                    ) {
                     Box(Modifier.fillMaxSize()) {
                         when {
                             // before anything else: what this app is, who made it, and the agreement

@@ -67,6 +67,7 @@ import androidx.compose.ui.draw.clip
 import app.malachite.player.ui.components.rememberFrost
 import app.malachite.player.ui.components.FrostLayer
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -139,7 +140,9 @@ fun PartBackground(style: PartStyle, default: Color, frost: Bitmap?, modifier: M
     Box(modifier) {
         if (own) Image(frost!!.asImageBitmap(), null, Modifier.matchParentSize(), contentScale = ContentScale.Crop)
         val alpha = style.alpha.coerceIn(0f, 1f).let { a -> if (glass) kotlin.math.min(a, 0.5f) else if (own) kotlin.math.min(a, 0.72f) else a }
-        Box(Modifier.matchParentSize().background(base.copy(alpha = alpha)))
+        // glides to a new song's colour while drawing, without composing the panel again
+        val glide = app.malachite.player.ui.theme.rememberGlidingColor(base, fx.animations)
+        Box(Modifier.matchParentSize().drawBehind { drawRect(glide.value.copy(alpha = alpha)) })
         // a faint sheen from above
         if (fx.gradients) Box(Modifier.matchParentSize().background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.04f), Color.Transparent))))
         content()

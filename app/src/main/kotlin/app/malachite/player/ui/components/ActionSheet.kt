@@ -46,6 +46,12 @@ import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbDownOffAlt
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.Equalizer
+import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -62,6 +68,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 /** The pictures of the actions, in one place. */
 object ActionIcons {
@@ -89,6 +96,12 @@ object ActionIcons {
     val dislike: ImageVector get() = Icons.Filled.ThumbDown
     val dislikeOff: ImageVector get() = Icons.Filled.ThumbDownOffAlt
     val best: ImageVector get() = Icons.Filled.Star
+    val bestOff: ImageVector get() = Icons.Filled.StarBorder
+    val equalizer: ImageVector get() = Icons.Filled.Equalizer
+    val sleep: ImageVector get() = Icons.Filled.Bedtime
+    val editLines: ImageVector get() = Icons.Filled.EditNote
+    val download: ImageVector get() = Icons.Filled.Download
+    val rename: ImageVector get() = Icons.Filled.DriveFileRenameOutline
 }
 
 /**
@@ -158,9 +171,9 @@ private fun ActionTile(a: MenuAction, modifier: Modifier, onClick: () -> Unit) {
                 tint = if (danger) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer,
             )
         }
-        Text(
-            a.title, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center,
-            maxLines = 2, overflow = TextOverflow.Ellipsis,
+        // a long word gets a smaller size instead of being cut in two («Синхронизир / овать»)
+        FitText(
+            a.title, MaterialTheme.typography.labelMedium, maxLines = 2, minSize = 9.sp, textAlign = TextAlign.Center,
             color = if (danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
         )
     }

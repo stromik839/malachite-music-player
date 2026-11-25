@@ -56,6 +56,9 @@ object Watermarks {
      */
     fun searchTitle(title: String, artist: String?): String {
         var t = strip(TextFold.cleanDisplay(title))
+        // "08 Наваждение", "08. Song", "8) Song", "8 - Song": the number of the track on its album,
+        // not a part of the name – with it a search found nothing or a wrong text
+        t = LEADING_TRACK.replace(t, "").ifBlank { t }
         if (!artist.isNullOrBlank()) {
             val parts = t.split(DASH, limit = 2)
             if (parts.size == 2 && parts[1].isNotBlank() && Similarity.sameName(primaryArtist(parts[0]), primaryArtist(artist)) != null) {
@@ -64,6 +67,19 @@ object Watermarks {
         }
         return unquote(strip(t))
     }
+
+    /**
+     * A track number in front of a title: zero-padded ("08 ", "08. ", "08_") or followed by a
+     * dot, a bracket or a dash ("8. ", "8) ", "8 - "). A bare number with a space stays: it is a
+     * part of names like "21 Guns" or "7 Seconds".
+     */
+    private val LEADING_TRACK = Regex("^\\s*(?:0\\d{1,2}(?:\\s*[.\\-_)–—]\\s*|\\s+)|\\d{1,3}\\s*[.)_]\\s+|\\d{1,3}\\s+[-–—]\\s+)(?=\\S)")
+
+    /** "8 Song": the title without a bare number in front – tried as one more way to ask, after the others. */
+    fun withoutBareNumber(title: String): String? =
+        BARE_NUMBER.matchEntire(title.trim())?.groupValues?.get(1)?.takeIf { it.any(Char::isLetter) }
+
+    private val BARE_NUMBER = Regex("\\d{1,3}\\s+(\\S.*)")
 
     private val DASH = Regex("\\s+[-–—]\\s+")
 

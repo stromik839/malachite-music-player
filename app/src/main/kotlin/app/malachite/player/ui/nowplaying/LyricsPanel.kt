@@ -415,7 +415,16 @@ private fun LyricRow(
     )
     val base = s.lyricsActiveColor?.let { Color(it.toInt()) }?.takeIf { isActive }
         ?: MaterialTheme.colorScheme.onSurface
-    val sung = s.lyricsSungColor?.let { Color(it.toInt()) } ?: MaterialTheme.colorScheme.primary
+    // the sung part stands out from the waiting one (a grey accent of a black-and-white cover did
+    // not: the line looked all one grey); a colour chosen in the settings is kept as it is
+    val own = s.lyricsSungColor?.let { Color(it.toInt()) }
+    val themeSung = MaterialTheme.colorScheme.primary
+    val background = MaterialTheme.colorScheme.background
+    val fill = remember(own, themeSung, base, background) {
+        if (own != null) app.malachite.player.ui.theme.LyricFill(own, app.malachite.player.ui.theme.WAITING_ALPHA)
+        else app.malachite.player.ui.theme.lyricFill(themeSung, base, background)
+    }
+    val sung = fill.sung
     // The line being sung word by word: its words take their colour while they are sung. The
     // text is laid out once; on every frame only the colours are painted again (a new text with
     // new colours on every frame meant laying the line out 60 times a second, which a modest
@@ -429,7 +438,7 @@ private fun LyricRow(
         line.words.map { w -> (at until at + w.text.length).also { at += w.text.length + 1 } }
     }
     val text = if (fillWords || (sweep && line.words.isNotEmpty())) joined else line.text
-    val dim = base.copy(alpha = 0.55f)
+    val dim = base.copy(alpha = fill.waitingAlpha)
     // a favourite line gets its mark under (or behind) the words, drawn line by line of the text
     val markColor = s.lineMarkColor?.let { Color(it.toInt()) } ?: MaterialTheme.colorScheme.primary
     var layout by remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }

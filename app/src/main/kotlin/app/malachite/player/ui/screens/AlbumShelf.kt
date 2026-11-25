@@ -69,6 +69,7 @@ import app.malachite.player.MalachiteApp
 import app.malachite.player.data.Album
 import app.malachite.player.data.AlbumSort
 import app.malachite.player.data.Shelf
+import app.malachite.player.data.view
 import app.malachite.player.ui.DialogRequest
 import app.malachite.player.ui.LocalNavigator
 import app.malachite.player.ui.Screen
@@ -101,20 +102,17 @@ fun AlbumsScreen() {
         EmptyState(Icons.Filled.Album, tr("Нет альбомов"), tr("Добавьте песни в главную папку."))
         return
     }
-    var onlyFavorites by rememberSaveable { mutableStateOf(false) }
-    var sortMenu by remember { mutableStateOf(false) }
+    // the same order and filters as every other list; pinned albums stay at the top in any order
+    val view = settings.view(app.malachite.player.data.ListKind.ALBUMS)
+    val dataState = g.library.data.collectAsState()
+    val dataKey by remember(view) { androidx.compose.runtime.derivedStateOf { viewDataKey(dataState.value, view) } }
     val loose = remember(all) { all.filter { it.hasNoAlbum() }.flatMap { it.tracks } }
-    val albums = remember(all, settings.albumSort, shelf, onlyFavorites) {
-        val real = all.filter { !it.hasNoAlbum() && (!onlyFavorites || it.key in shelf.favoriteAlbums) }
-        val sorted = when (settings.albumSort) {
-            AlbumSort.TITLE -> real.sortedBy { TextFold.strictKey(it.title) }
-            AlbumSort.ARTIST -> real.sortedWith(compareBy({ TextFold.strictKey(it.artist) }, { it.year }, { TextFold.strictKey(it.title) }))
-            AlbumSort.YEAR -> real.sortedWith(compareByDescending<Album> { it.year }.thenBy { TextFold.strictKey(it.title) })
-            AlbumSort.SIZE -> real.sortedByDescending { it.tracks.size }
-            AlbumSort.RECENT -> real.sortedByDescending { a -> a.tracks.maxOfOrNull { it.lastModified } ?: 0L }
-        }
-        // pinned albums stay at the top in whatever order was chosen
-        sorted.sortedByDescending { it.key in shelf.pinnedAlbums }
+    val albums = remember(all, view, dataKey, shelf) {
+        viewGroups(
+            all.filter { !it.hasNoAlbum() }, view, dataState.value, title = { it.title }, tracks = { it.tracks },
+            favorite = { it.key in shelf.favoriteAlbums }, pinned = { it.key in shelf.pinnedAlbums },
+            artist = { it.artist }, year = { yearOf(it.year) },
+        )
     }
     val sel = app.malachite.player.ui.components.rememberSelection("albums")
     val keys = remember(albums) { albums.map { it.key } }
@@ -146,29 +144,24 @@ fun AlbumsScreen() {
         val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
         var menuFor by remember { mutableStateOf<String?>(null) }
         app.malachite.player.ui.components.SelectionMenu(menuFor != null, { menuFor = null }, tr("Выбрано: ${sel.size}"), batch)
-        Row(
-            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically,
-        ) {
+        ListViewBar(app.malachite.player.data.ListKind.ALBUMS, view) {
             if (!sel.active && albums.size > 1) AssistChip(onClick = { sel.start() }, label = { Text(tr("Выбрать")) },
                 leadingIcon = { Icon(Icons.Filled.CheckBox, null, Modifier.size(18.dp)) })
-            Box {
-                AssistChip(onClick = { sortMenu = true }, label = { Text(settings.albumSort.title) }, leadingIcon = { Icon(Icons.Filled.Sort, tr("Сортировка"), Modifier.size(18.dp)) })
-                DropdownMenu(sortMenu, { sortMenu = false }) {
-                    AlbumSort.entries.forEach { s ->
-                        DropdownMenuItem(text = { Text(s.title) }, onClick = { sortMenu = false; g.settings.update { it.copy(albumSort = s) } })
-                    }
-                }
-            }
-            FilterChip(onlyFavorites, { onlyFavorites = !onlyFavorites }, label = { Text(tr("Избранные")) },
-                leadingIcon = { Icon(Icons.Filled.Favorite, null, Modifier.size(16.dp)) })
         }
         LazyVerticalGrid(
             gridCells(),
             Modifier.fillMaxSize().dragToChoose(sel, keys, { gridState.keyAt(it) }, { gridState.scrollBy(it) }) { menuFor = it },
             state = gridState, contentPadding = PaddingValues(8.dp),
         ) {
-            if (loose.isNotEmpty() && !onlyFavorites) item(key = "\u0000no-album") { NoAlbumCard(loose) { nav.push(Screen.NoAlbum) } }
+            // with a filter on, only the albums it leaves
+            if (loose.isNotEmpty() && view.filters.isEmpty()) item(key = "\u0000no-album") { NoAlbumCard(loose) { nav.push(Screen.NoAlbum) } }
+            // inside the grid (it takes the whole height): what to do when nothing is left
+            if (albums.isEmpty() && view.filters.isNotEmpty()) item(key = "\u0000nothing", span = { GridItemSpan(maxLineSpan) }) {
+                if (app.malachite.player.data.Narrow.FAVORITE in view.filters && view.filters.size == 1) {
+                    Text(tr("Избранных альбомов пока нет. Удерживайте альбом, чтобы добавить его в избранное или закрепить."),
+                        Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                } else NothingMatches()
+            }
             items(albums, key = { it.key }) { a ->
                 AlbumGridItem(
                     a, pinned = a.key in shelf.pinnedAlbums, favorite = a.key in shelf.favoriteAlbums,
@@ -177,10 +170,6 @@ fun AlbumsScreen() {
                     onClick = { if (sel.active) sel.toggle(a.key) else nav.push(Screen.AlbumDetail(a.key)) },
                 )
             }
-        }
-        if (albums.isEmpty() && onlyFavorites) {
-            Text(tr("Избранных альбомов пока нет. Удерживайте альбом, чтобы добавить его в избранное или закрепить."),
-                Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -248,18 +237,33 @@ fun albumsActions(nav: app.malachite.player.ui.Navigator, albums: List<Album>, d
     ) + songsActions(nav, albums.flatMap { it.tracks }, done)
 }
 
-/** Pin, favourite, rename, cover – the same list for the grid and for the open album. */
+/**
+ * What can be done with an album – the same sheet of tiles for the grid and for the open album
+ * (it was a long drop-down list): listen, pin, favourite, rename, cover, heal its songs.
+ */
 @Composable
 fun AlbumMenu(a: Album, expanded: Boolean, onRenamed: (String) -> Unit = {}, onChoose: (() -> Unit)? = null, onDismiss: () -> Unit) {
     val nav = LocalNavigator.current
-    val shelf by Shelf.state.collectAsState()
+    val g = MalachiteApp.graph
     var rename by remember { mutableStateOf(false) }
-    DropdownMenu(expanded, onDismiss) {
-        if (onChoose != null) DropdownMenuItem(text = { Text(tr("Выбрать несколько")) }, onClick = { onDismiss(); onChoose() })
-        DropdownMenuItem(text = { Text(if (a.key in shelf.pinnedAlbums) tr("Открепить") else tr("Закрепить вверху")) }, onClick = { onDismiss(); Shelf.togglePinnedAlbum(a.key) })
-        DropdownMenuItem(text = { Text(if (a.key in shelf.favoriteAlbums) tr("Убрать из избранного") else tr("В избранное")) }, onClick = { onDismiss(); Shelf.toggleFavoriteAlbum(a.key) })
-        DropdownMenuItem(text = { Text(tr("Переименовать")) }, onClick = { onDismiss(); rename = true })
-        DropdownMenuItem(text = { Text(tr("Заменить или обрезать обложку")) }, onClick = { onDismiss(); nav.show(DialogRequest.FindCover(a.tracks)) })
+    app.malachite.player.ui.components.ActionSheet(
+        expanded, onDismiss, a.title, listOf(a.artist, a.year).filter { it.isNotBlank() }.joinToString(" • "),
+        leading = { CoverImage(a.cover, size = 44.dp) },
+    ) {
+        val shelf = Shelf.state.value
+        val icons = app.malachite.player.ui.components.ActionIcons
+        val favorite = a.key in shelf.favoriteAlbums
+        listOfNotNull(
+            onChoose?.let { choose -> app.malachite.player.ui.components.MenuAction(tr("Выбрать несколько"), icons.choose) { choose() } },
+            app.malachite.player.ui.components.MenuAction(tr("Слушать"), icons.play) { g.player.play(a.tracks) },
+            app.malachite.player.ui.components.MenuAction(tr("Вперемешку"), icons.shuffle) { g.player.play(a.tracks, shuffle = true) },
+            app.malachite.player.ui.components.MenuAction(tr("Добавить в очередь"), icons.queue) { g.player.addToQueue(a.tracks) },
+            app.malachite.player.ui.components.MenuAction(if (a.key in shelf.pinnedAlbums) tr("Открепить") else tr("Закрепить вверху"), icons.pin) { Shelf.togglePinnedAlbum(a.key) },
+            app.malachite.player.ui.components.MenuAction(if (favorite) tr("Убрать из избранного") else tr("В избранное"), if (favorite) icons.unfavorite else icons.favorite) { Shelf.toggleFavoriteAlbum(a.key) },
+            app.malachite.player.ui.components.MenuAction(tr("Переименовать"), icons.rename) { rename = true },
+            app.malachite.player.ui.components.MenuAction(tr("Заменить или обрезать обложку"), icons.cover) { nav.show(DialogRequest.FindCover(a.tracks)) },
+            app.malachite.player.ui.components.MenuAction(tr("Исцелить альбом…"), icons.heal) { nav.show(DialogRequest.HealSelected(a.tracks.map { it.path })) },
+        )
     }
     if (rename) RenameAlbumDialog(a, onDismiss = { rename = false }, onRenamed = onRenamed)
 }
@@ -269,10 +273,11 @@ fun AlbumMenu(a: Album, expanded: Boolean, onRenamed: (String) -> Unit = {}, onC
 private fun RenameAlbumDialog(a: Album, onDismiss: () -> Unit, onRenamed: (String) -> Unit) {
     val g = MalachiteApp.graph
     val nav = LocalNavigator.current
-    val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf(a.title) }
     var busy by remember { mutableStateOf(false) }
     var done by remember { mutableIntStateOf(0) }
+    // "Остановить": the files renamed so far keep the new name, the rest stay as they were
+    val stop = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
     AlertDialog(
         onDismissRequest = { if (!busy) onDismiss() },
         title = { Text(tr("Название альбома")) },
@@ -291,22 +296,33 @@ private fun RenameAlbumDialog(a: Album, onDismiss: () -> Unit, onRenamed: (Strin
             TextButton(enabled = !busy && name.isNotBlank() && name.trim() != a.title, onClick = {
                 val newName = name.trim()
                 busy = true
-                scope.launch {
+                stop.set(false)
+                // not tied to this window: when the last file has moved, the old album (and the
+                // screen this window is on) is gone, and the work must still end properly
+                g.background.launch {
                     var failed = 0
                     for (t in a.tracks) {
+                        if (stop.get()) break
                         if (g.library.editTags(t, TagEdit(album = newName)).isFailure) failed++
                         done++
                     }
+                    val stopped = stop.get()
                     val newKey = a.key.substringBefore('|') + "|" + TextFold.strictKey(newName)
-                    Shelf.albumRenamed(a.key, newKey)
+                    if (!stopped) Shelf.albumRenamed(a.key, newKey)
                     busy = false
-                    nav.toast(if (failed == 0) tr("Альбом переименован") else tr("Переименовано, не получилось для файлов: $failed"))
+                    nav.toast(when {
+                        stopped -> tr("Остановлено: новое название получили $done из ${a.tracks.size} песен, остальные остались в прежнем альбоме")
+                        failed == 0 -> tr("Альбом переименован")
+                        else -> tr("Переименовано, не получилось для файлов: $failed")
+                    })
                     onDismiss()
-                    onRenamed(newKey)
+                    if (!stopped) onRenamed(newKey)
                 }
             }) { Text(tr("Сохранить")) }
         },
-        dismissButton = { TextButton(enabled = !busy, onClick = onDismiss) { Text(tr("Отмена")) } },
+        dismissButton = {
+            TextButton(onClick = { if (busy) stop.set(true) else onDismiss() }) { Text(if (busy) tr("Остановить") else tr("Отмена")) }
+        },
     )
 }
 
@@ -342,7 +358,9 @@ fun NoAlbumScreen() {
     // only the song playing (each tile follows its own), not every change of the player
     val playerState = g.player.state.collectAsState()
     val playingPath = remember { androidx.compose.runtime.derivedStateOf { playerState.value.currentPath } }
-    val songs = remember(all) { all.filter { it.hasNoAlbum() }.flatMap { it.tracks }.sortedBy { TextFold.strictKey(it.displayTitle) } }
+    val songs = remember(all) {
+        all.filter { it.hasNoAlbum() }.flatMap { it.tracks }.map { TextFold.strictKey(it.displayTitle) to it }.sortedBy { it.first }.map { it.second }
+    }
     if (songs.isEmpty()) {
         EmptyState(Icons.Filled.Album, tr("Песен без альбома нет"), tr("У каждой песни в главной папке есть свой альбом."))
         return

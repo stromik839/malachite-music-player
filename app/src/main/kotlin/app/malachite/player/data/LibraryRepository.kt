@@ -230,7 +230,8 @@ class LibraryRepository(private val context: Context, private val settings: Sett
                     tracks = ts.sortedWith(compareBy({ it.disc }, { it.track }, { it.displayTitle.lowercase() })),
                 )
             }
-            .sortedBy { TextFold.strictKey(it.title) }
+            // the key worked out once per album, not at every comparison
+            .map { TextFold.strictKey(it.title) to it }.sortedBy { it.first }.map { it.second }
 
     private fun buildArtists(albums: List<Album>): List<Artist> =
         albums.groupBy { it.key.substringBefore('|') }
@@ -238,7 +239,7 @@ class LibraryRepository(private val context: Context, private val settings: Sett
                 val name = als.flatMap { it.tracks }.groupingBy { it.groupArtist }.eachCount().maxByOrNull { it.value }?.key.orEmpty()
                 Artist(key, name.ifBlank { LibraryLayout.UNKNOWN_ARTIST }, als.sortedBy { it.year }, als.flatMap { it.tracks })
             }
-            .sortedBy { TextFold.strictKey(it.name) }
+            .map { TextFold.strictKey(it.name) to it }.sortedBy { it.first }.map { it.second }
 
     // ------------------------------------------------------------------ user data
 

@@ -1,6 +1,22 @@
 package app.malachite.player.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -97,7 +113,7 @@ fun StatsScreen() {
                 else tr("В среднем ${duration(dayValues.sum() / 14)} в день"),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            Bars(dayValues, picked, { picked = if (picked == it) null else it }, 120.dp)
+            Bars(dayValues, picked, { picked = it }, 120.dp)
             AxisLabels(listOf(0 to "${days.first().dayOfMonth}.%02d".format(days.first().monthValue), 13 to tr("сегодня")), 14)
         }
 
@@ -112,7 +128,7 @@ fun StatsScreen() {
                     ?.let { tr("Чаще всего — около %02d:00").format(it.index) } ?: tr("Пока нечего показать"),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            Bars(hours, picked, { picked = if (picked == it) null else it }, 80.dp)
+            Bars(hours, picked, { picked = it }, 80.dp)
             AxisLabels(listOf(0 to "0", 6 to "6", 12 to "12", 18 to "18", 23 to "23"), 24)
         }
 
@@ -184,48 +200,140 @@ private fun Tile(label: String, value: String, modifier: Modifier) {
     Card(modifier, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
         Column(Modifier.fillMaxWidth().padding(14.dp)) {
             Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            // smaller when it is long, never cut («36 ч 21» instead of «36 ч 21 мин»)
+            app.malachite.player.ui.components.FitText(value, MaterialTheme.typography.headlineSmall, maxLines = 1, minSize = 14.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
 
 /**
  * One series of columns on a baseline: thin, rounded only at the top, with a small gap between
- * them. A tap on a column (the whole height is the target) shows its value above the chart.
+ * them. A tap on a column (the whole height is the target) shows its value above the chart. Held
+ * for a moment (as long as the tab panel wants), the finger slides over the columns: the one under
+ * it is picked, the light glides from column to column and each step is felt.
  */
 @Composable
-private fun Bars(values: List<Long>, selected: Int?, onSelect: (Int) -> Unit, height: Dp) {
+private fun Bars(values: List<Long>, selected: Int?, onSelect: (Int?) -> Unit, height: Dp) {
+    val settings by MalachiteApp.graph.settings.state.collectAsState()
     val max = values.maxOrNull()?.takeIf { it > 0 } ?: 1L
     val primary = MaterialTheme.colorScheme.primary
     val dimmed = primary.copy(alpha = 0.4f)
+    val band = primary.copy(alpha = 0.14f)
+    val haptics = LocalHapticFeedback.current
+    val n = values.size
+    // where the light is: it glides to the picked column like the pill of the tab panel
+    val at = remember { Animatable(selected?.toFloat() ?: Float.NaN) }
+    val shown by animateFloatAsState(if (selected != null) 1f else 0f, tween(220), label = "barLight")
+    val anim = if (settings.animations) settings.tabSlideAnim else app.malachite.player.data.TabSlideAnim.NONE
+    val spec: AnimationSpec<Float> = when (anim) {
+        app.malachite.player.data.TabSlideAnim.SPRING -> spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessMediumLow)
+        app.malachite.player.data.TabSlideAnim.SMOOTH -> tween(320, easing = FastOutSlowInEasing)
+        app.malachite.player.data.TabSlideAnim.FAST -> tween(120, easing = FastOutSlowInEasing)
+        app.malachite.player.data.TabSlideAnim.NONE -> tween(0)
+    }
+    LaunchedEffect(selected) {
+        val to = selected?.toFloat() ?: return@LaunchedEffect
+        if (at.value.isNaN()) at.snapTo(to) else at.animateTo(to, spec)
+    }
+    val pick by rememberUpdatedState(onSelect)
+    val picked by rememberUpdatedState(selected)
+    val hold = settings.tabSlideDelayMs.toLong().coerceIn(150L, 1000L)
     Column {
-        Row(Modifier.fillMaxWidth().height(height)) {
-            values.forEachIndexed { i, v ->
-                Box(
-                    Modifier.weight(1f).fillMaxHeight().clickable { onSelect(i) }.padding(horizontal = 1.dp),
-                    contentAlignment = Alignment.BottomCenter,
-                ) {
-                    if (v > 0) {
-                        Box(
-                            Modifier.fillMaxWidth().fillMaxHeight((v.toFloat() / max).coerceIn(0.03f, 1f))
-                                .background(if (selected == null || selected == i) primary else dimmed, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)),
-                        )
+        androidx.compose.foundation.Canvas(
+            Modifier.fillMaxWidth().height(height).pointerInput(n, hold) {
+                fun indexAt(x: Float) = (x / size.width * n).toInt().coerceIn(0, n - 1)
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    // released early: a tap; moved early: the page is being scrolled
+                    val early: Boolean? = withTimeoutOrNull(hold) {
+                        var result: Boolean? = null
+                        while (result == null) {
+                            val c = awaitPointerEvent().changes.firstOrNull { it.id == down.id }
+                            result = when {
+                                c == null -> false
+                                !c.pressed -> true
+                                (c.position - down.position).getDistance() > viewConfiguration.touchSlop -> false
+                                else -> null
+                            }
+                        }
+                        result
+                    }
+                    when (early) {
+                        true -> {
+                            val i = indexAt(down.position.x)
+                            pick(if (picked == i) null else i)
+                            return@awaitEachGesture
+                        }
+                        false -> return@awaitEachGesture
+                        null -> Unit
+                    }
+                    // held: from now on the finger belongs to the chart (the page does not scroll)
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    var current = indexAt(down.position.x)
+                    pick(current)
+                    while (true) {
+                        val ev = awaitPointerEvent()
+                        val c = ev.changes.firstOrNull { it.id == down.id } ?: break
+                        c.consume()
+                        if (!c.pressed) break
+                        val i = indexAt(c.position.x)
+                        if (i != current) {
+                            current = i
+                            pick(i)
+                            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        }
                     }
                 }
+            },
+        ) {
+            if (n == 0) return@Canvas
+            val slot = size.width / n
+            val gap = 1.dp.toPx()
+            val corner = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+            val light = at.value
+            // the soft band behind the picked column moves with the light
+            if (!light.isNaN() && shown > 0.01f) {
+                drawRoundRect(band.copy(alpha = band.alpha * shown), androidx.compose.ui.geometry.Offset(light * slot, 0f),
+                    androidx.compose.ui.geometry.Size(slot, size.height), corner)
+            }
+            values.forEachIndexed { i, v ->
+                if (v <= 0) return@forEachIndexed
+                val h = size.height * (v.toFloat() / max).coerceIn(0.03f, 1f)
+                // lit by closeness to the light: a column it passes brightens and dims smoothly
+                val near = if (light.isNaN()) 0f else (1f - kotlin.math.abs(i - light)).coerceIn(0f, 1f)
+                val color = androidx.compose.ui.graphics.lerp(primary, androidx.compose.ui.graphics.lerp(dimmed, primary, near), shown)
+                val rect = androidx.compose.ui.geometry.Rect(i * slot + gap, size.height - h, (i + 1) * slot - gap, size.height)
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    addRoundRect(androidx.compose.ui.geometry.RoundRect(rect, topLeft = corner, topRight = corner))
+                }
+                drawPath(path, color)
             }
         }
         Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
     }
 }
 
-/** A few labels under the columns, each under its own column; the rest stay unlabelled. */
+/**
+ * A few labels under the columns, each under its own column; the rest stay unlabelled. A label
+ * may be wider than its column («13.11», «сегодня» were cut to «13.1», «сег»): the first one
+ * starts at its column, the last one ends at it, the others are centred.
+ */
 @Composable
 private fun AxisLabels(labels: List<Pair<Int, String>>, count: Int) {
     Row(Modifier.fillMaxWidth()) {
         for (i in 0 until count) {
-            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            val align = when (i) {
+                0 -> Alignment.Start
+                count - 1 -> Alignment.End
+                else -> Alignment.CenterHorizontally
+            }
+            Box(Modifier.weight(1f)) {
                 labels.firstOrNull { it.first == i }?.let {
-                    Text(it.second, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
+                    Text(
+                        it.second, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1, softWrap = false,
+                        modifier = Modifier.fillMaxWidth().wrapContentWidth(align, unbounded = true),
+                    )
                 }
             }
         }

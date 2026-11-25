@@ -44,15 +44,19 @@ fun schemeFromSeed(seed: Color, shade: Shade, background: Color? = null, surface
     fun hsl(h: Float, s: Float, l: Float) = app.malachite.player.ui.theme.hslColor(h, s * k, l)
     val (h, s0, _) = toHsl(seed).let { Triple(it[0], it[1], it[2]) }
     val s = s0.coerceIn(0.15f, 0.85f)
+    // A black-and-white cover gives a black-and-white theme, not a grey one: its accent is nearly
+    // white on a dark background (nearly black on a light one), as far as the cover has no colour.
+    // A grey accent looked dull, and the sung words of the lyrics were as grey as the waiting ones.
+    val grey = 1f - k
     return when (shade) {
         Shade.LIGHT -> {
             val bg = background ?: hsl(h, 0.25f, 0.97f)
             lightColorScheme(
-                primary = hsl(h, s, 0.34f), onPrimary = Color.White,
+                primary = hsl(h, s, 0.34f - 0.22f * grey), onPrimary = Color.White,
                 primaryContainer = hsl(h, s * 0.6f, 0.86f), onPrimaryContainer = hsl(h, 0.6f, 0.12f),
-                secondary = hsl(h, s * 0.4f, 0.38f), onSecondary = Color.White,
+                secondary = hsl(h, s * 0.4f, 0.38f - 0.20f * grey), onSecondary = Color.White,
                 secondaryContainer = hsl(h, s * 0.35f, 0.89f), onSecondaryContainer = hsl(h, 0.4f, 0.14f),
-                tertiary = hsl(h + 40, 0.4f, 0.38f), onTertiary = Color.White,
+                tertiary = hsl(h + 40, 0.4f, 0.38f - 0.20f * grey), onTertiary = Color.White,
                 tertiaryContainer = hsl(h + 40, 0.35f, 0.88f), onTertiaryContainer = hsl(h + 40, 0.4f, 0.14f),
                 background = bg, onBackground = hsl(h, 0.12f, 0.10f),
                 surface = surface ?: bg, onSurface = hsl(h, 0.12f, 0.10f),
@@ -68,11 +72,11 @@ fun schemeFromSeed(seed: Color, shade: Shade, background: Color? = null, surface
             val bg = background ?: if (amoled) Color.Black else hsl(h, 0.22f, 0.055f)
             fun cont(l: Float) = if (amoled) hsl(h, 0.12f, l * 0.75f) else hsl(h, 0.20f, l)
             darkColorScheme(
-                primary = hsl(h, minOf(s, 0.62f), 0.55f), onPrimary = hsl(h, 0.5f, 0.09f),
+                primary = hsl(h, minOf(s, 0.62f), 0.55f + 0.37f * grey), onPrimary = hsl(h, 0.5f, 0.09f),
                 primaryContainer = hsl(h, s * 0.75f, 0.20f), onPrimaryContainer = hsl(h, 0.5f, 0.86f),
-                secondary = hsl(h, s * 0.45f, 0.62f), onSecondary = hsl(h, 0.4f, 0.10f),
+                secondary = hsl(h, s * 0.45f, 0.62f + 0.18f * grey), onSecondary = hsl(h, 0.4f, 0.10f),
                 secondaryContainer = hsl(h, s * 0.40f, 0.17f), onSecondaryContainer = hsl(h, 0.3f, 0.86f),
-                tertiary = hsl(h + 40, 0.42f, 0.64f), onTertiary = hsl(h + 40, 0.4f, 0.10f),
+                tertiary = hsl(h + 40, 0.42f, 0.64f + 0.18f * grey), onTertiary = hsl(h + 40, 0.4f, 0.10f),
                 tertiaryContainer = hsl(h + 40, 0.3f, 0.19f), onTertiaryContainer = hsl(h + 40, 0.3f, 0.86f),
                 background = bg, onBackground = hsl(h, 0.10f, 0.91f),
                 surface = surface ?: bg, onSurface = hsl(h, 0.10f, 0.91f),
@@ -157,6 +161,39 @@ private const val COLOURFUL_CHROMA = 38
 private const val GREY_SHARE = 0.04f
 /** … and from this share on it is fully colourful. */
 private const val FULL_SHARE = 0.22f
+
+/** How the line being sung is coloured: the sung part, and how strong the part still waiting is (0…1). */
+data class LyricFill(val sung: Color, val waitingAlpha: Float)
+
+/**
+ * The sung part of a lyric line has to stand out from the part still waiting ([text] at
+ * [WAITING_ALPHA] over [background]). A grey accent made both the same grey: then the sung part is
+ * white on a dark background (nearly black on a light one) and the waiting part a little dimmer.
+ * A colour of its own (blue on grey) stands out by its hue and is kept.
+ */
+fun lyricFill(sung: Color, text: Color, background: Color): LyricFill {
+    val (c, a) = lyricFillArgb(sung.toArgb(), text.toArgb(), background.toArgb())
+    return LyricFill(Color(c), a / 255f)
+}
+
+/** [lyricFill] for the widget: the sung colour and the alpha (0…255) of the waiting text. */
+fun lyricFillArgb(sung: Int, text: Int, background: Int): Pair<Int, Int> {
+    val bg = ColorUtils.setAlphaComponent(background, 255)
+    val waiting = ColorUtils.compositeColors(ColorUtils.setAlphaComponent(text, WAITING_ALPHA_INT), bg)
+    val shown = ColorUtils.compositeColors(sung, bg)
+    val a = DoubleArray(3).also { ColorUtils.colorToLAB(shown, it) }
+    val b = DoubleArray(3).also { ColorUtils.colorToLAB(waiting, it) }
+    if (ColorUtils.distanceEuclidean(a, b) >= ENOUGH_DIFFERENCE) return sung to WAITING_ALPHA_INT
+    val dark = ColorUtils.calculateLuminance(bg) < 0.4
+    return (if (dark) android.graphics.Color.WHITE else 0xFF121212.toInt()) to DIMMER_WAITING_ALPHA_INT
+}
+
+/** How strong the words still to be sung are, next to the sung ones. */
+const val WAITING_ALPHA = 0.55f
+private const val WAITING_ALPHA_INT = 140
+private const val DIMMER_WAITING_ALPHA_INT = 115
+/** Below this distance in Lab (a grey next to a grey of about the same lightness) the eye hardly tells them apart. */
+private const val ENOUGH_DIFFERENCE = 22.0
 
 /**
  * What is wrong with a font file for this app, or null if it is fine. A font without Cyrillic

@@ -145,7 +145,7 @@ private fun TagEditorDialog(t: TrackInfo, close: () -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     val format = runCatching { AudioFormat.valueOf(t.format) }.getOrDefault(AudioFormat.UNKNOWN)
     AlertDialog(
-        onDismissRequest = { if (!busy) close() },
+        onDismissRequest = close,
         title = { Text(tr("Теги файла")) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -173,17 +173,23 @@ private fun TagEditorDialog(t: TrackInfo, close: () -> Unit) {
                 )
                 if (edit.isEmpty) { close(); return@TextButton }
                 busy = true
-                scope.launch {
+                // the window may be closed while the file is written: the writing still ends properly
+                g.background.launch {
                     val r = g.library.editTags(t, edit)
                     busy = false
                     r.onSuccess { newPath ->
                         if (newPath != t.path) g.player.remapQueue(mapOf(t.path to newPath))
                         nav.toast(tr("Теги сохранены")); close()
-                    }.onFailure { error = tr("Не сохранено: ${it.message}") }
+                    }.onFailure {
+                        error = tr("Не сохранено: ${it.message}")
+                        nav.toast(tr("Теги не сохранены: ${it.message}"))
+                    }
                 }
             }) { Text(tr("Сохранить")) }
         },
-        dismissButton = { TextButton(enabled = !busy, onClick = close) { Text(tr("Отмена")) } },
+        // while the file is written: "Скрыть" – the window goes, the writing ends by itself (the
+        // file is never left half-written)
+        dismissButton = { TextButton(onClick = close) { Text(if (busy) tr("Скрыть") else tr("Отмена")) } },
     )
 }
 

@@ -779,8 +779,10 @@ object WidgetUpdater {
         val plain = line?.text ?: if (l.synced) "♪" else ""
         if (line == null || !l.synced || !MalachiteApp.graph.settings.value.widget.wordFill) return plain
         val base = look.activeColor?.toInt() ?: c.text
-        val sung = look.sungColor?.toInt() ?: c.accent
-        val waiting = ColorUtils.setAlphaComponent(base, 0x8C)
+        // as in the player: the sung words stand out from the waiting ones even with a grey accent
+        val (sung, waitingAlpha) = look.sungColor?.toInt()?.let { it to 0x8C }
+            ?: app.malachite.player.ui.theme.lyricFillArgb(c.accent, base, c.bg)
+        val waiting = ColorUtils.setAlphaComponent(base, waitingAlpha)
         val mode = widgetFill(look)
         if (mode == WordFill.SWEEP) {
             // the whole line, letter after letter with a soft edge: each word at its own pace when

@@ -116,6 +116,8 @@ enum class VisualizerStyle(val title: String) {
     PULSE(tr("Пульс")),
     /** The bands around a circle (each twice, mirrored), a disc in the middle breathing with the bass. */
     CIRCLE(tr("Круг")),
+    /** The same rays around the cover itself, which becomes round: big, in the middle of the screen. */
+    RING(tr("Вокруг обложки")),
 }
 
 /** What the visualizer follows. */
@@ -362,6 +364,8 @@ data class AppSettings(
     val playlistSort: PlaylistSort = PlaylistSort.NAME,
     val artistSort: ArtistSort = ArtistSort.NAME,
     val artistAlbumSort: ArtistAlbumSort = ArtistAlbumSort.NEWEST,
+    /** The order and filters of each list (see [ListKind]); the four sorts above are where they started from. */
+    val listViews: Map<String, ListView> = emptyMap(),
     val albumGridColumns: Int = 2,
     // ---- lyrics
     val lyricsAutoSearch: Boolean = true,

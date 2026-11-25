@@ -98,7 +98,13 @@ fun HealChoiceDialog(paths: List<String>?, close: () -> Unit) {
     val someOn = HealStep.ALL.any { it in steps }
     AlertDialog(
         onDismissRequest = close,
-        title = { Text(if (paths != null) tr("Исцелить выбранные (${paths.size})") else tr("Что исцелить")) },
+        title = {
+            Text(when {
+                paths == null -> tr("Что исцелить")
+                paths.size == 1 -> tr("Исцелить эту песню")
+                else -> tr("Исцелить выбранные (${paths.size})")
+            })
+        },
         text = {
             Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState())) {
                 Text(

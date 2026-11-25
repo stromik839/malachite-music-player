@@ -2971,8 +2971,8 @@ Open the song (tap the mini player at the bottom), tap the lyrics button and "Fi
 Как синхронизировать текст самому или исправить одну строку?
 How do I sync lyrics myself or fix a single line?
 
-На экране песни: меню ⋮ → «Синхронизировать текст вручную» (держите кнопку, пока поётся строка или слово) или «Исправить строки текста» — поправить слова, добавить или удалить строку, синхронизировать заново только с нужного места. Незаконченная работа сохраняется сама — продолжить можно в «Процессах».
-On the song screen: menu ⋮ → "Sync lyrics by hand" (hold the button while a line or word is sung) or "Fix lines of the lyrics" — correct words, add or delete a line, sync again only from the place you need. Unfinished work is saved by itself — continue it in "Processes".
+На экране песни: меню ⋮ → «Синхронизация текста» (держите кнопку, пока поётся строка или слово) или «Исправить строки текста» — поправить слова, добавить или удалить строку, синхронизировать заново только с нужного места. Незаконченная работа сохраняется сама — продолжить можно в «Процессах».
+On the song screen: menu ⋮ → "Lyrics sync" (hold the button while a line or word is sung) or "Fix lines of the lyrics" — correct words, add or delete a line, sync again only from the place you need. Unfinished work is saved by itself — continue it in "Processes".
 
 Как отметить любимую строку?
 How do I mark a favourite line?
@@ -4390,12 +4390,6 @@ Don't like
 Онлайн-песни без интернета
 Online songs without internet
 
-Отметить лучший момент здесь ({})
-Mark the best moment here ({})
-
-Убрать отметку лучшего момента
-Remove the best moment mark
-
 Снова нравится
 Like again
 
@@ -5275,9 +5269,6 @@ Never played
 Выбрать все найденные
 Choose all found
 
-Полосы — со свечением, отражением и «шапочками», которые ненадолго задерживаются на самой высокой точке. Светодиоды — как индикатор на пульте. Волна — плавная, отражённая от середины. Горы — залитый график частот. Точки — круглые огоньки. Осциллограф — сама звуковая волна, а не частоты. Пульс — громкость последних секунд бежит справа налево, удары видны всплесками. Круг — полосы расходятся лучами от круга, который дышит с басом.
-Bars — with a glow, a reflection and caps that rest at the highest point for a moment. LEDs — like the meter of a mixing desk. Wave — smooth, mirrored around its middle. Mountains — a filled graph of the frequencies. Dots — round lights. Oscilloscope — the sound wave itself, not the frequencies. Pulse — the loudness of the last seconds runs from right to left, beats show as spikes. Circle — the bars shoot out like rays from a circle that breathes with the bass.
-
 Что показывать
 What to show
 
@@ -5316,3 +5307,87 @@ Choose all songs of an artist
 
 При выборе нескольких песен есть кнопки «Исполнитель…», «Альбом…», «Год…» и «Формат…»: список с количеством песен, нажатие выбирает их все. В поиске — «Выбрать все найденные», в фильтрах — «Ни разу не слушал».
 When choosing several songs there are "Artist…", "Album…", "Year…" and "Format…" buttons: a list with the number of songs, a tap chooses them all. In search — "Choose all found", among the filters — "Never played".
+
+Вокруг обложки
+Around the cover
+
+По году: сначала новые
+By year: newest first
+
+По году: сначала старые
+By year: oldest first
+
+Закреплённые
+Pinned
+
+Теги не сохранены: {}
+Tags not saved: {}
+
+Исцелить эту песню
+Heal this song
+
+Исцелить
+Heal
+
+Лучший момент здесь ({})
+Best moment here ({})
+
+Убрать лучший момент
+Remove the best moment
+
+Исцелить альбом…
+Heal the album…
+
+Остановлено: новое название получили {} из {} песен, остальные остались в прежнем альбоме
+Stopped: {} of {} songs got the new name, the rest stayed in the old album
+
+Исцелить песни…
+Heal the songs…
+
+Сначала избранные
+Favourites first
+
+Ничего не подходит под выбранные фильтры
+Nothing matches the chosen filters
+
+Полосы — со свечением, отражением и «шапочками», которые ненадолго задерживаются на самой высокой точке. Светодиоды — как индикатор на пульте. Волна — плавная, отражённая от середины. Горы — залитый график частот. Точки — круглые огоньки. Осциллограф — сама звуковая волна, а не частоты. Пульс — громкость последних секунд бежит справа налево, удары видны всплесками. Круг — полосы расходятся лучами от круга, который дышит с басом; он занимает всё место между обложкой и названием. Вокруг обложки — те же лучи расходятся от самой обложки, она становится круглой.
+Bars — with a glow, a reflection and caps that rest at the highest point for a moment. LEDs — like the meter of a mixing desk. Wave — smooth, mirrored around its middle. Mountains — a filled graph of the frequencies. Dots — round lights. Oscilloscope — the sound wave itself, not the frequencies. Pulse — the loudness of the last seconds runs from right to left, beats show as spikes. Circle — the bars shoot out like rays from a circle that breathes with the bass; it takes all the room between the cover and the title. Around the cover — the same rays shoot out from the cover itself, which becomes round.
+
+Одна сортировка и фильтры везде
+One sorting and filters everywhere
+
+Песни, избранное, альбомы, исполнители, плейлисты, страница исполнителя и поиск теперь сортируются и фильтруются одинаково, одной строкой над списком: порядок, «Сначала избранные», «Без обложки», «Без текста», «Ни разу не слушал» и другие. Выбор запоминается. В избранное можно добавить и исполнителя, и плейлист.
+Songs, favourites, albums, artists, playlists, an artist's page and the search are now sorted and filtered the same way, with one row above the list: the order, "Favourites first", "Without cover", "Without lyrics", "Never played" and more. The choice is remembered. Artists and playlists can be favourites too.
+
+«Исцелить» в меню
+"Heal" in the menus
+
+В меню песни, альбома, исполнителя, плейлиста и выбранных песен есть «Исцелить»: исцеляется именно это. Меню ⋮ на экране песни теперь такое же компактное, плитками.
+The menu of a song, an album, an artist, a playlist and of the chosen songs has "Heal": just that is healed. The ⋮ menu of the song screen is now as compact, with tiles.
+
+Белые обложки — белая тема
+White covers, white theme
+
+Для чёрно-белой обложки акцент теперь почти белый (на светлой теме — почти чёрный), а не серый. Спетые слова текста белые, неспетые — серые: заливку снова видно.
+With a black-and-white cover the accent is now nearly white (nearly black with a light theme), not grey. The sung words of the lyrics are white, the rest grey: the fill shows again.
+
+Номер в названии не мешает поиску
+A number in the title does not spoil the search
+
+Песня «08 Наваждение» ищет текст, обложку и теги как «Наваждение» — находятся синхронизированные тексты. Номер в названии исправляет исцеление «Номера в названиях».
+A song called "08 Наваждение" looks for lyrics, a cover and tags as "Наваждение", and synced lyrics are found. The number in the title itself is fixed by the "Numbers in titles" healing.
+
+Круг больше, и вокруг обложки
+A bigger circle, and around the cover
+
+Визуализатор «Круг» занимает всё место между обложкой и названием, лучи ровнее. Новый вид «Вокруг обложки»: обложка становится круглой, а лучи расходятся от неё.
+The "Circle" visualizer takes all the room between the cover and the title, its rays are more even. New look "Around the cover": the cover becomes round and the rays shoot out from it.
+
+Статистика: ведите по столбикам
+Statistics: slide over the columns
+
+Задержите палец на столбике графика и ведите влево-вправо: столбики переключаются с плавной подсветкой, как вкладки на боковой панели. Подписи под графиками и цифры больше не обрезаются.
+Hold a finger on a column of a chart and slide left and right: the columns switch with a gliding light, like the tabs of the side panel. The labels under the charts and the numbers are no longer cut off.
+
+К статистике
+To the statistics

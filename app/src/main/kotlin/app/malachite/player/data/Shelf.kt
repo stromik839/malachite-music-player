@@ -12,12 +12,16 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
 
-/** Albums and playlists the user pinned to the top or marked as favourites. */
+/** Albums, playlists and artists the user pinned to the top or marked as favourites. */
 @Serializable
 data class ShelfData(
     val pinnedAlbums: Set<String> = emptySet(),
     val favoriteAlbums: Set<String> = emptySet(),
     val pinnedPlaylists: Set<String> = emptySet(),
+    /** Playlists by name. */
+    val favoritePlaylists: Set<String> = emptySet(),
+    /** Artists by their key (the spelling-insensitive one of the library). */
+    val favoriteArtists: Set<String> = emptySet(),
 )
 
 /**
@@ -71,6 +75,8 @@ object Shelf {
     fun togglePinnedAlbum(key: String) = update { it.copy(pinnedAlbums = it.pinnedAlbums.toggled(key)) }
     fun toggleFavoriteAlbum(key: String) = update { it.copy(favoriteAlbums = it.favoriteAlbums.toggled(key)) }
     fun togglePinnedPlaylist(name: String) = update { it.copy(pinnedPlaylists = it.pinnedPlaylists.toggled(name)) }
+    fun toggleFavoritePlaylist(name: String) = update { it.copy(favoritePlaylists = it.favoritePlaylists.toggled(name)) }
+    fun toggleFavoriteArtist(key: String) = update { it.copy(favoriteArtists = it.favoriteArtists.toggled(key)) }
 
     /** A renamed album or playlist keeps its pin and its heart. */
     fun albumRenamed(oldKey: String, newKey: String) = update {
@@ -81,6 +87,9 @@ object Shelf {
     }
 
     fun playlistRenamed(old: String, new: String) = update {
-        it.copy(pinnedPlaylists = if (old in it.pinnedPlaylists) it.pinnedPlaylists - old + new else it.pinnedPlaylists)
+        it.copy(
+            pinnedPlaylists = if (old in it.pinnedPlaylists) it.pinnedPlaylists - old + new else it.pinnedPlaylists,
+            favoritePlaylists = if (old in it.favoritePlaylists) it.favoritePlaylists - old + new else it.favoritePlaylists,
+        )
     }
 }

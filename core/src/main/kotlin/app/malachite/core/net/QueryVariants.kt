@@ -40,6 +40,10 @@ object QueryVariants {
             val parts = s0.split(Regex("\\s+[-–—]\\s+"), limit = 2)
             if (parts.size == 2 && parts.all { it.isNotBlank() }) add(Watermarks.primaryArtist(parts[0].trim()), Watermarks.unquote(parts[1]), "artist from title")
         }
+        if (isTitle) {
+            // "8 Наваждение": the number may be the track's place on its album
+            Watermarks.withoutBareNumber(s1)?.let { add(a1, it, "without the number in front") }
+        }
         if (allowSwap) add(s1, a1, "artist/album swapped")
         Translit.alternateScript(a1)?.let { add(it, s1, "artist in other script") }
         Translit.alternateScript(s1)?.let { add(a1, it, "name in other script") }

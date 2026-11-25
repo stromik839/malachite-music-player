@@ -150,6 +150,9 @@ private class Pulse {
     }
 }
 
+/** "Around the cover": the share of the place the round cover takes; the rays go from its edge. */
+const val RING_COVER = 0.64f
+
 /**
  * The music as a picture under the cover, its bands in the chosen [order]. [low] and [high] are
  * the colours of the two ends (the theme's), [tip] the bright tops and caps; [alpha] is how far it
@@ -188,7 +191,7 @@ fun Visualizer(
         val width = when {
             order == VisualizerOrder.STRONG_CENTER || order == VisualizerOrder.STRONG_LEFT || order == VisualizerOrder.STRONG_RIGHT -> 0.15f
             style == VisualizerStyle.WAVE -> 0.7f
-            style == VisualizerStyle.CIRCLE -> 0.3f
+            style == VisualizerStyle.CIRCLE || style == VisualizerStyle.RING -> 0.3f
             else -> 0.42f
         }
         val heard = FloatArray(n)
@@ -423,14 +426,16 @@ fun Visualizer(
                         }
                     }
                 }
-                VisualizerStyle.CIRCLE -> {
+                VisualizerStyle.CIRCLE, VisualizerStyle.RING -> {
                     // the bands around a circle, each twice (the right half and its mirror on the left),
-                    // the bass at the top; a disc in the middle breathes with the bass
+                    // the bass at the top. "Circle": a disc in the middle breathes with the bass. "Ring":
+                    // the round cover lies in the middle (drawn over this) and the rays start at its edge.
+                    val ring = style == VisualizerStyle.RING
                     val cx = size.width / 2
                     val cy = size.height / 2
                     // never below a pixel: a gradient with a radius of 0 throws while the area is tiny
                     val outer = max(4f, min(size.width, size.height) / 2 - 2.dp.toPx())
-                    val inner = outer * 0.42f
+                    val inner = if (ring) min(size.width, size.height) / 2 * RING_COVER + 6.dp.toPx() else outer * 0.42f
                     val room = max(0f, outer - inner - 3.dp.toPx())
                     val count = n * 2
                     val cosA = FloatArray(count)
@@ -442,22 +447,35 @@ fun Visualizer(
                     }
                     val spokeW = max(1.5.dp.toPx(), (2 * Math.PI * inner / count * 0.6).toFloat())
                     val around = Brush.sweepGradient(listOf(low, high, low), Offset(cx, cy))
-                    val disc = Brush.radialGradient(listOf(lerp(high, tip, 0.35f).copy(alpha = 0.55f), low.copy(alpha = 0.08f)), Offset(cx, cy), inner)
+                    val disc = Brush.radialGradient(listOf(lerp(high, tip, 0.35f).copy(alpha = 0.55f), low.copy(alpha = 0.08f)), Offset(cx, cy), max(1f, inner))
                     val edgeLine = Stroke(1.5.dp.toPx())
                     val startGap = 2.dp.toPx()
+                    // each ray a little like its neighbours: an even, round outline instead of a ragged one
+                    val even = FloatArray(n)
                     onDrawBehind {
                         @Suppress("UNUSED_EXPRESSION") frame.intValue
                         val a = alpha()
                         if (a <= 0.01f) return@onDrawBehind
+                        for (i in 0 until n) {
+                            val l = motion.level[i]
+                            val before = motion.level[if (i == 0) 0 else i - 1]
+                            val after = motion.level[if (i == n - 1) n - 1 else i + 1]
+                            even[i] = (before + 2 * l + after) / 4f
+                        }
                         var bass = 0f
                         for (i in 0 until min(4, n)) bass += motion.level[i]
                         bass /= min(4, n).coerceAtLeast(1)
-                        val r = inner * (0.82f + 0.18f * bass * a)
-                        drawCircle(disc, r, Offset(cx, cy), alpha = a)
-                        drawCircle(around, r, Offset(cx, cy), alpha = a * 0.7f, style = edgeLine)
+                        if (ring) {
+                            // a thin light around the cover, a little wider with the bass
+                            drawCircle(around, inner - startGap, Offset(cx, cy), alpha = a * (0.45f + 0.4f * bass), style = Stroke(1.5.dp.toPx() + 2.dp.toPx() * bass))
+                        } else {
+                            val r = inner * (0.82f + 0.18f * bass * a)
+                            drawCircle(disc, r, Offset(cx, cy), alpha = a)
+                            drawCircle(around, r, Offset(cx, cy), alpha = a * 0.7f, style = edgeLine)
+                        }
                         for (s in 0 until count) {
                             val i = if (s < n) s else count - 1 - s
-                            val len = max(1.dp.toPx(), motion.level[i] * a * room)
+                            val len = max(1.dp.toPx(), even[i] * a * room)
                             val from = inner + startGap
                             drawLine(
                                 around,

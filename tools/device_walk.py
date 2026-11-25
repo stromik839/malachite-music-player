@@ -420,12 +420,12 @@ else:
         if media_state()[0] == "PLAYING":
             adb("shell", "input", "keyevent", "127")
         time.sleep(1)
-# the song's menu: the best moment and "don't like" are there
+# the song's menu (a sheet of tiles): the best moment, "don't like" and healing this song are there
 if step("Song screen menu", "Ещё", desc=True, optional=True):
-    time.sleep(1)
+    time.sleep(2)
     nodes = screen("song screen menu")
     # a menu item may carry a value ("… здесь (0:05)"): its words before the brackets are enough
-    for key in ("Отметить лучший момент здесь ({})", "Не нравится"):
+    for key in ("Лучший момент здесь ({})", "Не нравится", "Исцелить"):
         word = key.split(" (")[0]
         en = EN.get(key, word).split(" (")[0]
         if not any(n["text"].startswith(en) or n["text"].startswith(word) for n in nodes):

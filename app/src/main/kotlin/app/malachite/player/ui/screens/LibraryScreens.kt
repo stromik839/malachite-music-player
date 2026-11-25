@@ -88,10 +88,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.malachite.core.library.LibraryLayout
 import app.malachite.core.library.TrackInfo
 import app.malachite.core.text.TextFold
 import app.malachite.player.MalachiteApp
+import app.malachite.player.data.view
 import app.malachite.player.data.Album
 import app.malachite.player.ui.DialogRequest
 import app.malachite.player.ui.LocalNavigator
@@ -127,9 +129,11 @@ fun trackActions(nav: Navigator, t: TrackInfo, queue: List<TrackInfo> = emptyLis
             }
         },
         MenuAction(tr("Найти текст"), app.malachite.player.ui.components.ActionIcons.lyrics) { nav.show(DialogRequest.FindLyrics(t)) },
-        MenuAction(tr("Синхронизировать текст вручную"), app.malachite.player.ui.components.ActionIcons.sync) { nav.push(Screen.LyricsSync(t.path)) },
+        MenuAction(tr("Синхронизация текста"), app.malachite.player.ui.components.ActionIcons.sync) { nav.push(Screen.LyricsSync(t.path)) },
         MenuAction(if (t.hasArtwork) tr("Заменить обложку") else tr("Найти обложку"), app.malachite.player.ui.components.ActionIcons.cover) { nav.show(DialogRequest.FindCover(listOf(t))) },
         MenuAction(tr("Изменить теги"), app.malachite.player.ui.components.ActionIcons.tags) { nav.show(DialogRequest.EditTags(t)) },
+        // this one file: names, tags, cover, lyrics… – the steps are chosen in the window that opens
+        if (g.library.isOnline(t.path)) null else MenuAction(tr("Исцелить"), app.malachite.player.ui.components.ActionIcons.heal) { nav.show(DialogRequest.HealSelected(listOf(t.path))) },
         MenuAction(tr("К исполнителю"), app.malachite.player.ui.components.ActionIcons.artist) { nav.push(Screen.ArtistDetail(TextFold.strictKey(t.groupArtist))) },
         MenuAction(tr("К альбому"), app.malachite.player.ui.components.ActionIcons.album) { nav.push(Screen.AlbumDetail(albumKey)) },
         MenuAction(tr("Сведения о файле"), app.malachite.player.ui.components.ActionIcons.info) { nav.show(DialogRequest.Info(t)) },
@@ -227,81 +231,6 @@ fun PlayButtons(tracks: List<TrackInfo>, extra: (@Composable () -> Unit)? = null
     }
 }
 
-enum class SongSort(val title: String) { TITLE(tr("По названию")), ARTIST(tr("По исполнителю")), ALBUM(tr("По альбому")), ADDED(tr("Недавно добавленные")), PLAYS(tr("Часто слушаю")), DURATION(tr("По длительности")) }
-
-/** Narrowing a list of songs; several can be on at once. */
-enum class SongFilter(val title: String) {
-    FAVORITE(tr("Избранное")), WITH_LYRICS(tr("С текстом")), NO_LYRICS(tr("Без текста")), NO_COVER(tr("Без обложки")), NO_ALBUM(tr("Без альбома")),
-    NEVER_PLAYED(tr("Ни разу не слушал"));
-
-    fun accepts(t: TrackInfo, u: app.malachite.core.library.TrackUserData): Boolean = when (this) {
-        NEVER_PLAYED -> u.playCount == 0
-        FAVORITE -> u.favorite
-        WITH_LYRICS -> u.lyricsId != null
-        NO_LYRICS -> u.lyricsId == null && !u.noLyrics
-        NO_COVER -> !t.hasArtwork
-        NO_ALBUM -> t.album.isBlank()
-    }
-}
-
-/** What of the player's data [sort] and [filters] read: the list is made again only when it changed. */
-fun songsDataKey(data: app.malachite.core.library.LibraryData, sort: SongSort, filters: Set<SongFilter>): Any {
-    // each part is one element of the key (a map or a set as a whole, never spread into the list)
-    val parts = ArrayList<Any>(4)
-    if (sort == SongSort.ADDED) parts.add(data.tracks.mapValues { it.value.addedAt })
-    if (sort == SongSort.PLAYS) parts.add(data.tracks.mapValues { it.value.playCount })
-    if (SongFilter.FAVORITE in filters) parts.add(data.tracks.filterValues { it.favorite }.keys)
-    if (SongFilter.NEVER_PLAYED in filters) parts.add(data.tracks.filterValues { it.playCount > 0 }.keys)
-    if (SongFilter.WITH_LYRICS in filters || SongFilter.NO_LYRICS in filters) {
-        parts.add(data.tracks.mapValues { (it.value.lyricsId != null) to it.value.noLyrics })
-    }
-    return parts
-}
-
-fun sortSongs(tracks: List<TrackInfo>, sort: SongSort, data: app.malachite.core.library.LibraryData): List<TrackInfo> = when (sort) {
-    SongSort.TITLE -> tracks
-    SongSort.ARTIST -> tracks.sortedWith(compareBy({ TextFold.strictKey(it.displayArtist) }, { it.album }, { it.track }))
-    SongSort.ALBUM -> tracks.sortedWith(compareBy({ TextFold.strictKey(it.album) }, { it.track }))
-    SongSort.ADDED -> tracks.sortedByDescending { data.user(it.path).addedAt.takeIf { a -> a > 0 } ?: it.lastModified }
-    SongSort.PLAYS -> tracks.sortedByDescending { data.user(it.path).playCount }
-    SongSort.DURATION -> tracks.sortedByDescending { it.durationMs }
-}
-
-/** One scrollable row: a clearly labelled sort chip, then the filters. */
-@Composable
-fun SortAndFilterRow(sort: SongSort, onSort: (SongSort) -> Unit, filters: Set<SongFilter>, onFilters: (Set<SongFilter>) -> Unit) {
-    var sortMenu by remember { mutableStateOf(false) }
-    Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box {
-            androidx.compose.material3.AssistChip(
-                onClick = { sortMenu = true },
-                label = { Text(sort.title) },
-                leadingIcon = { Icon(Icons.Filled.Sort, tr("Сортировка"), Modifier.size(18.dp)) },
-            )
-            DropdownMenu(sortMenu, { sortMenu = false }) {
-                SongSort.entries.forEach { s ->
-                    DropdownMenuItem(text = { Text(s.title, fontWeight = if (s == sort) FontWeight.Bold else FontWeight.Normal) }, onClick = { onSort(s); sortMenu = false })
-                }
-            }
-        }
-        SongFilter.entries.forEach { f ->
-            androidx.compose.material3.FilterChip(
-                selected = f in filters,
-                onClick = {
-                    // "with lyrics" and "without lyrics" cannot both be on
-                    val opposite = when (f) { SongFilter.WITH_LYRICS -> SongFilter.NO_LYRICS; SongFilter.NO_LYRICS -> SongFilter.WITH_LYRICS; else -> null }
-                    onFilters(if (f in filters) filters - f else (filters + f).let { if (opposite != null) it - opposite else it })
-                },
-                label = { Text(f.title) },
-            )
-        }
-    }
-}
-
 private enum class SearchScope(val title: String) { ALL(tr("Всё")), SONGS(tr("Песни")), ALBUMS(tr("Альбомы")), ARTISTS(tr("Исполнители")), PLAYLISTS(tr("Плейлисты")) }
 
 @Composable
@@ -310,9 +239,8 @@ fun SongsScreen() {
     val tracks by g.library.tracks.collectAsState()
     val scan by g.library.scan.collectAsState()
     val data by g.library.data.collectAsState()
-    var sort by rememberSaveable { mutableStateOf(SongSort.TITLE) }
-    var sortMenu by remember { mutableStateOf(false) }
-    var filters by rememberSaveable { mutableStateOf(emptySet<SongFilter>()) }
+    val settings by g.settings.state.collectAsState()
+    val view = settings.view(app.malachite.player.data.ListKind.SONGS)
     val nav = LocalNavigator.current
     if (tracks.isEmpty() && !scan.running) {
         EmptyState(Icons.Filled.LibraryMusic, tr("Главная папка пуста"), tr("Песни появятся после импорта с устройства.")) {
@@ -323,10 +251,9 @@ fun SongsScreen() {
     // Sorted again only when what the order and the filters read changed: after every song the
     // data changes (its play count, the time), and all the songs were filtered and sorted again on
     // the main thread – into a new list, so every row on the screen was composed anew.
-    val dataKey = remember(data, sort, filters) { songsDataKey(data, sort, filters) }
-    val sorted = remember(tracks, sort, dataKey, filters) {
-        if (filters.isEmpty() && sort == SongSort.TITLE) tracks
-        else sortSongs(tracks.filter { t -> filters.all { f -> f.accepts(t, data.user(t.path)) } }, sort, data)
+    val dataKey = remember(data, view) { viewDataKey(data, view) }
+    val sorted = remember(tracks, view, dataKey) {
+        if (view == app.malachite.player.data.ListView()) tracks else viewSongs(tracks, view, data)
     }
     Column {
         if (scan.running) LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -334,11 +261,11 @@ fun SongsScreen() {
             Column {
                 PlayButtons(sorted)
                 Text(
-                    tr("${sorted.size} песен • ${formatTime(sorted.sumOf { it.durationMs })}") + if (filters.isNotEmpty()) tr(" (из ${tracks.size})") else "",
+                    tr("${sorted.size} песен • ${formatTime(sorted.sumOf { it.durationMs })}") + if (view.filters.isNotEmpty()) tr(" (из ${tracks.size})") else "",
                     Modifier.padding(horizontal = 16.dp),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                SortAndFilterRow(sort, { sort = it }, filters) { filters = it }
+                ListViewBar(app.malachite.player.data.ListKind.SONGS, view)
             }
         })
     }
@@ -365,11 +292,18 @@ fun ArtistsScreen() {
         return
     }
     val settings by g.settings.state.collectAsState()
-    val sort = settings.artistSort
+    val view = settings.view(app.malachite.player.data.ListKind.ARTISTS)
+    val shelf by app.malachite.player.data.Shelf.state.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(Unit) { app.malachite.player.data.Shelf.ensureLoaded() }
     // only what this order reads of the player's data: after every song the data changes
     val dataState = g.library.data.collectAsState()
-    val dataKey by remember(sort) { androidx.compose.runtime.derivedStateOf { artistsDataKey(dataState.value, sort) } }
-    val artists = remember(all, sort, dataKey) { sortArtists(all, sort, dataState.value) }
+    val dataKey by remember(view) { androidx.compose.runtime.derivedStateOf { viewDataKey(dataState.value, view) } }
+    val artists = remember(all, view, dataKey, shelf.favoriteArtists) {
+        viewGroups(
+            all, view, dataState.value, title = { it.name }, tracks = { it.tracks }, favorite = { it.key in shelf.favoriteArtists },
+            albums = { it.albums.size }, inTitleOrder = true,
+        )
+    }
     val sel = app.malachite.player.ui.components.rememberSelection("artists")
     val keys = remember(artists) { artists.map { it.key } }
     androidx.compose.runtime.LaunchedEffect(keys) { sel.retain(keys) }
@@ -387,15 +321,14 @@ fun ArtistsScreen() {
             Modifier.weight(1f).fillMaxWidth().dragToChoose(sel, keys, { listState.keyAt(it) }, { listState.scrollBy(it) }) { menuFor = it },
             state = listState,
         ) {
-            if (!sel.active && artists.size > 1) item {
-                Row(Modifier.padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    androidx.compose.material3.AssistChip(onClick = { sel.start() }, label = { Text(tr("Выбрать")) },
+            // the same row of order and filters as every other list (kept while a filter leaves nobody)
+            if (!sel.active && all.size > 1) item {
+                ListViewBar(app.malachite.player.data.ListKind.ARTISTS, view) {
+                    if (artists.size > 1) androidx.compose.material3.AssistChip(onClick = { sel.start() }, label = { Text(tr("Выбрать")) },
                         leadingIcon = { Icon(androidx.compose.material.icons.Icons.Filled.CheckBox, null, Modifier.size(18.dp)) })
-                    SortChip(sort.title, app.malachite.player.data.ArtistSort.entries.map { it to it.title }, sort) { s ->
-                        g.settings.update { it.copy(artistSort = s) }
-                    }
                 }
             }
+            if (artists.isEmpty()) item { NothingMatches() }
             items(artists, key = { it.key }) { a ->
                 ChoosableItem(
                     chosen = if (sel.active) a.key in sel else null,
@@ -406,8 +339,18 @@ fun ArtistsScreen() {
                             MenuAction(tr("Слушать"), app.malachite.player.ui.components.ActionIcons.play) { g.player.play(a.tracks) },
                             MenuAction(tr("Вперемешку"), app.malachite.player.ui.components.ActionIcons.shuffle) { g.player.play(a.tracks, shuffle = true) },
                             MenuAction(tr("Добавить в очередь"), app.malachite.player.ui.components.ActionIcons.queue) { g.player.addToQueue(a.tracks) },
+                            MenuAction(tr("Исцелить песни…"), app.malachite.player.ui.components.ActionIcons.heal) { nav.show(DialogRequest.HealSelected(a.tracks.map { it.path })) },
+                            run {
+                                val fav = a.key in app.malachite.player.data.Shelf.state.value.favoriteArtists
+                                MenuAction(if (fav) tr("Убрать из избранного") else tr("В избранное"), if (fav) app.malachite.player.ui.components.ActionIcons.unfavorite else app.malachite.player.ui.components.ActionIcons.favorite) {
+                                    app.malachite.player.data.Shelf.toggleFavoriteArtist(a.key)
+                                }
+                            },
                         )
                     },
+                    trailing = if (a.key in shelf.favoriteArtists) ({
+                        Icon(androidx.compose.material.icons.Icons.Filled.Favorite, tr("В избранном"), Modifier.padding(end = 16.dp).size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                    }) else null,
                     title = a.name,
                 ) {
                     ListItem(
@@ -460,15 +403,38 @@ fun ChoosableItem(
 fun ArtistDetailScreen(key: String) {
     val g = MalachiteApp.graph
     val artists by g.library.artists.collectAsState()
+    val library by g.library.tracks.collectAsState()
     val nav = LocalNavigator.current
     val a = artists.firstOrNull { it.key == key } ?: run { EmptyState(Icons.Filled.Person, tr("Исполнитель не найден"), tr("Возможно, его переименовали при исцелении.")); return }
     val settings by g.settings.state.collectAsState()
-    // the albums, or all the songs at once (sorted as chosen, and all of them can be chosen in one go)
+    val shelf by app.malachite.player.data.Shelf.state.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(Unit) { app.malachite.player.data.Shelf.ensureLoaded() }
+    // the albums, or all the songs at once – each with the same row of order and filters as every list
     var songs by rememberSaveable { mutableStateOf(false) }
-    var songSort by rememberSaveable { mutableStateOf(SongSort.ALBUM) }
-    val albums = remember(a.albums, settings.artistAlbumSort) { sortArtistAlbums(a.albums, settings.artistAlbumSort) }
+    val songView = settings.view(app.malachite.player.data.ListKind.ARTIST_SONGS)
+    val albumView = settings.view(app.malachite.player.data.ListKind.ARTIST_ALBUMS)
+    val dataState = g.library.data.collectAsState()
+    val albumKey by remember(albumView) { androidx.compose.runtime.derivedStateOf { viewDataKey(dataState.value, albumView) } }
+    val albums = remember(a.albums, albumView, albumKey, shelf) {
+        viewGroups(
+            a.albums, albumView, dataState.value, title = { it.title }, tracks = { it.tracks },
+            favorite = { it.key in shelf.favoriteAlbums }, pinned = { it.key in shelf.pinnedAlbums }, year = { yearOf(it.year) },
+        )
+    }
     val header: @Composable () -> Unit = {
-        Text(a.name, Modifier.padding(16.dp), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            app.malachite.player.ui.components.FitText(
+                a.name, MaterialTheme.typography.headlineMedium, Modifier.weight(1f).padding(vertical = 16.dp), maxLines = 2, minSize = 18.sp, fontWeight = FontWeight.Bold,
+            )
+            val fav = a.key in shelf.favoriteArtists
+            IconButton(onClick = { app.malachite.player.data.Shelf.toggleFavoriteArtist(a.key) }) {
+                Icon(
+                    if (fav) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    if (fav) tr("Убрать из избранного") else tr("В избранное"),
+                    tint = if (fav) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
         val data by g.library.data.collectAsState()
         val disliked = data.artistDisliked(a.name)
         PlayButtons(a.tracks) {
@@ -487,96 +453,37 @@ fun ArtistDetailScreen(key: String) {
             tr("Не нравится: песни этого исполнителя не играют вперемешку и не попадают в умные плейлисты. Файлы на месте; нажатие на песню играет её как обычно."),
             Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Row(
-            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        ListViewBar(
+            if (songs) app.malachite.player.data.ListKind.ARTIST_SONGS else app.malachite.player.data.ListKind.ARTIST_ALBUMS,
+            if (songs) songView else albumView,
         ) {
             androidx.compose.material3.FilterChip(!songs, { songs = false }, label = { Text(tr("Альбомы: ${a.albums.size}")) })
             androidx.compose.material3.FilterChip(songs, { songs = true }, label = { Text(tr("Все песни: ${a.tracks.size}")) })
-            if (songs) SortChip(songSort.title, SongSort.entries.filter { it != SongSort.ARTIST }.map { it to it.title }, songSort) { songSort = it }
-            else SortChip(settings.artistAlbumSort.title, app.malachite.player.data.ArtistAlbumSort.entries.map { it to it.title }, settings.artistAlbumSort) { s ->
-                g.settings.update { it.copy(artistAlbumSort = s) }
-            }
         }
     }
     if (songs) {
-        val dataState = g.library.data.collectAsState()
-        val dataKey by remember(songSort) { androidx.compose.runtime.derivedStateOf { songsDataKey(dataState.value, songSort, emptySet()) } }
-        val sorted = remember(a.tracks, songSort, dataKey) { sortArtistSongs(a.tracks, songSort, dataState.value) }
-        TrackList(sorted, header = header)
+        val songKey by remember(songView) { androidx.compose.runtime.derivedStateOf { viewDataKey(dataState.value, songView) } }
+        val ranks = remember(library) { titleRanks(library) }
+        val sorted = remember(a.tracks, songView, songKey, ranks) { viewSongs(a.tracks, songView, dataState.value, ranks) }
+        TrackList(sorted, header = { Column { header(); if (sorted.isEmpty()) NothingMatches() } })
         return
     }
     LazyColumn(Modifier.fillMaxSize()) {
         item { header() }
+        if (albums.isEmpty()) item { NothingMatches() }
         items(albums, key = { it.key }) { al ->
             ListItem(
                 headlineContent = { Text(al.title) },
                 supportingContent = { Text(listOf(al.year, tr("${al.tracks.size} песен")).filter { it.isNotBlank() }.joinToString(" • ")) },
                 leadingContent = { CoverImage(al.cover, size = 56.dp) },
+                trailingContent = if (al.key in shelf.favoriteAlbums) ({
+                    Icon(Icons.Filled.Favorite, tr("В избранном"), Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                }) else null,
                 modifier = Modifier.then(app.malachite.player.ui.components.A11yGroup).clickable { nav.push(Screen.AlbumDetail(al.key)) },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             )
         }
     }
-}
-
-/** A chip that shows the order and opens the choice of orders. */
-@Composable
-fun <T> SortChip(label: String, options: List<Pair<T, String>>, current: T, onPick: (T) -> Unit) {
-    var open by remember { mutableStateOf(false) }
-    Box {
-        androidx.compose.material3.AssistChip(
-            onClick = { open = true },
-            label = { Text(label) },
-            leadingIcon = { Icon(Icons.Filled.Sort, tr("Сортировка"), Modifier.size(18.dp)) },
-        )
-        DropdownMenu(open, { open = false }) {
-            options.forEach { (value, title) ->
-                DropdownMenuItem(
-                    text = { Text(title, fontWeight = if (value == current) FontWeight.Bold else FontWeight.Normal) },
-                    onClick = { onPick(value); open = false },
-                )
-            }
-        }
-    }
-}
-
-/** What of the player's data [sort] reads: the artists are sorted again only when it changed. */
-fun artistsDataKey(data: app.malachite.core.library.LibraryData, sort: app.malachite.player.data.ArtistSort): Any = when (sort) {
-    app.malachite.player.data.ArtistSort.PLAYS -> data.tracks.mapValues { it.value.playCount }
-    app.malachite.player.data.ArtistSort.LAST_PLAYED -> data.tracks.mapValues { it.value.lastPlayed }
-    app.malachite.player.data.ArtistSort.ADDED -> data.tracks.mapValues { it.value.addedAt }
-    else -> Unit
-}
-
-fun sortArtists(artists: List<app.malachite.player.data.Artist>, sort: app.malachite.player.data.ArtistSort, data: app.malachite.core.library.LibraryData): List<app.malachite.player.data.Artist> = when (sort) {
-    // the library keeps them by name already
-    app.malachite.player.data.ArtistSort.NAME -> artists
-    app.malachite.player.data.ArtistSort.SONGS -> artists.sortedByDescending { it.tracks.size }
-    app.malachite.player.data.ArtistSort.ALBUMS -> artists.sortedByDescending { it.albums.size }
-    app.malachite.player.data.ArtistSort.PLAYS -> artists.sortedByDescending { a -> a.tracks.sumOf { data.user(it.path).playCount } }
-    app.malachite.player.data.ArtistSort.LAST_PLAYED -> artists.sortedByDescending { a -> a.tracks.maxOfOrNull { data.user(it.path).lastPlayed } ?: 0L }
-    app.malachite.player.data.ArtistSort.ADDED -> artists.sortedByDescending { a ->
-        a.tracks.maxOfOrNull { t -> data.user(t.path).addedAt.takeIf { it > 0 } ?: t.lastModified } ?: 0L
-    }
-}
-
-/** The year of an album as a number (its tag may hold a whole date); 0 when unknown. */
-private fun yearOf(al: Album): Int = Regex("\\d{4}").find(al.year)?.value?.toIntOrNull() ?: 0
-
-fun sortArtistAlbums(albums: List<Album>, sort: app.malachite.player.data.ArtistAlbumSort): List<Album> = when (sort) {
-    // albums without a year go to the end either way
-    app.malachite.player.data.ArtistAlbumSort.NEWEST -> albums.sortedWith(compareBy<Album> { yearOf(it) == 0 }.thenByDescending { yearOf(it) }.thenBy { TextFold.strictKey(it.title) })
-    app.malachite.player.data.ArtistAlbumSort.OLDEST -> albums.sortedWith(compareBy<Album> { yearOf(it) == 0 }.thenBy { yearOf(it) }.thenBy { TextFold.strictKey(it.title) })
-    app.malachite.player.data.ArtistAlbumSort.TITLE -> albums.sortedBy { TextFold.strictKey(it.title) }
-    app.malachite.player.data.ArtistAlbumSort.SIZE -> albums.sortedByDescending { it.tracks.size }
-}
-
-/** The songs of one artist: [SongSort.TITLE] really sorts here (the artist's songs come in album order). */
-fun sortArtistSongs(tracks: List<TrackInfo>, sort: SongSort, data: app.malachite.core.library.LibraryData): List<TrackInfo> = when (sort) {
-    SongSort.TITLE -> tracks.sortedBy { TextFold.strictKey(it.displayTitle) }
-    else -> sortSongs(tracks, sort, data)
 }
 
 @Composable
@@ -589,7 +496,10 @@ fun AlbumDetailScreen(key: String) {
         Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             CoverImage(a.cover, size = 220.dp, corner = 18.dp, sizePx = 600)
             Spacer(Modifier.size(12.dp))
-            Text(a.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            app.malachite.player.ui.components.FitText(
+                a.title, MaterialTheme.typography.headlineSmall, maxLines = 3, minSize = 15.sp, fontWeight = FontWeight.Bold,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            )
             Text(
                 a.artist, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable { nav.push(Screen.ArtistDetail(a.key.substringBefore('|'))) },
@@ -629,18 +539,21 @@ fun PlaylistsScreen() {
     val playlists by g.library.playlists.collectAsState()
     val nav = LocalNavigator.current
     var create by remember { mutableStateOf(false) }
-    var sortMenu by remember { mutableStateOf(false) }
     val settings by g.settings.state.collectAsState()
+    val view = settings.view(app.malachite.player.data.ListKind.PLAYLISTS)
     val shelf by app.malachite.player.data.Shelf.state.collectAsState()
     androidx.compose.runtime.LaunchedEffect(Unit) { app.malachite.player.data.Shelf.ensureLoaded() }
-    val ordered = remember(playlists, settings.playlistSort, shelf) {
-        val sorted = when (settings.playlistSort) {
-            app.malachite.player.data.PlaylistSort.NAME -> playlists.sortedBy { it.name.lowercase() }
-            app.malachite.player.data.PlaylistSort.CREATED -> playlists.sortedByDescending { it.createdAt }
-            app.malachite.player.data.PlaylistSort.UPDATED -> playlists.sortedByDescending { it.updatedAt }
-            app.malachite.player.data.PlaylistSort.SIZE -> playlists.sortedByDescending { it.entries.size }
-        }
-        sorted.sortedByDescending { it.name in shelf.pinnedPlaylists }
+    val dataState = g.library.data.collectAsState()
+    val dataKey by remember(view) { androidx.compose.runtime.derivedStateOf { viewDataKey(dataState.value, view) } }
+    val libraryTracks by g.library.tracks.collectAsState()
+    val ordered = remember(playlists, view, dataKey, shelf, libraryTracks) {
+        // the same order and filters as every other list; the pinned ones stay on top
+        viewGroups(
+            playlists, view, dataState.value, title = { it.name },
+            tracks = { pl -> pl.entries.mapNotNull { e -> g.library.track(e.relativePath) } },
+            favorite = { it.name in shelf.favoritePlaylists }, pinned = { it.name in shelf.pinnedPlaylists },
+            created = { it.createdAt }, updated = { it.updatedAt },
+        )
     }
     // only "my playlists" can be chosen (the smart ones are made by the player)
     val sel = app.malachite.player.ui.components.rememberSelection("playlists")
@@ -681,22 +594,12 @@ fun PlaylistsScreen() {
                 Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         }
         if (playlists.size > 1) item {
-            Row(Modifier.padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (!sel.active) androidx.compose.material3.AssistChip(onClick = { sel.start() }, label = { Text(tr("Выбрать")) },
+            ListViewBar(app.malachite.player.data.ListKind.PLAYLISTS, view) {
+                if (!sel.active && ordered.size > 1) androidx.compose.material3.AssistChip(onClick = { sel.start() }, label = { Text(tr("Выбрать")) },
                     leadingIcon = { Icon(androidx.compose.material.icons.Icons.Filled.CheckBox, null, Modifier.size(18.dp)) })
-                Box {
-                    androidx.compose.material3.AssistChip(
-                        onClick = { sortMenu = true }, label = { Text(settings.playlistSort.title) },
-                        leadingIcon = { Icon(Icons.Filled.Sort, tr("Сортировка"), Modifier.size(18.dp)) },
-                    )
-                    DropdownMenu(sortMenu, { sortMenu = false }) {
-                        app.malachite.player.data.PlaylistSort.entries.forEach { s ->
-                            DropdownMenuItem(text = { Text(s.title) }, onClick = { sortMenu = false; g.settings.update { it.copy(playlistSort = s) } })
-                        }
-                    }
-                }
             }
         }
+        if (playlists.isNotEmpty() && ordered.isEmpty()) item { NothingMatches() }
         items(ordered, key = { it.name }) { p ->
             val pinned = p.name in shelf.pinnedPlaylists
             ChoosableItem(
@@ -706,6 +609,7 @@ fun PlaylistsScreen() {
                 ownMenu = { playlistsActions(nav, listOf(p), done = {}, delete = { deleting = it }) },
                 title = p.name,
                 trailing = {
+                    if (p.name in shelf.favoritePlaylists) Icon(androidx.compose.material.icons.Icons.Filled.Favorite, tr("В избранном"), Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                     IconButton(onClick = { app.malachite.player.data.Shelf.togglePinnedPlaylist(p.name) }) {
                         Icon(androidx.compose.material.icons.Icons.Filled.PushPin, if (pinned) tr("Открепить") else tr("Закрепить вверху"),
                             tint = if (pinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f))
@@ -762,8 +666,15 @@ fun playlistsActions(
         MenuAction(tr("Вперемешку"), app.malachite.player.ui.components.ActionIcons.shuffle) { g.player.play(tracks, shuffle = true); done() },
         MenuAction(tr("Добавить в очередь"), app.malachite.player.ui.components.ActionIcons.queue) { g.player.addToQueue(tracks); done() },
         MenuAction(tr("Собрать в другой плейлист…"), app.malachite.player.ui.components.ActionIcons.playlist) { nav.show(DialogRequest.AddToPlaylist(tracks.map { it.path }.distinct())) },
+        MenuAction(tr("Исцелить песни…"), app.malachite.player.ui.components.ActionIcons.heal) { nav.show(DialogRequest.HealSelected(tracks.map { it.path }.distinct())) },
         MenuAction(if (allPinned) tr("Открепить") else tr("Закрепить вверху"), app.malachite.player.ui.components.ActionIcons.pin) {
             playlists.filter { (it.name in shelf.pinnedPlaylists) == allPinned }.forEach { app.malachite.player.data.Shelf.togglePinnedPlaylist(it.name) }
+        },
+        run {
+            val allFavorite = playlists.all { it.name in shelf.favoritePlaylists }
+            MenuAction(if (allFavorite) tr("Убрать из избранного") else tr("В избранное"), if (allFavorite) app.malachite.player.ui.components.ActionIcons.unfavorite else app.malachite.player.ui.components.ActionIcons.favorite) {
+                playlists.filter { (it.name in shelf.favoritePlaylists) == allFavorite }.forEach { app.malachite.player.data.Shelf.toggleFavoritePlaylist(it.name) }
+            }
         },
         MenuAction(if (playlists.size == 1) tr("Удалить плейлист…") else tr("Удалить плейлисты (${playlists.size})…"), app.malachite.player.ui.components.ActionIcons.delete, danger = true) { delete(playlists.map { it.name }) },
     )
@@ -924,13 +835,30 @@ fun PlaylistDetailScreen(name: String) {
                 }
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(p.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    // never broken inside a word: the size goes down until the longest word fits
+                    app.malachite.player.ui.components.FitText(
+                        p.name, MaterialTheme.typography.headlineSmall, maxLines = 3, minSize = 15.sp, fontWeight = FontWeight.Bold,
+                    )
                     Text(tr("${list.size} песен • ${formatTime(list.sumOf { it.durationMs })}"), style = MaterialTheme.typography.bodySmall)
                     if (list.size < p.entries.size) Text(tr("Не найдено в главной папке: ${p.entries.size - list.size}"), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                     Text(tr("Нажмите на картинку, чтобы поставить свою обложку"), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    // under the name, not beside it: the name keeps the whole width
+                    val shelfNow by app.malachite.player.data.Shelf.state.collectAsState()
+                    val fav = p.name in shelfNow.favoritePlaylists
+                    val pinned = p.name in shelfNow.pinnedPlaylists
+                    Row {
+                        IconButton(onClick = { app.malachite.player.data.Shelf.toggleFavoritePlaylist(p.name) }) {
+                            Icon(if (fav) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, if (fav) tr("Убрать из избранного") else tr("В избранное"),
+                                tint = if (fav) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        IconButton(onClick = { app.malachite.player.data.Shelf.togglePinnedPlaylist(p.name) }) {
+                            Icon(androidx.compose.material.icons.Icons.Filled.PushPin, if (pinned) tr("Открепить") else tr("Закрепить вверху"),
+                                tint = if (pinned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        IconButton(onClick = { rename = true }) { Icon(Icons.Filled.Edit, tr("Переименовать")) }
+                        IconButton(onClick = { delete = true }) { Icon(Icons.Filled.Delete, tr("Удалить")) }
+                    }
                 }
-                IconButton(onClick = { rename = true }) { Icon(Icons.Filled.Edit, tr("Переименовать")) }
-                IconButton(onClick = { delete = true }) { Icon(Icons.Filled.Delete, tr("Удалить")) }
             }
             PlayButtons(list) {
                 if (list.size > 1 && !sel.active) IconButton(onClick = { sortSheet = true }) {
@@ -1006,6 +934,7 @@ fun SmartPlaylistScreen(kind: SmartKind) {
     val g = MalachiteApp.graph
     val tracks by g.library.tracks.collectAsState()
     val data by g.library.data.collectAsState()
+    if (kind == SmartKind.FAVORITES) { FavoritesScreen(); return }
     val list = remember(tracks, data, kind) {
         when (kind) {
             SmartKind.FAVORITES -> tracks.filter { data.user(it.path).favorite }
@@ -1020,6 +949,31 @@ fun SmartPlaylistScreen(kind: SmartKind) {
         return
     }
     TrackList(list, header = { PlayButtons(list) })
+}
+
+/** The favourite songs, with the same row of order and filters as the other lists. */
+@Composable
+private fun FavoritesScreen() {
+    val g = MalachiteApp.graph
+    val tracks by g.library.tracks.collectAsState()
+    val data by g.library.data.collectAsState()
+    val settings by g.settings.state.collectAsState()
+    val view = settings.view(app.malachite.player.data.ListKind.FAVORITES)
+    val favorites = remember(tracks, data) { tracks.filter { data.user(it.path).favorite } }
+    if (favorites.isEmpty()) {
+        EmptyState(Icons.Filled.Star, SmartKind.FAVORITES.title, tr("Отмечайте песни сердечком — они появятся здесь."))
+        return
+    }
+    val dataKey = remember(data, view) { viewDataKey(data, view) }
+    // the favourites come in the library's order (by title) already
+    val list = remember(favorites, view, dataKey) { viewSongs(favorites, view, data) }
+    TrackList(list, header = {
+        Column {
+            PlayButtons(list)
+            ListViewBar(app.malachite.player.data.ListKind.FAVORITES, view)
+            if (list.isEmpty()) NothingMatches()
+        }
+    })
 }
 
 /** Browses the real folder structure of the main folder: Artist → Album → songs. */
@@ -1072,19 +1026,17 @@ fun SearchScreen() {
     val playlists by g.library.playlists.collectAsState()
     val onlineEnabled = g.settings.state.collectAsState().value.onlineEnabled
     var scope by rememberSaveable { mutableStateOf(SearchScope.ALL) }
-    var filters by rememberSaveable { mutableStateOf(emptySet<SongFilter>()) }
-    var sort by rememberSaveable { mutableStateOf(SongSort.TITLE) }
+    // the same order and filters as every list of songs
+    val view = g.settings.state.collectAsState().value.view(app.malachite.player.data.ListKind.SEARCH)
+    val filters = view.filters
     val showSongs = scope == SearchScope.ALL || scope == SearchScope.SONGS
     // with a filter on and nothing typed, the filter alone picks the songs ("all favourites")
-    val songs = remember(q, tracks, filters, sort, data, showSongs) {
+    val songs = remember(q, tracks, view, data, showSongs) {
         if (!showSongs || (key.isEmpty() && filters.isEmpty())) emptyList()
-        else sortSongs(
-            tracks.asSequence()
-                .filter { key.isEmpty() || match(it.displayTitle) || match(it.displayArtist) || match(it.album) || match(it.fileName.substringBeforeLast('.')) }
-                .filter { t -> filters.all { f -> f.accepts(t, data.user(t.path)) } }
-                .take(500).toList(),
-            sort, data,
-        )
+        else viewSongs(
+            tracks.filter { key.isEmpty() || match(it.displayTitle) || match(it.displayArtist) || match(it.album) || match(it.fileName.substringBeforeLast('.')) },
+            view, data,
+        ).take(500)
     }
     val foundArtists = remember(q, artists, scope) {
         if (scope == SearchScope.ALL || scope == SearchScope.ARTISTS) artists.filter { match(it.name) }.take(if (scope == SearchScope.ALL) 20 else 200) else emptyList()
@@ -1128,7 +1080,7 @@ fun SearchScreen() {
                 androidx.compose.material3.FilterChip(selected = scope == sc, onClick = { scope = sc }, label = { Text(sc.title) })
             }
         }
-        if (showSongs) SortAndFilterRow(sort, { sort = it }, filters) { filters = it }
+        if (showSongs) ListViewBar(app.malachite.player.data.ListKind.SEARCH, view)
         TrackList(songs, header = {
             Column {
                 // nothing typed: the recent searches, a tap searches again

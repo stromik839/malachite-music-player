@@ -44,6 +44,11 @@ class AppGraph(val context: Context) {
     val scanScheduler = ScanScheduler(context, settings, library, deviceScanner)
     /** New songs heal themselves (when switched on and online). */
     val autoHeal = app.malachite.player.heal.AutoHeal(settings, healing).also { a -> library.onNewSongs = { paths -> a.newSongs(paths) } }
+    /**
+     * Work started from a window that may close before it ends (tags written, an album renamed):
+     * closing the window must not cut the work off in the middle of a file.
+     */
+    val background = CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Main)
 
     /** Opens the main folder if it can be found and accessed. */
     fun openLibraryIfPossible(): Boolean {

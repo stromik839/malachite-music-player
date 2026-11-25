@@ -200,62 +200,13 @@ private fun NowPlayingContent(t: TrackInfo, st: PlayerUiState) {
                             LyricsGuide.headerText = androidx.compose.ui.geometry.Rect(p.x, p.y, p.x + c.size.width, p.y + albumBaseline)
                         })
             }
-            Box {
-                IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, tr("Ещё")) }
-                DropdownMenu(menu, { menu = false }) {
-                    if (online != null) {
-                        // A song from the internet is not a file of the library yet: no playlists,
-                        // tags or cover editing until it is downloaded.
-                        if (online.downloadUrl != null) {
-                            DropdownMenuItem(text = { Text(tr("Скачать в главную папку")) }, onClick = {
-                                menu = false
-                                app.malachite.player.ui.screens.downloadOnline(online) { nav.toast(it) }
-                            })
-                        } else {
-                            DropdownMenuItem(
-                                text = { Text(if (online.preview) tr("Это отрывок 30 секунд") else tr("Автор не открыл скачивание")) },
-                                onClick = { menu = false }, enabled = false,
-                            )
-                        }
-                    } else {
-                        DropdownMenuItem(text = { Text(tr("Найти текст")) }, onClick = { menu = false; nav.show(DialogRequest.FindLyrics(t)) })
-                        DropdownMenuItem(text = { Text(tr("Синхронизировать текст вручную")) }, onClick = { menu = false; nav.push(Screen.LyricsSync(t.path)) })
-                        DropdownMenuItem(text = { Text(tr("Исправить строки текста")) }, onClick = { menu = false; nav.push(Screen.LyricsEdit(t.path)) })
-                        DropdownMenuItem(text = { Text(if (t.hasArtwork) tr("Заменить обложку") else tr("Найти обложку")) }, onClick = { menu = false; nav.show(DialogRequest.FindCover(listOf(t))) })
-                        DropdownMenuItem(text = { Text(tr("Изменить теги")) }, onClick = { menu = false; nav.show(DialogRequest.EditTags(t)) })
-                        DropdownMenuItem(text = { Text(tr("В плейлист…")) }, onClick = { menu = false; nav.show(DialogRequest.AddToPlaylist(listOf(t.path))) })
-                        DropdownMenuItem(text = { Text(tr("Отметить лучший момент здесь (${formatTime(pos.longValue)})")) }, onClick = {
-                            menu = false
-                            g.library.setBestMoment(t.path, pos.longValue)
-                            nav.toast(tr("Лучший момент отмечен чертой на полосе перемотки: задержите ползунок у неё на пару секунд — он встанет точно на неё"))
-                        })
-                        if (data.user(t.path).bestMomentMs != null) {
-                            DropdownMenuItem(text = { Text(tr("Убрать отметку лучшего момента")) }, onClick = { menu = false; g.library.setBestMoment(t.path, null) })
-                        }
-                        val disliked = data.user(t.path).disliked
-                        DropdownMenuItem(text = { Text(if (disliked) tr("Снова нравится") else tr("Не нравится")) }, onClick = {
-                            menu = false
-                            g.library.setDisliked(listOf(t.path), !disliked)
-                            nav.toast(if (disliked) tr("Песня снова играет вперемешку") else tr("Не нравится: песня не играет вперемешку и не попадает в умные плейлисты"))
-                        })
-                    }
-                    DropdownMenuItem(text = { Text(tr("Эквалайзер и микшер")) }, onClick = { menu = false; nav.push(Screen.Equalizer) })
-                    DropdownMenuItem(text = { Text(tr("Таймер сна")) }, onClick = { menu = false; sleepDialog = true })
-                    if (online == null) {
-                        DropdownMenuItem(text = { Text(tr("К исполнителю")) }, onClick = { menu = false; nav.push(Screen.ArtistDetail(TextFold.strictKey(t.groupArtist))) })
-                        DropdownMenuItem(text = { Text(tr("Сведения о файле")) }, onClick = { menu = false; nav.show(DialogRequest.Info(t)) })
-                    }
-                }
-            }
-        }
-    }
-    val stage: @Composable () -> Unit = {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (showLyrics) {
-                LyricsPanel(t, st.speed) { pos.longValue }
-            } else {
-                CoverArea(t) { showLyrics = true }
-            }
+            IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, tr("Ещё")) }
+            // the same sheet of tiles as the menu of a song in a list (it was a long drop-down list)
+            app.malachite.player.ui.components.ActionSheet(
+                menu, { menu = false }, t.displayTitle,
+                listOf(t.displayArtist, t.album).filter { it.isNotBlank() }.joinToString(" • "),
+                leading = { app.malachite.player.ui.components.CoverImage(t, size = 44.dp) },
+            ) { nowPlayingActions(nav, t, online, { pos.longValue }) { sleepDialog = true } }
         }
     }
     val settings by g.settings.state.collectAsState()
@@ -266,11 +217,16 @@ private fun NowPlayingContent(t: TrackInfo, st: PlayerUiState) {
         androidx.compose.animation.core.tween(settings.visualizerFadeMs.coerceIn(0, 5000), easing = androidx.compose.animation.core.FastOutSlowInEasing),
         label = "bars",
     )
-    val bars: @Composable () -> Unit = {
-        if (settings.visualizer && !showLyrics) Visualizer(
+    val visualizerOn = settings.visualizer && !showLyrics
+    // the rays around the cover itself: drawn behind the (round) cover, nothing under it
+    val ring = visualizerOn && settings.visualizerStyle == app.malachite.player.data.VisualizerStyle.RING
+    // the round one under the cover takes all the room the cover leaves, between it and the title
+    val circle = visualizerOn && settings.visualizerStyle == app.malachite.player.data.VisualizerStyle.CIRCLE
+    val visualizer: @Composable (Modifier) -> Unit = { place ->
+        Visualizer(
             settings.visualizerStyle,
             settings.visualizerOrder,
-            Modifier.fillMaxWidth().height(settings.visualizerHeightDp.coerceIn(48, 200).dp).padding(top = 8.dp),
+            place,
             low = MaterialTheme.colorScheme.primary,
             high = MaterialTheme.colorScheme.tertiary,
             tip = androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onSurface, 0.7f),
@@ -279,6 +235,23 @@ private fun NowPlayingContent(t: TrackInfo, st: PlayerUiState) {
             sensitivity = settings.visualizerSensitivity,
             fall = settings.visualizerFall,
         )
+    }
+    val stage: @Composable () -> Unit = {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            if (showLyrics) {
+                LyricsPanel(t, st.speed) { pos.longValue }
+            } else if (ring) {
+                visualizer(Modifier.fillMaxSize())
+                Box(Modifier.fillMaxSize(RING_COVER), contentAlignment = Alignment.Center) {
+                    CoverArea(t, round = true) { showLyrics = true }
+                }
+            } else {
+                CoverArea(t) { showLyrics = true }
+            }
+        }
+    }
+    val bars: @Composable () -> Unit = {
+        if (visualizerOn && !ring) visualizer(Modifier.fillMaxWidth().height(settings.visualizerHeightDp.coerceIn(48, 200).dp).padding(top = 8.dp))
     }
     val title: @Composable () -> Unit = {
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -373,8 +346,22 @@ private fun NowPlayingContent(t: TrackInfo, st: PlayerUiState) {
         } else {
             Column(Modifier.widthIn(max = 640.dp).fillMaxHeight().padding(horizontal = 18.dp)) {
                 header()
-                Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { stage() }
-                bars()
+                if (circle) {
+                    // The cover as big as before, at the top of its place; the circle gets all the
+                    // rest (at least its set height) and stands in the middle of it, between the
+                    // cover and the title. It used to be a small circle low in a narrow strip.
+                    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+                        val least = settings.visualizerHeightDp.coerceIn(48, 200).dp + 16.dp
+                        val side = minOf(maxWidth, maxOf(maxHeight - least, maxHeight * 0.5f))
+                        Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(Modifier.size(side), contentAlignment = Alignment.Center) { stage() }
+                            visualizer(Modifier.fillMaxWidth().weight(1f).padding(vertical = 4.dp))
+                        }
+                    }
+                } else {
+                    Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { stage() }
+                    bars()
+                }
                 title()
                 seek()
                 transport()
@@ -394,8 +381,59 @@ private fun NowPlayingContent(t: TrackInfo, st: PlayerUiState) {
 private object CoverReading
 private object CoverMissing
 
+/** What the menu ⋮ of the song screen offers: the song's own actions, then the player's. */
+private fun nowPlayingActions(
+    nav: app.malachite.player.ui.Navigator,
+    t: TrackInfo,
+    online: app.malachite.core.online.OnlineCatalog.Item?,
+    position: () -> Long,
+    sleep: () -> Unit,
+): List<app.malachite.player.ui.components.MenuAction> {
+    val g = MalachiteApp.graph
+    val icons = app.malachite.player.ui.components.ActionIcons
+    fun action(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, run: () -> Unit) =
+        app.malachite.player.ui.components.MenuAction(title, icon, action = run)
+    val player = listOf(
+        action(tr("Эквалайзер и микшер"), icons.equalizer) { nav.push(Screen.Equalizer) },
+        action(tr("Таймер сна"), icons.sleep) { sleep() },
+    )
+    if (online != null) {
+        // a song from the internet is not a file of the library yet: no playlists, tags or covers
+        val download = if (online.downloadUrl != null) action(tr("Скачать в главную папку"), icons.download) {
+            app.malachite.player.ui.screens.downloadOnline(online) { nav.toast(it) }
+        } else action(if (online.preview) tr("Это отрывок 30 секунд") else tr("Автор не открыл скачивание"), icons.info) {
+            nav.toast(if (online.preview) tr("Это отрывок 30 секунд") else tr("Автор не открыл скачивание"))
+        }
+        return listOf(download) + player
+    }
+    val u = g.library.data.value.user(t.path)
+    val at = position()
+    return listOfNotNull(
+        action(tr("Найти текст"), icons.lyrics) { nav.show(DialogRequest.FindLyrics(t)) },
+        action(tr("Синхронизация текста"), icons.sync) { nav.push(Screen.LyricsSync(t.path)) },
+        action(tr("Исправить строки текста"), icons.editLines) { nav.push(Screen.LyricsEdit(t.path)) },
+        action(if (t.hasArtwork) tr("Заменить обложку") else tr("Найти обложку"), icons.cover) { nav.show(DialogRequest.FindCover(listOf(t))) },
+        action(tr("Изменить теги"), icons.tags) { nav.show(DialogRequest.EditTags(t)) },
+        action(tr("Исцелить"), icons.heal) { nav.show(DialogRequest.HealSelected(listOf(t.path))) },
+        action(tr("В плейлист…"), icons.playlist) { nav.show(DialogRequest.AddToPlaylist(listOf(t.path))) },
+        action(tr("Лучший момент здесь (${formatTime(at)})"), icons.best) {
+            g.library.setBestMoment(t.path, at)
+            nav.toast(tr("Лучший момент отмечен чертой на полосе перемотки: задержите ползунок у неё на пару секунд — он встанет точно на неё"))
+        },
+        if (u.bestMomentMs != null) action(tr("Убрать лучший момент"), icons.bestOff) { g.library.setBestMoment(t.path, null) } else null,
+        action(if (u.disliked) tr("Снова нравится") else tr("Не нравится"), if (u.disliked) icons.dislikeOff else icons.dislike) {
+            g.library.setDisliked(listOf(t.path), !u.disliked)
+            nav.toast(if (u.disliked) tr("Песня снова играет вперемешку") else tr("Не нравится: песня не играет вперемешку и не попадает в умные плейлисты"))
+        },
+    ) + player + listOf(
+        action(tr("К исполнителю"), icons.artist) { nav.push(Screen.ArtistDetail(TextFold.strictKey(t.groupArtist))) },
+        action(tr("К альбому"), icons.album) { nav.push(Screen.AlbumDetail(TextFold.strictKey(t.groupArtist) + "|" + TextFold.strictKey(t.album))) },
+        action(tr("Сведения о файле"), icons.info) { nav.show(DialogRequest.Info(t)) },
+    )
+}
+
 @Composable
-private fun CoverArea(t: TrackInfo, onLyrics: () -> Unit) {
+private fun CoverArea(t: TrackInfo, round: Boolean = false, onLyrics: () -> Unit) {
     val nav = LocalNavigator.current
     val animate = MalachiteApp.graph.settings.state.collectAsState().value.animations
     val cover = rememberCoverState(t, 900)
@@ -403,6 +441,8 @@ private fun CoverArea(t: TrackInfo, onLyrics: () -> Unit) {
     // while the file is still read, and "no cover" only once it is known there is none – it used to
     // flash up on every opening before the picture came.
     val look: Any = cover.bitmap ?: if (cover.settled) CoverMissing else CoverReading
+    // round when the visualizer's rays go around it
+    val shape = if (round) androidx.compose.foundation.shape.CircleShape else RoundedCornerShape(22.dp)
     // the biggest square that fits: also when the place is wider than it is tall
     Box(Modifier.aspectRatio(1f).padding(8.dp), contentAlignment = Alignment.Center) {
         androidx.compose.animation.Crossfade(
@@ -413,16 +453,20 @@ private fun CoverArea(t: TrackInfo, onLyrics: () -> Unit) {
             when (shown) {
                 is android.graphics.Bitmap -> Image(
                     shown.asImageBitmap(), tr("Обложка"),
-                    Modifier.fillMaxSize().clip(RoundedCornerShape(22.dp)).clickable(onClick = onLyrics),
+                    Modifier.fillMaxSize().clip(shape).clickable(onClick = onLyrics),
                     contentScale = ContentScale.Crop,
                 )
                 CoverMissing -> {
                     // No cover in the file: offer to find one and embed it into the file itself.
                     Card(
-                        Modifier.fillMaxSize(), shape = RoundedCornerShape(22.dp),
+                        Modifier.fillMaxSize(), shape = shape,
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
                     ) {
-                        Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                        if (round) Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                            // a circle has no room in its corners: only the note and the way to a cover
+                            Icon(Icons.Filled.MusicNote, null, Modifier.size(56.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                            TextButton(onClick = { nav.show(DialogRequest.FindCover(listOf(t))) }) { Text(tr("Найти обложку")) }
+                        } else Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                             Icon(Icons.Filled.MusicNote, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
                             Spacer(Modifier.height(10.dp))
                             Text(tr("В файле нет обложки"), style = MaterialTheme.typography.titleMedium)
@@ -436,7 +480,7 @@ private fun CoverArea(t: TrackInfo, onLyrics: () -> Unit) {
                     }
                 }
                 else -> Box(
-                    Modifier.fillMaxSize().clip(RoundedCornerShape(22.dp))
+                    Modifier.fillMaxSize().clip(shape)
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
                 )
             }

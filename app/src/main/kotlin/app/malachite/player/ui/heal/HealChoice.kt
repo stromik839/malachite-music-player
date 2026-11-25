@@ -63,7 +63,7 @@ private fun stepInfos(): List<StepInfo> = listOf(
     StepInfo(HealStep.FORMATS, Icons.Filled.SwapHoriz, tr("Форматы файлов"), tr("расширение по настоящему формату")),
     StepInfo(HealStep.ODD_TAGS, Icons.Filled.Language, tr("Странные альбомы и исполнители"), tr("«AyuGram», сайты, «Разные исполнители» — проверка в интернете")),
     StepInfo(HealStep.SOUND_ID, Icons.Filled.Hearing, tr("Узнать песни по звуку"), tr("непонятные названия; нужен ключ AcoustID")),
-    StepInfo(HealStep.TITLE_NUMBERS, Icons.Filled.Tag, tr("Номера в названиях"), tr("«01 - Песня» → «Песня»")),
+    StepInfo(HealStep.TITLE_NUMBERS, Icons.Filled.Tag, tr("Номера в названиях"), tr("«09 Песня» → «Песня»; песня «13» получает своё название из списка альбома")),
     StepInfo(HealStep.MISSING, Icons.Filled.Album, tr("Пустые альбомы и исполнители"), tr("из тегов Android и папок")),
     StepInfo(HealStep.NAMES, Icons.Filled.Spellcheck, tr("Написание названий"), tr("опечатки, кириллица и латиница, украшения")),
     StepInfo(HealStep.FILENAMES, Icons.Filled.DriveFileRenameOutline, tr("Имена файлов"), tr("«2_3049492992.mp3» → название песни")),

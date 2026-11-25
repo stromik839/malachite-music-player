@@ -283,7 +283,8 @@ class HealingEngine(
                     persistQueue()
                 }
                 CoverLoader.invalidate()
-                library.rescan()
+                // files healing renamed or moved are the same songs, not new ones (they are not healed again)
+                library.rescan(notNew = HealExecutor.compose(report.moves).values.toHashSet())
                 report.albumHints.forEach { albumHints[it.path] = it }
                 if (app.malachite.player.data.AppLog.enabled) {
                     app.malachite.player.data.AppLog.i(
@@ -381,7 +382,7 @@ class HealingEngine(
                     HealKind.BROKEN -> _state.update { it.copy(broken = brokenPlan(tracks)) }
                     HealKind.COVER_QUALITY -> _state.update { it.copy(coverIssues = coverQualityPlan(tracks, library.data.value)) }
                     HealKind.TRACK_NUMBERS -> _state.update { it.copy(numbering = numberingPlan(tracks)) }
-                    HealKind.TITLE_NUMBERS -> _state.update { it.copy(titleNumbers = HealPlanner.titleNumbers(tracks)) }
+                    HealKind.TITLE_NUMBERS -> _state.update { it.copy(titleNumbers = titleNumbersPlan(tracks)) }
                     HealKind.LETTER_CASE -> _state.update { it.copy(letterCase = HealPlanner.letterCase(tracks)) }
                     HealKind.SOUND_ID -> analyzeSounds(tracks)
                     HealKind.LOUDNESS -> {
@@ -900,6 +901,25 @@ class HealingEngine(
             u.coverChosen || (u.coverSource != null && u.coverSource !in DOWNLOAD_COVER_SOURCES)
         })
 
+    private val albumTracks by lazy { app.malachite.core.cover.AlbumTracks(app.malachite.player.MalachiteApp.graph.http) }
+
+    /**
+     * Numbers in titles ("09 Иван Говнов") and titles that are only a number ("13"): those get the
+     * real title from the album's list of songs online (MusicBrainz, Deezer), each album asked once.
+     */
+    private fun titleNumbersPlan(tracks: List<app.malachite.core.library.TrackInfo>): List<app.malachite.core.heal.TitleNumberFix> {
+        val plain = HealPlanner.titleNumbers(tracks)
+        if (tracks.none { HealPlanner.numberOnlyTitle(it) != null }) return plain
+        if (!app.malachite.player.data.Net.online()) {
+            _state.update { it.copy(message = tr("Нет интернета: названия-номера («13») берутся из списков песен альбомов в интернете. Проверьте позже.")) }
+            return plain
+        }
+        val lists = HashMap<String, List<app.malachite.core.cover.AlbumTracks.Tracklist>>()
+        val online = HealPlanner.numberTitles(tracks) { artist, album -> lists.getOrPut("$artist|$album") { albumTracks.find(artist, album) } }
+        val fixed = online.mapTo(HashSet()) { it.path }
+        return plain.filter { it.path !in fixed } + online
+    }
+
     /** Albums without track numbers matched to their lists of songs online (Deezer). */
     private fun numberingPlan(tracks: List<app.malachite.core.library.TrackInfo>): List<app.malachite.core.heal.AlbumNumbering> {
         if (!app.malachite.player.data.Net.online()) {
@@ -1045,7 +1065,7 @@ class HealingEngine(
         return when (kind) {
             HealKind.JUNK -> e.applyJunk(HealPlanner.junk(tracks, data(), settings.value.importRules) { t -> isVideo(t) }, p, c)
             HealKind.FORMATS -> e.applyFormats(HealPlanner.formats(tracks), p, c)
-            HealKind.TITLE_NUMBERS -> e.applyTitleNumbers(HealPlanner.titleNumbers(tracks), p, c)
+            HealKind.TITLE_NUMBERS -> e.applyTitleNumbers(titleNumbersPlan(tracks), p, c)
             HealKind.MISSING -> e.applyMissingTags(missingPlan(tracks, data()), p, c)
             HealKind.NAMES -> e.applyNames(
                 HealPlanner.names(all).mapNotNull { f -> if (chosen == null) f else f.tracks.filter(::mine).takeIf { it.isNotEmpty() }?.let { f.copy(tracks = it) } },

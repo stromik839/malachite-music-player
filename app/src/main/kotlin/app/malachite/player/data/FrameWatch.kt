@@ -48,6 +48,7 @@ object FrameWatch {
         val w = window
         if (value) {
             AppLog.i("frames", "Подробный журнал включён: " + deviceLine())
+            AppLog.i("a11y", "службы специальных возможностей: " + A11y.describe(app.malachite.player.MalachiteApp.graph.context))
             if (w != null) start(w)
             watchMainThread(true)
         } else {

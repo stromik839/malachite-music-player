@@ -134,17 +134,30 @@ class LibraryRepository(private val context: Context, private val settings: Sett
         scope.launch { rescan() }
     }
 
-    suspend fun rescan() = mutex.withLock {
+    /** Told the songs that have just appeared in the main folder (not at the very first reading of it). */
+    @Volatile var onNewSongs: ((List<String>) -> Unit)? = null
+
+    private fun tellNew(before: Collection<String>, after: List<TrackInfo>, notNew: Set<String>) {
+        if (before.isEmpty()) return
+        val known = before as? Set<String> ?: before.toHashSet()
+        val fresh = after.asSequence().map { it.path }.filter { it !in known && it !in notNew && !it.startsWith(ONLINE_PREFIX) }.toList()
+        if (fresh.isNotEmpty()) runCatching { onNewSongs?.invoke(fresh) }
+    }
+
+    /** [notNew]: paths that only changed place (healing renamed or moved them) – not new songs. */
+    suspend fun rescan(notNew: Set<String> = emptySet()) = mutex.withLock {
         val r = root ?: return@withLock
         val st = store ?: return@withLock
         _scan.value = ScanState(true, 0, 0, tr("Чтение главной папки…"))
+        val base = _tracks.value.ifEmpty { st.loadIndex() }
         val list = withContext(Dispatchers.IO) {
-            LibraryScanner(r, settings.value.layoutOptions()).scan(_tracks.value.ifEmpty { st.loadIndex() }, threads = 3) { d, t ->
+            LibraryScanner(r, settings.value.layoutOptions()).scan(base, threads = 3) { d, t ->
                 _scan.value = ScanState(true, d, t, tr("Чтение тегов $d из $t"))
             }
         }
         st.saveIndex(list)
         publish(list)
+        tellNew(base.mapTo(HashSet()) { it.path }, list, notNew)
         _data.value = st.loadLibrary()
         _playlists.value = st.listPlaylists()
         _scan.value = ScanState(false, list.size, list.size, "")
@@ -161,6 +174,8 @@ class LibraryRepository(private val context: Context, private val settings: Sett
             if (i >= 0) list[i] = t else list += t
         } else if (i >= 0) list.removeAt(i)
         publish(list)
+        // a song downloaded into the main folder is new
+        if (i < 0 && f.isFile && list.size > 1) runCatching { onNewSongs?.invoke(listOf(path)) }
         store?.saveIndex(list)
         _revision.value++
     }
@@ -355,6 +370,14 @@ class LibraryRepository(private val context: Context, private val settings: Sett
     fun setLyricsOffset(t: TrackInfo, ms: Long) {
         if (isOnline(t.path)) return // nothing is stored for a song that is not in the library
         updateData { it.update(t.path) { u -> u.copy(lyricsOffsetMs = ms) } }
+        app.malachite.player.widget.WidgetUpdater.lyricsChanged(context)
+    }
+
+    /** The lyrics' own pace for this song (1f: as they are); see Lyrics.retimed. */
+    fun setLyricsTempo(t: TrackInfo, tempo: Float) {
+        if (isOnline(t.path)) return
+        updateData { it.update(t.path) { u -> u.copy(lyricsTempo = tempo) } }
+        app.malachite.player.widget.WidgetUpdater.lyricsChanged(context)
     }
 
     /** [saveLyrics] away from the main thread (it writes files, maybe the tags too); [then] runs on the main thread after. */
@@ -472,6 +495,8 @@ class LibraryRepository(private val context: Context, private val settings: Sett
     fun addDownloaded(
         item: app.malachite.core.online.OnlineCatalog.Item,
         http: app.malachite.core.net.Http,
+        /** Asked as the file comes in: false stops the download (nothing is added). */
+        keepGoing: () -> Boolean = { true },
         onProgress: (Float) -> Unit,
     ): Result<String> = runCatching {
         val url = item.downloadUrl ?: error(tr("Автор не разрешил скачивание"))
@@ -482,8 +507,8 @@ class LibraryRepository(private val context: Context, private val settings: Sett
         val ext = item.extension.lowercase().takeIf { it.matches(Regex("[a-z0-9]{1,5}")) } ?: "mp3"
         val tmp = File(st.dataDir, "incoming/" + System.nanoTime() + "." + ext)
         try {
-            val whole = http.downloadTo(url, tmp) { done, total -> onProgress(if (total > 0) done.toFloat() / total else -1f); true }
-            if (!whole) error(tr("Загрузка оборвалась"))
+            val whole = http.downloadTo(url, tmp) { done, total -> onProgress(if (total > 0) done.toFloat() / total else -1f); keepGoing() }
+            if (!whole) error(if (!keepGoing()) tr("Скачивание остановлено") else tr("Загрузка оборвалась"))
             val format = app.malachite.core.audio.AudioFormat.detect(tmp)
             if (format == app.malachite.core.audio.AudioFormat.UNKNOWN) error(tr("Это не музыкальный файл"))
             val planned = TrackInfo(path = "song." + format.extension, title = item.title, artist = item.artist, album = item.album, format = format.name)

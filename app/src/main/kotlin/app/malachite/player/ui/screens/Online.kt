@@ -76,8 +76,16 @@ private val downloading = mutableStateMapOf<String, Float>()
 private val downloadingTitles = mutableStateMapOf<String, String>()
 private val downloaded = mutableStateListOf<String>()
 
-/** Songs being downloaded right now: title and progress 0..1 (below 0 = size unknown). For the "Processes" screen. */
-fun activeDownloads(): List<Pair<String, Float>> = downloading.map { (id, progress) -> (downloadingTitles[id] ?: id) to progress }
+/** Downloads asked to stop: each stops at its next piece of data. */
+private val stopRequested: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+
+/** Songs being downloaded right now: id, title and progress 0..1 (below 0 = size unknown). For the "Processes" screen. */
+fun activeDownloads(): List<Triple<String, String, Float>> = downloading.map { (id, progress) -> Triple(id, downloadingTitles[id] ?: id, progress) }
+
+/** Stops the download of one song (a "download all" goes on with the next one). */
+fun stopDownload(id: String) {
+    stopRequested += id
+}
 
 /**
  * Downloads an online song into the main folder, where it becomes an ordinary song.
@@ -89,14 +97,19 @@ fun downloadOnline(item: OnlineCatalog.Item, report: (String) -> Unit) {
     val g = MalachiteApp.graph
     downloading[item.id] = 0f
     downloadingTitles[item.id] = listOf(item.artist, item.title).filter { it.isNotBlank() }.joinToString(" — ")
+    stopRequested -= item.id
     downloadScope.launch {
-        val result = withContext(Dispatchers.IO) { g.library.addDownloaded(item, g.http) { p -> downloading[item.id] = p } }
+        val result = withContext(Dispatchers.IO) {
+            g.library.addDownloaded(item, g.http, keepGoing = { item.id !in stopRequested }) { p -> downloading[item.id] = p }
+        }
         downloading.remove(item.id)
         downloadingTitles.remove(item.id)
+        val stopped = stopRequested.remove(item.id)
         if (result.isSuccess) {
             downloaded += item.id
             report(tr("Скачано в главную папку: ${item.title}"))
-        } else report(tr("Не скачалось: ${result.exceptionOrNull()?.message ?: tr("ошибка")}"))
+        } else if (stopped) report(tr("Скачивание остановлено: ${item.title}"))
+        else report(tr("Не скачалось: ${result.exceptionOrNull()?.message ?: tr("ошибка")}"))
     }
 }
 
@@ -135,9 +148,13 @@ private fun downloadAllOnline(listId: String, title: String, items: List<OnlineC
         try {
             for (item in todo) {
                 bulk.value = bulk.value?.copy(currentId = item.id)
-                val result = withContext(Dispatchers.IO) { g.library.addDownloaded(item, g.http) { p -> downloading[item.id] = p } }
+                stopRequested -= item.id
+                val result = withContext(Dispatchers.IO) {
+                    g.library.addDownloaded(item, g.http, keepGoing = { item.id !in stopRequested }) { p -> downloading[item.id] = p }
+                }
                 downloading.remove(item.id)
                 downloadingTitles.remove(item.id)
+                stopRequested.remove(item.id)
                 if (result.isSuccess) { downloaded += item.id; ok++ } else failed++
                 bulk.value = bulk.value?.copy(ok = ok, failed = failed)
             }
@@ -156,7 +173,11 @@ private fun downloadAllOnline(listId: String, title: String, items: List<OnlineC
     }
 }
 
-private fun stopDownloadAll() { bulkJob?.cancel() }
+private fun stopDownloadAll() {
+    // the song coming in now stops at once too (it used to finish first)
+    bulk.value?.currentId?.let { stopRequested += it }
+    bulkJob?.cancel()
+}
 
 /**
  * The online section: search in open catalogues, listen, download into the main folder.

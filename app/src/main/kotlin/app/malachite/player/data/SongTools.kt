@@ -170,7 +170,12 @@ object SongTools {
      * it is and the converted copy is added to the main folder. Returns what happened; nothing is
      * changed when anything fails.
      */
-    suspend fun convert(context: Context, p: Picked, target: Converter.Target, progress: (Float) -> Unit): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun convert(
+        context: Context, p: Picked, target: Converter.Target,
+        /** Asked as the work goes on: true stops it, and the original stays as it was. */
+        stopped: () -> Boolean = { false },
+        progress: (Float) -> Unit,
+    ): Result<String> = withContext(Dispatchers.IO) {
         val root = g.library.root ?: return@withContext Result.failure(Converter.Failed(tr("Главная папка не открыта")))
         val safe = g.library.safe ?: return@withContext Result.failure(Converter.Failed(tr("Главная папка не открыта")))
         val src = p.file
@@ -178,7 +183,10 @@ object SongTools {
         val work = File(File(context.cacheDir, "convert-out/" + UUID.randomUUID()).apply { mkdirs() }, src.nameWithoutExtension.ifBlank { "song" } + "." + target.extension)
         try {
             val before = Converter.durationUs(src)
-            Converter.convert(src, work, target, progress)
+            Converter.convert(src, work, target) { f ->
+                if (stopped()) throw Converter.Stopped()
+                progress(f)
+            }
             Converter.check(work, before)?.let { return@withContext Result.failure(Converter.Failed(it)) }
             // the words and the picture of the song come along
             val tags = TagIO.read(src)
@@ -213,6 +221,8 @@ object SongTools {
             Result.success(tr("Готово: ${placed.name}. Старый файл — в корзине главной папки (Настройки → Перенос и копии).") + note)
         } catch (e: Converter.Failed) {
             Result.failure(e)
+        } catch (e: Converter.Stopped) {
+            Result.failure(Converter.Failed(tr("Остановлено. Исходный файл не тронут.")))
         } catch (e: Exception) {
             Result.failure(Converter.Failed(tr("Перевод прервался: ${e.message ?: e.javaClass.simpleName}")))
         } finally {

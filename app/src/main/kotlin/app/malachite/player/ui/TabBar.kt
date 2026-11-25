@@ -217,7 +217,7 @@ fun TabBar(
         }
     }
     if (vertical) {
-        PartBackground(style, bg, frost, Modifier.fillMaxHeight().width(84.dp * scale).tourTarget("nav")) {
+        PartBackground(style, bg, frost, Modifier.fillMaxHeight().width(84.dp * scale).tourTarget("nav").then(app.malachite.player.ui.components.A11yGroup)) {
             // scrolls when the window is too low for all tabs (a phone on its side)
             Column(
                 Modifier.fillMaxHeight().verticalScroll(rememberScrollState()).then(panelPlace).then(pillDraw).then(gesture).padding(vertical = 12.dp),
@@ -227,7 +227,7 @@ fun TabBar(
             }
         }
     } else {
-        PartBackground(style, bg, frost, Modifier.fillMaxWidth().tourTarget("nav")) {
+        PartBackground(style, bg, frost, Modifier.fillMaxWidth().tourTarget("nav").then(app.malachite.player.ui.components.A11yGroup)) {
             Row(Modifier.fillMaxWidth().then(panelPlace).then(pillDraw).then(gesture).padding(horizontal = 4.dp, vertical = 2.dp)) {
                 tabs.forEachIndexed { i, t -> item(i, t, Modifier.weight(1f)) }
             }

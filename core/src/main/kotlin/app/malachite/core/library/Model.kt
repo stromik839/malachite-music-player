@@ -59,6 +59,8 @@ data class TrackUserData(
     val lyricsId: String? = null,
     val lyricsSource: String? = null,
     val lyricsOffsetMs: Long = 0,
+    /** The lyrics' own pace (1.01: a hundredth faster), kept apart like the offset; see Lyrics.retimed. */
+    val lyricsTempo: Float = 1f,
     /** User marked "this song has no lyrics" – do not search again. */
     val noLyrics: Boolean = false,
     val coverSource: String? = null,
@@ -136,6 +138,9 @@ data class LibraryData(
             addedAt = listOf(a.addedAt, b.addedAt).filter { it > 0 }.minOrNull() ?: 0,
             lyricsId = a.lyricsId ?: b.lyricsId,
             lyricsSource = a.lyricsSource ?: b.lyricsSource,
+            // the shift and the pace belong to the lyrics kept
+            lyricsOffsetMs = if (a.lyricsId != null) a.lyricsOffsetMs else b.lyricsOffsetMs,
+            lyricsTempo = if (a.lyricsId != null) a.lyricsTempo else b.lyricsTempo,
             coverSource = a.coverSource ?: b.coverSource,
             coverChosen = a.coverChosen || b.coverChosen,
             speed = a.speed ?: b.speed,

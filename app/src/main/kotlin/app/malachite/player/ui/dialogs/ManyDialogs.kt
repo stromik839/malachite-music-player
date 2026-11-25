@@ -38,6 +38,8 @@ fun DeleteManyDialog(tracks: List<TrackInfo>, close: () -> Unit) {
     val scope = rememberCoroutineScope()
     var busy by remember { mutableStateOf(false) }
     var done by remember { mutableIntStateOf(0) }
+    // "stop": the song being moved is finished, the rest stay where they are
+    val stop = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
     AlertDialog(
         onDismissRequest = { if (!busy) close() },
         title = { Text(tr("Удалить выбранные песни (${tracks.size})?")) },
@@ -57,6 +59,7 @@ fun DeleteManyDialog(tracks: List<TrackInfo>, close: () -> Unit) {
                     var failed = 0
                     withContext(Dispatchers.IO) {
                         for (t in tracks) {
+                            if (stop.get()) break
                             val f = g.library.file(t)
                             val ok = f != null && g.library.safe?.trash(f, g.library.root)?.isOk == true
                             if (!ok) failed++
@@ -65,12 +68,21 @@ fun DeleteManyDialog(tracks: List<TrackInfo>, close: () -> Unit) {
                         g.library.refreshTracks(tracks.map { it.path })
                     }
                     busy = false
-                    nav.toast(if (failed == 0) tr("Перемещено в корзину: ${tracks.size}") else tr("В корзине: ${tracks.size - failed}, не удалось: $failed"))
+                    nav.toast(
+                        when {
+                            stop.get() -> tr("Остановлено: в корзине ${done - failed} из ${tracks.size}")
+                            failed == 0 -> tr("Перемещено в корзину: ${tracks.size}")
+                            else -> tr("В корзине: ${tracks.size - failed}, не удалось: $failed")
+                        },
+                    )
                     close()
                 }
             }) { Text(tr("Удалить")) }
         },
-        dismissButton = { TextButton(enabled = !busy, onClick = close) { Text(tr("Отмена")) } },
+        dismissButton = {
+            if (busy) TextButton(onClick = { stop.set(true) }) { Text(tr("Остановить")) }
+            else TextButton(onClick = close) { Text(tr("Отмена")) }
+        },
     )
 }
 
@@ -125,6 +137,8 @@ fun EditTagsManyDialog(tracks: List<TrackInfo>, close: () -> Unit) {
     var genre by remember { mutableStateOf(start[4]) }
     var busy by remember { mutableStateOf(false) }
     var done by remember { mutableIntStateOf(0) }
+    // "stop": the song being written is finished (it is never left half-written), the rest stay as they were
+    val stop = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
     val differs = tr("у песен разное — оставить")
     AlertDialog(
         onDismissRequest = { if (!busy) close() },
@@ -163,17 +177,27 @@ fun EditTagsManyDialog(tracks: List<TrackInfo>, close: () -> Unit) {
                     var failed = 0
                     val moves = HashMap<String, String>()
                     for (t in tracks) {
+                        if (stop.get()) break
                         g.library.editTags(t, edit).onSuccess { p -> if (p != t.path) moves[t.path] = p }.onFailure { failed++ }
                         done++
                     }
                     if (moves.isNotEmpty()) g.player.remapQueue(moves)
                     busy = false
-                    nav.toast(if (failed == 0) tr("Теги записаны: ${tracks.size}") else tr("Записано: ${tracks.size - failed}, не получилось: $failed"))
+                    nav.toast(
+                        when {
+                            stop.get() -> tr("Остановлено: записано ${done - failed} из ${tracks.size}")
+                            failed == 0 -> tr("Теги записаны: ${tracks.size}")
+                            else -> tr("Записано: ${tracks.size - failed}, не получилось: $failed")
+                        },
+                    )
                     close()
                 }
             }) { Text(tr("Записать")) }
         },
-        dismissButton = { TextButton(enabled = !busy, onClick = close) { Text(tr("Отмена")) } },
+        dismissButton = {
+            if (busy) TextButton(onClick = { stop.set(true) }) { Text(tr("Остановить")) }
+            else TextButton(onClick = close) { Text(tr("Отмена")) }
+        },
     )
 }
 

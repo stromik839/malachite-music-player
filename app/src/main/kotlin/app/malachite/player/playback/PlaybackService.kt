@@ -94,8 +94,29 @@ class PlaybackService : MediaSessionService() {
         setMediaNotificationProvider(CoverColorNotificationProvider(this) { graph.settings.value.notificationCoverColors })
         // the detailed log: what the player did, one line for each batch of its events
         player.addListener(object : Player.Listener {
+            // volume steps (a fade: one every 30 ms) and the buffer filling up are counted, not
+            // written one by one: they were nine lines in ten of the log
+            private var volumeSteps = 0
+            private var loads = 0
+            private var quietSince = 0L
+
             override fun onEvents(p: Player, events: Player.Events) {
                 if (!app.malachite.player.data.FrameWatch.isOn) return
+                val quiet = (0 until events.size()).all { events.get(it) == Player.EVENT_VOLUME_CHANGED || events.get(it) == Player.EVENT_IS_LOADING_CHANGED }
+                if (quiet) {
+                    if (volumeSteps == 0 && loads == 0) quietSince = android.os.SystemClock.uptimeMillis()
+                    if (events.contains(Player.EVENT_VOLUME_CHANGED)) volumeSteps++
+                    if (events.contains(Player.EVENT_IS_LOADING_CHANGED)) loads++
+                    return
+                }
+                if (volumeSteps > 0 || loads > 0) {
+                    app.malachite.player.data.AppLog.i(
+                        "player",
+                        "до этого за ${android.os.SystemClock.uptimeMillis() - quietSince} мс: громкость менялась $volumeSteps раз, подгрузка файла $loads раз, громкость сейчас ${"%.2f".format(p.volume)}",
+                    )
+                    volumeSteps = 0
+                    loads = 0
+                }
                 val names = (0 until events.size()).joinToString(", ") { eventName(events.get(it)) }
                 app.malachite.player.data.AppLog.i(
                     "player",

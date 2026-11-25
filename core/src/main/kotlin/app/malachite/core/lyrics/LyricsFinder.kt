@@ -47,6 +47,10 @@ class LyricsFinder(private val http: Http = Http()) {
         album: String = "",
         durationMs: Long = 0,
         cleanOptions: LyricsCleaner.Options = LyricsCleaner.Options(),
+        /** Asked between requests: true stops the search, and what was found so far is returned. */
+        stopped: () -> Boolean = { false },
+        /** Told what has been found so far, best first, after each source. */
+        progress: ((List<Candidate>) -> Unit)? = null,
     ): List<Candidate> {
         val found = LinkedHashMap<String, Candidate>()
         val queries = QueryVariants.build(artist, title, allowSwap = true, isTitle = true)
@@ -92,11 +96,18 @@ class LyricsFinder(private val http: Http = Http()) {
             }
         }
 
+        fun ranked(): List<Candidate> = found.values.sortedWith(
+            compareByDescending<Candidate> { it.synced && it.lyrics.lines.isNotEmpty() && it.score >= MIN_SCORE }
+                .thenByDescending { it.lyrics.lines.isNotEmpty() && it.score >= MIN_SCORE }
+                .thenByDescending { it.score },
+        )
+
         fun goodSynced(min: Double) = found.values.any { it.synced && it.lyrics.lines.isNotEmpty() && it.score >= min }
         fun goodPlain(min: Double) = found.values.any { !it.synced && it.lyrics.lines.isNotEmpty() && it.score >= min }
 
         // 1) LRCLIB: exact signature, then its search, for the best few spellings
         for ((i, q) in queries.take(4).withIndex()) {
+            if (stopped()) break
             runCatching {
                 val url = StringBuilder(LRCLIB + "get?artist_name=").append(Http.enc(q.artist))
                     .append("&track_name=").append(Http.enc(q.second))
@@ -112,9 +123,11 @@ class LyricsFinder(private val http: Http = Http()) {
             }
             if (goodSynced(0.85)) break
         }
+        progress?.invoke(ranked())
         // free text finds songs whose artist is spelled differently there
-        if (!goodSynced(0.85)) {
+        if (!stopped() && !goodSynced(0.85)) {
             for (q in queries.take(2)) {
+                if (stopped()) break
                 runCatching {
                     http.getJson(LRCLIB + "search?q=" + Http.enc("${q.artist} ${q.second}".trim())).arr()?.take(15)?.forEach { considerLrclib(it, q) }
                 }
@@ -123,22 +136,26 @@ class LyricsFinder(private val http: Http = Http()) {
         }
 
         // 2) NetEase: synced lyrics for many popular songs
-        if (!goodSynced(0.8)) {
+        if (!stopped() && !goodSynced(0.8)) {
             for (q in queries.take(2)) {
+                if (stopped()) break
                 runCatching { netease(q) { lrc, t, a, al, d -> add(synced(lrc, "NetEase"), t, a, al, d, "NetEase") } }
                 if (goodSynced(0.8)) break
             }
+            progress?.invoke(ranked())
         }
 
         // 3) Plain text, only when there is no synced version
-        if (!goodSynced(MIN_SCORE) && !goodPlain(0.85)) {
+        if (!stopped() && !goodSynced(MIN_SCORE) && !goodPlain(0.85)) {
             for (q in queries.take(2)) {
+                if (stopped()) break
                 runCatching { genius(q) { text, t, a -> add(plain(text, "Genius"), t, a, "", 0.0, "Genius") } }
                 if (goodPlain(0.8)) break
             }
         }
-        if (!goodSynced(MIN_SCORE) && !goodPlain(0.8)) {
+        if (!stopped() && !goodSynced(MIN_SCORE) && !goodPlain(0.8)) {
             for (q in queries.take(2)) {
+                if (stopped()) break
                 if (q.artist.isBlank() || q.second.isBlank()) continue
                 runCatching {
                     val el = http.getJson("https://api.lyrics.ovh/v1/" + Http.encPath(q.artist) + "/" + Http.encPath(q.second))
@@ -150,11 +167,7 @@ class LyricsFinder(private val http: Http = Http()) {
             }
         }
 
-        val sorted = found.values.sortedWith(
-            compareByDescending<Candidate> { it.synced && it.lyrics.lines.isNotEmpty() && it.score >= MIN_SCORE }
-                .thenByDescending { it.lyrics.lines.isNotEmpty() && it.score >= MIN_SCORE }
-                .thenByDescending { it.score },
-        )
+        val sorted = ranked()
         app.malachite.core.CoreLog.i(
             "lyrics",
             "«$artist» — «$title» (ищу как «${queries.first().artist}» — «${queries.first().second}»): ${sorted.size} вариантов" +

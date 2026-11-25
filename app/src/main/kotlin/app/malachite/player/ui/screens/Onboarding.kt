@@ -212,6 +212,8 @@ fun ImportPanel(doneLabel: String = tr("Готово"), onFinished: () -> Unit =
     val settings by g.settings.state.collectAsState()
     var found by remember { mutableStateOf<DeviceScanner.Found?>(null) }
     var busy by remember { mutableStateOf(false) }
+    // "stop": the file being copied is finished, the rest stay where they are
+    val stopImport = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
     var progress by remember { mutableStateOf(0f to "") }
     var result by remember { mutableStateOf<DeviceScanner.ImportResult?>(null) }
     var showRejected by remember { mutableStateOf(false) }
@@ -313,12 +315,14 @@ fun ImportPanel(doneLabel: String = tr("Готово"), onFinished: () -> Unit =
             app.malachite.player.ui.settings.DeleteOriginalsControl(compact = true)
             val toImport = f.music.filter { (it.file.parent ?: "") !in skippedFolders.value } +
                 f.rejected.filter { it.file.absolutePath in forced.value }
+            if (busy) OutlinedButton(onClick = { stopImport.set(true) }) { Text(tr("Остановить после текущего файла")) }
             Button(enabled = toImport.isNotEmpty() && !busy, onClick = {
                 busy = true
+                stopImport.set(false)
                 LongTaskService.start(context, tr("Сбор музыки в главную папку"))
                 scope.launch {
                     result = withContext(Dispatchers.IO) {
-                        g.deviceScanner.import(toImport) { d, t, name ->
+                        g.deviceScanner.import(toImport, stopped = { stopImport.get() }) { d, t, name ->
                             progress = (if (t > 0) d.toFloat() / t else 0f) to tr("Копирую $d из $t: $name")
                             LongTaskService.progress(context, name, d, t)
                         }

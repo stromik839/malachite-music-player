@@ -54,15 +54,28 @@ internal class Crossfader(
 
     private fun progress(): Float = ((SystemClock.uptimeMillis() - fadeStart).toFloat() / fadeLength).coerceIn(0f, 1f)
 
+    private var inStep = false
+    private var wokenInStep = false
+
     private val tick = object : Runnable {
         override fun run() {
-            val next = step()
-            if (next > 0) handler.postDelayed(this, next)
+            inStep = true
+            wokenInStep = false
+            val next = try { step() } finally { inStep = false }
+            // A wake() during the step (the step itself moved the player to the next song, and the
+            // player's listener woke this class) used to start a second chain of looks: every fade
+            // then set the volume twice every 30 ms. There is one chain, whatever happens.
+            handler.removeCallbacks(this)
+            if (wokenInStep) handler.post(this) else if (next > 0) handler.postDelayed(this, next)
         }
     }
 
     /** Called when the main player starts or stops playing, and when the setting changes. */
     fun wake() {
+        if (inStep) {
+            wokenInStep = true
+            return
+        }
         handler.removeCallbacks(tick)
         handler.post(tick)
     }

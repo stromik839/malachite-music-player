@@ -51,7 +51,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
@@ -67,6 +66,7 @@ import app.malachite.player.ui.components.rememberFrost
 import app.malachite.player.ui.components.FrostLayer
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -203,7 +203,7 @@ fun MainScaffold() {
     val content: @Composable () -> Unit = {
         Column(Modifier.fillMaxSize()) {
             TopBar(settings.topBarStyle, frost)
-            Box(Modifier.weight(1f).fillMaxWidth()) {
+            Box(Modifier.weight(1f).fillMaxWidth().then(app.malachite.player.ui.components.A11yGroup)) {
                 val key = nav.currentKey
                 // which screen the detailed log reports frames for
                 LaunchedEffect(nav) {
@@ -254,7 +254,10 @@ fun MainScaffold() {
     val playerShown = remember { androidx.compose.animation.core.MutableTransitionState(false) }
     playerShown.targetState = nav.playerOpen && current != null
     val covered = playerShown.isIdle && playerShown.currentState
+    // nor is it there for the phone's accessibility services: while one is on, Compose builds a copy of
+    // the whole screen's structure after every change, and the lists under the song screen were half of it
     val hideWhenCovered = Modifier.drawWithContent { if (!covered) drawContent() }
+        .then(if (covered) Modifier.clearAndSetSemantics { } else Modifier)
 
     // the frosted glass behind the whole window, the screens and the panels alike
     if (settings.blur) FrostLayer(frost, 0.32f, settings.animations, hideWhenCovered.fillMaxSize())
@@ -409,7 +412,7 @@ private fun TopBar(style: PartStyle, frost: Bitmap?) {
     val nav = LocalNavigator.current
     val scale = style.scale.coerceIn(0.7f, 1.6f)
     PartBackground(style, MaterialTheme.colorScheme.background, frost, Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().height(56.dp * scale).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().then(app.malachite.player.ui.components.A11yGroup).height(56.dp * scale).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             if (nav.stack.size > 1) {
                 IconButton(onClick = { nav.back() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, tr("Назад")) }
             } else Spacer(Modifier.width(12.dp))
@@ -444,6 +447,8 @@ private fun MiniPlayer(style: PartStyle, frost: Bitmap?, animate: Boolean) {
     LaunchedEffect(st.currentPath, st.durationMs, animate) {
         val duration = st.durationMs
         while (true) {
+            // waits for a frame first: with the app in the background (no frames) the line rests
+            androidx.compose.runtime.withFrameMillis { }
             val f = fractionNow(duration)
             val gap = kotlin.math.abs(f - progress.value)
             val jump = if (duration > 0) gap * duration > MINI_JUMP_MS else gap > 0.01f
@@ -455,11 +460,18 @@ private fun MiniPlayer(style: PartStyle, frost: Bitmap?, animate: Boolean) {
             delay(500)
         }
     }
-    PartBackground(style, MaterialTheme.colorScheme.surfaceContainerHigh, frost, Modifier.fillMaxWidth().clickable { nav.playerOpen = true }) {
+    PartBackground(style, MaterialTheme.colorScheme.surfaceContainerHigh, frost, Modifier.fillMaxWidth().then(app.malachite.player.ui.components.A11yGroup).clickable { nav.playerOpen = true }) {
         Column {
-            LinearProgressIndicator(
-                progress = { progress.value },
-                modifier = Modifier.fillMaxWidth().height(2.dp),
+            // Drawn here, not with the standard indicator: that one tells the phone's accessibility
+            // services its value at each step, and while any such service is on, every step made
+            // the whole screen's structure be built anew (twice a second, background included).
+            val active = MaterialTheme.colorScheme.primary
+            val track = MaterialTheme.colorScheme.secondaryContainer
+            Box(
+                Modifier.fillMaxWidth().height(2.dp).drawBehind {
+                    drawRect(track)
+                    drawRect(active, size = androidx.compose.ui.geometry.Size(size.width * progress.value.coerceIn(0f, 1f), size.height))
+                },
             )
             Row(Modifier.fillMaxWidth().height(62.dp * scale).padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 CoverImage(t, size = 46.dp * scale, corner = 10.dp)

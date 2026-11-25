@@ -25,10 +25,12 @@ import java.io.File
 
 enum class Shade { DARK, AMOLED, LIGHT }
 
-private fun hsl(h: Float, s: Float, l: Float): Color {
+internal fun hslColor(h: Float, s: Float, l: Float): Color {
     val arr = floatArrayOf(((h % 360) + 360) % 360, s.coerceIn(0f, 1f), l.coerceIn(0f, 1f))
     return Color(ColorUtils.HSLToColor(arr))
 }
+
+private fun hsl(h: Float, s: Float, l: Float): Color = hslColor(h, s, l)
 
 private fun toHsl(c: Color): FloatArray = FloatArray(3).also { ColorUtils.colorToHSL(c.toArgb(), it) }
 
@@ -36,7 +38,10 @@ private fun toHsl(c: Color): FloatArray = FloatArray(3).also { ColorUtils.colorT
  * Builds a complete Material colour scheme from one accent colour.
  * Dark: dark background with accent-tinted surfaces; AMOLED: pure black; Light: soft white.
  */
-fun schemeFromSeed(seed: Color, shade: Shade, background: Color? = null, surface: Color? = null): ColorScheme {
+fun schemeFromSeed(seed: Color, shade: Shade, background: Color? = null, surface: Color? = null, colourful: Float = 1f): ColorScheme {
+    // every tint scaled by how colourful the source is: a black-and-white cover gives greys
+    val k = colourful.coerceIn(0f, 1f)
+    fun hsl(h: Float, s: Float, l: Float) = app.malachite.player.ui.theme.hslColor(h, s * k, l)
     val (h, s0, _) = toHsl(seed).let { Triple(it[0], it[1], it[2]) }
     val s = s0.coerceIn(0.15f, 0.85f)
     return when (shade) {
@@ -102,18 +107,56 @@ fun coverScheme(bitmap: Bitmap, shade: Shade): ColorScheme? {
     val p = runCatching { Palette.from(bitmap).maximumColorCount(16).generate() }.getOrNull() ?: return null
     val seedInt = p.vibrantSwatch?.rgb ?: p.lightVibrantSwatch?.rgb ?: p.dominantSwatch?.rgb ?: return null
     val bgSwatch = p.darkMutedSwatch ?: p.darkVibrantSwatch ?: p.mutedSwatch ?: p.dominantSwatch
+    // A black-and-white cover (a pencil drawing on white paper, a grey photo) used to give a light
+    // brown or light red theme: the faint tone of the paper or the noise of the picture was taken
+    // for its colour and then made as strong as a real one. Tints follow how colourful it really is.
+    val k = colourfulness(bitmap)
     return when (shade) {
         Shade.LIGHT -> {
-            val bg = bgSwatch?.let { toHsl(Color(it.rgb)) }?.let { hsl(it[0], it[1] * 0.4f, 0.94f) }
-            schemeFromSeed(Color(seedInt), Shade.LIGHT, bg)
+            val bg = bgSwatch?.let { toHsl(Color(it.rgb)) }?.let { hsl(it[0], it[1] * 0.4f * k, 0.94f) }
+            schemeFromSeed(Color(seedInt), Shade.LIGHT, bg, colourful = k)
         }
         else -> {
             val bg = if (shade == Shade.AMOLED) Color.Black
-            else bgSwatch?.let { toHsl(Color(it.rgb)) }?.let { hsl(it[0], it[1] * 0.7f, minOf(it[2], 0.13f)) }
-            schemeFromSeed(Color(seedInt), shade, bg)
+            else bgSwatch?.let { toHsl(Color(it.rgb)) }?.let { hsl(it[0], it[1] * 0.7f * k, minOf(it[2], 0.13f)) }
+            schemeFromSeed(Color(seedInt), shade, bg, colourful = k)
         }
     }
 }
+
+/**
+ * How colourful a picture is, 0 (black and white) … 1: the share of its pixels that really carry a
+ * colour (very dark and very light ones say nothing about it). A few colourful pixels in a grey
+ * picture give a faint tint, not a strong one.
+ */
+internal fun colourfulness(bitmap: Bitmap): Float = runCatching {
+    val small = if (bitmap.width > 64 || bitmap.height > 64) Bitmap.createScaledBitmap(bitmap, 48, 48, true) else bitmap
+    val px = IntArray(small.width * small.height)
+    small.getPixels(px, 0, small.width, 0, 0, small.width, small.height)
+    var counted = 0
+    var colourful = 0
+    for (c in px) {
+        val r = (c shr 16) and 0xFF
+        val g = (c shr 8) and 0xFF
+        val b = c and 0xFF
+        val max = maxOf(r, g, b)
+        val min = minOf(r, g, b)
+        val light = (max + min) / 2
+        if (light < 20 || light > 240) continue
+        counted++
+        if (max - min > COLOURFUL_CHROMA) colourful++
+    }
+    if (counted < px.size / 20) return@runCatching 0f
+    val share = colourful.toFloat() / counted
+    ((share - GREY_SHARE) / (FULL_SHARE - GREY_SHARE)).coerceIn(0f, 1f)
+}.getOrDefault(1f)
+
+/** A pixel whose channels differ by more than this (of 255) has a colour of its own. */
+private const val COLOURFUL_CHROMA = 38
+/** Below this share of colourful pixels a picture counts as black and white … */
+private const val GREY_SHARE = 0.04f
+/** … and from this share on it is fully colourful. */
+private const val FULL_SHARE = 0.22f
 
 /**
  * What is wrong with a font file for this app, or null if it is fine. A font without Cyrillic

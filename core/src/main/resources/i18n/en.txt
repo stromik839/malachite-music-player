@@ -3196,9 +3196,6 @@ loudness
 Номера в названиях
 Numbers in titles
 
-«01 - Песня» → название «Песня», а номер переходит в номер трека. Числа, которые относятся к названию («7-я пятница», «99 Luftballons»), не трогаются.
-"01 - Song" → the title "Song", and the number goes to the track number. Numbers that belong to the title ("7-я пятница", "99 Luftballons") are left alone.
-
 Номера треков
 Track numbers
 
@@ -4237,9 +4234,6 @@ Odd albums and artists
 непонятные названия; нужен ключ AcoustID
 meaningless titles; needs an AcoustID key
 
-«01 - Песня» → «Песня»
-«01 - Song» → «Song»
-
 из тегов Android и папок
 from Android's tags and the folders
 
@@ -5115,3 +5109,144 @@ Lists stay smooth when the song changes
 
 При смене песни список больше не перерисовывается целиком: меняются только строка, которая играла, и строка, которая играет теперь. Названия песен готовятся один раз, меню строки — только когда его открывают. Виджет и уведомление больше не обращаются к системе лишний раз при каждом переключении.
 A song change no longer redraws the whole list: only the row that was playing and the row playing now change. Song names are prepared once, and a row's menu only when it is opened. The widget and the notification no longer call the system needlessly at every switch.
+
+По имени
+By name
+
+По числу альбомов
+By number of albums
+
+Недавно слушал
+Recently played
+
+Сначала новые
+Newest first
+
+Сначала старые
+Oldest first
+
+Скачивание остановлено
+Download stopped
+
+Остановлено. Исходный файл не тронут.
+Stopped. The original file is untouched.
+
+Нет интернета: названия-номера («13») берутся из списков песен альбомов в интернете. Проверьте позже.
+No internet: titles that are only numbers ("13") come from the albums' song lists online. Try again later.
+
+Поиск остановлен. Можно исправить данные и искать снова.
+Search stopped. You can correct the details and search again.
+
+Остановить поиск
+Stop searching
+
+Остановлено: в корзине {} из {}
+Stopped: {} of {} in the trash
+
+Остановлено: записано {} из {}
+Stopped: {} of {} written
+
+«09 Песня» → «Песня»; песня «13» получает своё название из списка альбома
+"09 Song" → "Song"; a song called "13" gets its name from the album's list
+
+«01 - Песня» и «09 Песня» → название «Песня», а номер переходит в номер трека. Числа, которые относятся к названию («7-я пятница», «99 Luftballons»), не трогаются. Песня, названная только номером («13»), получает настоящее название из списка песен её альбома в интернете (MusicBrainz, Deezer) — если совпадает длительность.
+"01 - Song" and "09 Song" → the title "Song", and the number becomes the track number. Numbers that belong to the title ("7-я пятница", "99 Luftballons") are left alone. A song called only by a number ("13") gets its real title from its album's song list online (MusicBrainz, Deezer) — if the length matches.
+
+Плавнее, если включены спецвозможности
+Smoother with accessibility services on
+
+Пока на телефоне включена любая служба специальных возможностей (на Xiaomi их бывает несколько), Android просит у приложения копию всего экрана после каждого изменения. Полоска мини-плеера меняла её дважды в секунду, даже в фоне, и каждый раз это занимало до 0,7 с. Теперь лишних изменений нет, а копия собирается в разы быстрее: списки и переключение песен плавнее. Какие службы включены, видно в подробном журнале.
+While any accessibility service is on (Xiaomi phones often have several), Android asks the app for a copy of the whole screen after every change. The mini player's line changed it twice a second, even in the background, and each time took up to 0.7 s. Now there are no needless changes and the copy is built many times faster: lists and song switches are smoother. The detailed log shows which services are on.
+
+Каждое слово — своей скоростью
+Each word at its own pace
+
+Если текст размечен по словам, заливка «по буквам» снова идёт со скоростью каждого слова: протяжное заливается медленно, быстрое — быстро. Выключается в настройках текста. В виджете первое слово строки больше не опаздывает на секунду.
+When lyrics are timed word by word, the letter-by-letter fill follows each word's own pace again: a held word fills slowly, a quick one quickly. It can be switched off in the lyrics settings. In the widget the first word of a line is no longer a second late.
+
+К настройкам текста
+To lyrics settings
+
+Темп текста
+Lyrics pace
+
+Текст в начале совпадает, а к концу уезжает? Нажмите на «сдвиг» в капсуле под текстом: там можно ускорить или замедлить сам текст, первая строка остаётся на месте.
+Lyrics right at the start but drifting towards the end? Tap "shift" in the capsule under the lyrics: there you can speed up or slow down the lyrics themselves; the first line stays in place.
+
+Кнопки «Остановить»
+"Stop" buttons
+
+Поиск текста и обложки, удаление и запись тегов у многих песен, перевод в другой формат, сбор музыки в главную папку и скачивание из онлайн-раздела теперь можно остановить, не дожидаясь конца.
+Searching for lyrics and covers, deleting and tagging many songs, converting to another format, gathering music into the main folder and downloading from the online section can now be stopped without waiting for the end.
+
+Сортировка исполнителей
+Sorting artists
+
+Исполнителей можно упорядочить по имени, числу песен и альбомов, по прослушиваниям и по дате. На странице исполнителя альбомы сортируются по году или названию, а во вкладке «Все песни» их можно выбрать все сразу.
+Artists can be sorted by name, by number of songs and albums, by plays and by date. On an artist's page the albums are sorted by year or title, and under "All songs" they can all be chosen at once.
+
+К исполнителям
+To artists
+
+Исцеление названий
+Healing names
+
+«09 Иван Говнов» → «Иван Говнов»; песня с названием «13» получает настоящее название из списка песен альбома (MusicBrainz, Deezer), если совпадает длительность; альбом «Гражданская Оборона — Попс 1993» → «Попс 1993».
+"09 Иван Говнов" → "Иван Говнов"; a song called "13" gets its real title from the album's song list (MusicBrainz, Deezer) if the length matches; the album "Гражданская Оборона — Попс 1993" → "Попс 1993".
+
+Новые песни исцеляются сами
+New songs heal themselves
+
+Новая песня в главной папке сама проходит исцеление, как только есть интернет: названия, пустые теги, обложка, текст, папка. Ничего не удаляется, всё можно отменить. Выключается в настройках библиотеки.
+A new song in the main folder is healed by itself as soon as there is internet: names, empty tags, cover, lyrics, folder. Nothing is deleted and everything can be undone. It can be switched off in the library settings.
+
+К настройкам
+To settings
+
+Чёрно-белые обложки
+Black-and-white covers
+
+Обложка без цвета (рисунок карандашом, белый фон) даёт серую тему, а не светло-коричневую или розовую.
+A cover without colour (a pencil drawing, a white background) gives a grey theme, not a light brown or pink one.
+
+ · темп %.1f %%
+ · pace %.1f %%
+
+Темп текста: %.1f %%
+Lyrics pace: %.1f %%
+
+Если в начале песни текст совпадает, а к концу всё сильнее отстаёт — ускорьте его; если убегает вперёд — замедлите. Первая строка остаётся на месте, меняется сразу.
+If the lyrics match at the start but fall further behind towards the end, speed them up; if they run ahead, slow them down. The first line stays in place; the change applies at once.
+
+Медленнее 1 %
+Slower 1 %
+
+−0,2 %
+−0.2 %
+
++0,2 %
++0.2 %
+
+Быстрее 1 %
+Faster 1 %
+
+Как было
+As it was
+
+Альбомы: {}
+Albums: {}
+
+Все песни: {}
+All songs: {}
+
+Скачивание остановлено: {}
+Download stopped: {}
+
+Каждое слово — со своей скоростью
+Each word at its own pace
+
+Если текст размечен по словам, слово заливается ровно столько, сколько поётся: протяжное — медленно, быстрое — быстро. Выключено — вся строка заливается ровным темпом. В тексте без разметки по словам строка всегда идёт ровным темпом.
+When lyrics are timed word by word, each word fills for exactly as long as it is sung: a held word slowly, a quick one quickly. Off: the whole line fills at an even pace. Lyrics without word timing always fill at an even pace.
+
+Как только в главной папке появляется новая песня и есть интернет, она проходит исцеление: номера и мусор в названиях, пустые теги, обложка, текст, имя файла и папка. Ничего не удаляется, сомнительное ждёт во вкладке «Исцеление», любое изменение можно отменить.
+As soon as a new song appears in the main folder and there is internet, it goes through healing: numbers and junk in titles, empty tags, cover, lyrics, file name and folder. Nothing is deleted, doubtful cases wait in the Healing tab, and any change can be undone.

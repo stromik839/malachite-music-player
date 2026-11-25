@@ -188,7 +188,7 @@ private fun AlbumGridItem(
     var menu by remember { mutableStateOf(false) }
     Box {
         // while choosing, holding and sliding belongs to the grid (and its menu is for all chosen)
-        Column(Modifier.combinedClickable(onClick = onClick, onLongClick = if (chosen != null) null else ({ menu = true })).padding(8.dp)) {
+        Column(Modifier.then(app.malachite.player.ui.components.A11yGroup).combinedClickable(onClick = onClick, onLongClick = if (chosen != null) null else ({ menu = true })).padding(8.dp)) {
             Box(Modifier.fillMaxWidth().aspectRatio(1f)) {
                 CoverImage(a.cover, Modifier.fillMaxSize(), size = 400.dp, corner = 14.dp, sizePx = 400)
                 if (chosen != null) ChosenMark(chosen, Modifier.align(Alignment.TopStart))
@@ -303,7 +303,7 @@ private fun RenameAlbumDialog(a: Album, onDismiss: () -> Unit, onRenamed: (Strin
 @Composable
 private fun NoAlbumCard(loose: List<TrackInfo>, onClick: () -> Unit) {
     val four = remember(loose) { loose.filter { it.hasArtwork }.sortedByDescending { it.lastModified }.take(4) }
-    Column(Modifier.combinedClickable(onClick = onClick).padding(8.dp)) {
+    Column(Modifier.then(app.malachite.player.ui.components.A11yGroup).combinedClickable(onClick = onClick).padding(8.dp)) {
         Box(
             Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest),
             contentAlignment = Alignment.Center,
@@ -358,7 +358,7 @@ fun NoAlbumScreen() {
             val playing by remember(t.path) { androidx.compose.runtime.derivedStateOf { playingPath.value == t.path } }
             val chosen = if (sel.active) t.path in sel else null
             Box {
-                Column(Modifier.combinedClickable(
+                Column(Modifier.then(app.malachite.player.ui.components.A11yGroup).combinedClickable(
                     onClick = { if (chosen != null) sel.toggle(t.path) else g.player.play(songs, i) },
                     onLongClick = if (chosen != null) null else ({ menu = true }),
                 ).padding(8.dp)) {

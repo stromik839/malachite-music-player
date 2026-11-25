@@ -130,7 +130,7 @@ fun LyricsPanel(t: TrackInfo, speed: Float = 1f, pos: () -> Long) {
         }
     }
 
-    LaunchedEffect(t.path, user.lyricsId, user.lyricsOffsetMs) {
+    LaunchedEffect(t.path, user.lyricsId, user.lyricsOffsetMs, user.lyricsTempo) {
         loading = true
         lyrics = if (g.library.isOnline(t.path)) lyrics else withContext(Dispatchers.IO) { g.library.loadLyrics(t) }
         loading = false
@@ -185,7 +185,8 @@ private fun LyricsLines(
     val nav = LocalNavigator.current
     val pos by rememberUpdatedState(position)
     val data by g.library.data.collectAsState()
-    val marks = data.user(t.path).markedLines.toSet()
+    val user = data.user(t.path)
+    val marks = user.markedLines.toSet()
     // each line knows which repeat of its words it is: only the chosen one gets the mark
     val markKeys = remember(l) { app.malachite.core.lyrics.lineMarkKeys(l.lines.map { it.text }) }
     val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
@@ -336,7 +337,8 @@ private fun LyricsLines(
                 TextButton(onClick = { g.library.setLyricsOffset(t, l.offsetMs - 100) }, enabled = !demo, contentPadding = tight) { Text(tr("−0.1 с")) }
                 TextButton(onClick = { typing = true }, enabled = !demo, contentPadding = tight) {
                     Text(
-                        if (l.offsetMs == 0L) tr("сдвиг 0") else tr("сдвиг %+.1f с").format(l.offsetMs / 1000f),
+                        (if (l.offsetMs == 0L) tr("сдвиг 0") else tr("сдвиг %+.1f с").format(l.offsetMs / 1000f)) +
+                            (if (user.lyricsTempo != 1f) tr(" · темп %.1f %%").format(user.lyricsTempo * 100) else ""),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
@@ -353,7 +355,10 @@ private fun LyricsLines(
                     TextButton(onClick = { nav.playerOpen = false; nav.push(Screen.SettingsLyrics) }, contentPadding = tight) { Text(tr("Вид текста"), maxLines = 1, softWrap = false) }
                 }
             }
-            if (typing) OffsetDialog(l.offsetMs, onSet = { g.library.setLyricsOffset(t, it) }, onDismiss = { typing = false })
+            if (typing) OffsetDialog(
+                l.offsetMs, onSet = { g.library.setLyricsOffset(t, it) }, onDismiss = { typing = false },
+                tempo = user.lyricsTempo, onTempo = if (l.synced) ({ v -> g.library.setLyricsTempo(t, v) }) else null,
+            )
         }
     }
 }
@@ -445,7 +450,7 @@ private fun LyricRow(
             }
         }
     }
-    Box(Modifier.fillMaxWidth().combinedClickable(onClick = onClick, onLongClick = onLongClick).padding(vertical = 8.dp, horizontal = 6.dp)) {
+    Box(Modifier.fillMaxWidth().then(app.malachite.player.ui.components.A11yGroup).combinedClickable(onClick = onClick, onLongClick = onLongClick).padding(vertical = 8.dp, horizontal = 6.dp)) {
         Text(
             text,
             onTextLayout = { layout = it },
@@ -475,7 +480,7 @@ private fun LyricRow(
                 if (sweep && lay != null && read != null && lay.layoutInput.text.text == text) {
                     drawContent()
                     val shown = lay.layoutInput.text.text
-                    val reach = app.malachite.core.lyrics.LineSweep.reach(shown, line, read(), nextStartMs, switchAtMs)
+                    val reach = app.malachite.core.lyrics.LineSweep.reach(shown, line, read(), nextStartMs, switchAtMs, s.lyricsWordPace)
                     sweepLine(lay, reach, sung, fontSize.sp.toPx() * 0.9f, fontSize.sp.toPx() * 0.08f)
                     return@drawWithContent
                 }

@@ -31,6 +31,61 @@ class HealExtrasTest {
     }
 
     @Test
+    fun zeroPaddedAndAlbumWideNumbers() {
+        // a number with a leading zero and a space is a track number
+        val padded = HealPlanner.titleNumbers(listOf(t("09 Иван Говнов", album = "Попс")))
+        assertEquals(listOf("Иван Говнов"), padded.map { it.newTitle })
+        assertEquals(9, padded.single().track)
+        // a bare number and a space: only when the folder is numbered like that throughout
+        val folder = listOf(t("8 Против", album = "Х"), t("9 Иван", album = "Х"), t("10 Лес", album = "Х"), t("11 Дом", album = "Х"))
+        assertEquals(listOf("Против", "Иван", "Лес", "Дом"), HealPlanner.titleNumbers(folder).map { it.newTitle })
+        // a single «99 Luftballons» among normal titles stays, and so does a title that is only numbers
+        val mixed = listOf(t("99 Luftballons", album = "Y"), t("Песня", album = "Y"), t("Другая", album = "Y"), t("2 3", album = "Y"))
+        assertTrue(HealPlanner.titleNumbers(mixed).isEmpty())
+    }
+
+    @Test
+    fun titlesThatAreOnlyNumbersComeFromTheAlbumList() {
+        fun song(title: String, track: Int, ms: Long) = TrackInfo(
+            path = "ГО/Попс/$title.mp3", title = title, artist = "Гражданская Оборона",
+            album = "Гражданская Оборона — Попс 1993", track = track, durationMs = ms,
+        )
+        val songs = listOf(song("13", 13, 150_000), song("14", 0, 200_000), song("Нормальная", 1, 100_000))
+        var asked: Pair<String, String>? = null
+        val fixes = HealPlanner.numberTitles(songs) { artist, album ->
+            asked = artist to album
+            listOf(
+                app.malachite.core.cover.AlbumTracks.Tracklist(
+                    "test", "Попс", "Гражданская Оборона",
+                    listOf(
+                        app.malachite.core.cover.AlbumTracks.Track(13, "Песня тринадцать", 151_000),
+                        app.malachite.core.cover.AlbumTracks.Track(14, "Песня четырнадцать", 260_000),
+                    ),
+                ),
+            )
+        }
+        // looked up without the artist's name in front of the album
+        assertEquals("Гражданская Оборона" to "Попс 1993", asked)
+        assertEquals(listOf("Песня тринадцать", "Песня четырнадцать"), fixes.map { it.newTitle })
+        // the length agrees: ticked; it does not (a minute off): offered only
+        assertTrue(fixes[0].selected)
+        assertEquals(false, fixes[1].selected)
+        // the number goes into the tag where it had none
+        assertEquals(null, fixes[0].track)
+        assertEquals(14, fixes[1].track)
+    }
+
+    @Test
+    fun anAlbumNamedAfterItsArtistLosesTheArtist() {
+        val songs = listOf(
+            t("Песня 1", artist = "Гражданская Оборона", album = "Гражданская Оборона — Попс 1993"),
+            t("Песня 2", artist = "Гражданская Оборона", album = "Гражданская Оборона — Попс 1993"),
+        )
+        val album = HealPlanner.names(songs).first { it.field == app.malachite.core.heal.NameField.ALBUM }
+        assertEquals("Попс 1993", album.canonical)
+    }
+
+    @Test
     fun letterCase() {
         assertEquals("Группа крови", HealPlanner.normalCase("ГРУППА КРОВИ"))
         assertEquals("Highway to Hell", HealPlanner.normalCase("HIGHWAY TO HELL"))

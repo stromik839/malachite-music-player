@@ -48,6 +48,9 @@ object Converter {
     /** Something went wrong; the message says what, for a person. */
     class Failed(message: String) : Exception(message)
 
+    /** The user stopped the work: nothing was written in place of the original. */
+    class Stopped : Exception()
+
     /** Length of the sound in [file] (µs), 0 when Android does not say. */
     fun durationUs(file: File): Long = runCatching {
         val ex = MediaExtractor()
@@ -147,6 +150,8 @@ object Converter {
             sink = null
             progress(1f)
         } catch (e: Failed) {
+            throw e
+        } catch (e: Stopped) {
             throw e
         } catch (e: Exception) {
             throw Failed(tr("Перевод прервался: ${e.message ?: e.javaClass.simpleName}"))

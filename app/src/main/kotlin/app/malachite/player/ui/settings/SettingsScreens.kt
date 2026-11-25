@@ -268,6 +268,11 @@ fun SyncedLyricsLook(s: app.malachite.player.data.AppSettings, up: ((app.malachi
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             app.malachite.player.data.WordFill.entries.forEach { w -> FilterChip(s.lyricsWordFill == w, { up { it.copy(lyricsWordFill = w) } }, label = { Text(w.title) }) }
         }
+        if (s.lyricsWordFill == app.malachite.player.data.WordFill.SWEEP) SwitchRow(
+            tr("Каждое слово — со своей скоростью"),
+            s.lyricsWordPace,
+            tr("Если текст размечен по словам, слово заливается ровно столько, сколько поётся: протяжное — медленно, быстрое — быстро. Выключено — вся строка заливается ровным темпом. В тексте без разметки по словам строка всегда идёт ровным темпом."),
+        ) { v -> up { it.copy(lyricsWordPace = v) } }
         Hint(tr("Прокрутка и смена строки"))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             app.malachite.player.data.LyricsAnim.entries.forEach { a -> FilterChip(s.lyricsAnim == a, { up { it.copy(lyricsAnim = a) } }, label = { Text(a.title) }) }
@@ -419,6 +424,11 @@ fun SettingsLibraryScreen() {
             }
             Hint(tr("Когда плеер закрыт, Android разрешает фоновую проверку не чаще раза в 15 минут. Пока плеер открыт или играет — как указано, плюс мгновенно при появлении новых файлов."))
             SwitchRow(tr("Сразу добавлять найденное в главную папку"), s.autoImport, tr("Иначе — только уведомление")) { v -> up { it.copy(autoImport = v) } }
+            SwitchRow(
+                tr("Новые песни исцеляются сами"),
+                s.autoHealNew,
+                tr("Как только в главной папке появляется новая песня и есть интернет, она проходит исцеление: номера и мусор в названиях, пустые теги, обложка, текст, имя файла и папка. Ничего не удаляется, сомнительное ждёт во вкладке «Исцеление», любое изменение можно отменить."),
+            ) { v -> up { it.copy(autoHealNew = v) } }
             SwitchRow(tr("Глубокий поиск по файлам"), s.deepScan, tr("Находит и песни с неправильным расширением, и в папках, скрытых от медиатеки")) { v -> up { it.copy(deepScan = v) } }
             androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Button(onClick = { nav.push(Screen.ImportScreen) }) { Text(tr("Найти сейчас")) }

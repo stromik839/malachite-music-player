@@ -88,6 +88,7 @@ fun AddScreen() {
     var fix by remember { mutableStateOf(false) }
     var working by remember { mutableStateOf(false) }
     var progress by remember { mutableFloatStateOf(0f) }
+    val stopConvert = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
     var result by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     val targets = remember { Converter.available() }
@@ -201,12 +202,13 @@ fun AddScreen() {
                     result = null
                     error = null
                     progress = 0f
+                    stopConvert.set(false)
                     LongTaskService.start(context, tr("Перевод песни в другой формат"))
                     scope.launch {
                         if (fix) {
                             result = SongTools.fixExtension(p)
                         } else if (chosen != null) {
-                            SongTools.convert(context, p, chosen) { f ->
+                            SongTools.convert(context, p, chosen, stopped = { stopConvert.get() }) { f ->
                                 progress = f
                                 LongTaskService.progress(context, p.name, (f * 100).toInt(), 100)
                             }.onSuccess { result = it }.onFailure { error = it.message ?: it.javaClass.simpleName }
@@ -218,7 +220,11 @@ fun AddScreen() {
                     }
                 }, enabled = !working && (target != null || fix)) { Text(if (fix) tr("Исправить") else tr("Перевести")) }
             }
-            if (working) LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+            if (working) {
+                LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+                // stops after the piece being converted; the original is never touched before the end
+                androidx.compose.material3.OutlinedButton(onClick = { stopConvert.set(true) }) { Text(tr("Остановить")) }
+            }
             result?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
             error?.let {
                 Text(tr("Не получилось: $it"), color = MaterialTheme.colorScheme.error)

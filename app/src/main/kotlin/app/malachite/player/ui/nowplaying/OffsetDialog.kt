@@ -45,7 +45,14 @@ internal fun parseSeconds(text: String): Long? {
  * have no minus key).
  */
 @Composable
-fun OffsetDialog(currentMs: Long, onSet: (Long) -> Unit, onDismiss: () -> Unit) {
+fun OffsetDialog(
+    currentMs: Long,
+    onSet: (Long) -> Unit,
+    onDismiss: () -> Unit,
+    /** The lyrics' pace (1f: as they are) and how to change it at once (null: not offered). */
+    tempo: Float = 1f,
+    onTempo: ((Float) -> Unit)? = null,
+) {
     var earlier by remember { mutableStateOf(currentMs < 0) }
     var text by remember { mutableStateOf(secondsText(currentMs)) }
     val typed = parseSeconds(text)
@@ -86,9 +93,30 @@ fun OffsetDialog(currentMs: Long, onSet: (Long) -> Unit, onDismiss: () -> Unit) 
                     }
                     AssistChip(onClick = { set(0L) }, label = { Text(tr("Без сдвига")) })
                 }
+                if (onTempo != null) {
+                    androidx.compose.material3.HorizontalDivider()
+                    // the pace: for lyrics right at the start of the song that drift towards its end
+                    Text(tr("Темп текста: %.1f %%").format(tempo * 100), style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        tr("Если в начале песни текст совпадает, а к концу всё сильнее отстаёт — ускорьте его; если убегает вперёд — замедлите. Первая строка остаётся на месте, меняется сразу."),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        fun step(d: Float) = onTempo(((tempo + d) * 1000).let { kotlin.math.round(it) / 1000f }.coerceIn(MIN_TEMPO, MAX_TEMPO))
+                        AssistChip(onClick = { step(-0.01f) }, label = { Text(tr("Медленнее 1 %")) })
+                        AssistChip(onClick = { step(-0.002f) }, label = { Text(tr("−0,2 %")) })
+                        AssistChip(onClick = { step(0.002f) }, label = { Text(tr("+0,2 %")) })
+                        AssistChip(onClick = { step(0.01f) }, label = { Text(tr("Быстрее 1 %")) })
+                        if (tempo != 1f) AssistChip(onClick = { onTempo(1f) }, label = { Text(tr("Как было")) })
+                    }
+                }
             }
         },
         confirmButton = { TextButton(onClick = ::done, enabled = value != null) { Text(tr("Готово")) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(tr("Отмена")) } },
     )
 }
+
+/** How far the lyrics' pace can go: a fifth slower or a quarter faster (a sped-up version has its own lyrics). */
+private const val MIN_TEMPO = 0.8f
+private const val MAX_TEMPO = 1.25f

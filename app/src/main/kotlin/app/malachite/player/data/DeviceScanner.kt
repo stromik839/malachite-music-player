@@ -364,16 +364,21 @@ class DeviceScanner(
      * Copies [candidates] into Artist/Album folders (verified byte-for-byte). When
      * "full move" is enabled, the originals are deleted afterwards.
      */
-    fun import(candidates: List<Candidate>, onProgress: (Int, Int, String) -> Unit = { _, _, _ -> }): ImportResult =
+    fun import(
+        candidates: List<Candidate>,
+        /** Asked before each file: true stops after the file being copied (what is copied stays). */
+        stopped: () -> Boolean = { false },
+        onProgress: (Int, Int, String) -> Unit = { _, _, _ -> },
+    ): ImportResult =
         exclusive(wait = true) {
             try {
-                importLocked(candidates, onProgress)
+                importLocked(candidates, stopped, onProgress)
             } finally {
                 quietUntil = System.currentTimeMillis() + 120_000
             }
         }!!
 
-    private fun importLocked(candidates: List<Candidate>, onProgress: (Int, Int, String) -> Unit): ImportResult {
+    private fun importLocked(candidates: List<Candidate>, stopped: () -> Boolean, onProgress: (Int, Int, String) -> Unit): ImportResult {
         val root = library.root ?: return ImportResult(0, 0, 0, 0, listOf(tr("Нет главной папки")))
         val safe = library.safe ?: return ImportResult(0, 0, 0, 0, listOf(tr("Нет главной папки")))
         val store = library.store ?: return ImportResult(0, 0, 0, 0, listOf(tr("Нет главной папки")))
@@ -387,6 +392,7 @@ class DeviceScanner(
         // Album years, singles and known artists are judged together with what is already in the library.
         val context = LibraryLayout.Context(library.tracks.value + candidates.map { it.track })
         for ((i, c0) in candidates.withIndex()) {
+            if (stopped()) break
             onProgress(i, candidates.size, c0.file.name)
             val key0 = if (c0.privilegedSource != null) null else sourceKey(c0.file)
             if (key0 != null && key0 in already) { skipped++; continue }

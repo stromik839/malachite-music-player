@@ -42,6 +42,8 @@ class AppGraph(val context: Context) {
     val healing = HealingEngine(context, settings, library, coverFinder, lyricsFinder)
     val player = PlayerConnection(context, settings, library)
     val scanScheduler = ScanScheduler(context, settings, library, deviceScanner)
+    /** New songs heal themselves (when switched on and online). */
+    val autoHeal = app.malachite.player.heal.AutoHeal(settings, healing).also { a -> library.onNewSongs = { paths -> a.newSongs(paths) } }
 
     /** Opens the main folder if it can be found and accessed. */
     fun openLibraryIfPossible(): Boolean {
@@ -114,6 +116,8 @@ class MalachiteApp : Application() {
         AppLog.init(this, graph.settings.value)
         app.malachite.player.data.SoundIdKey.init(this)
         AppLog.i("app", "Запуск. " + AppLog.deviceInfo())
+        // which accessibility services are on: each makes every change of the screen cost more
+        app.malachite.player.data.A11y.start(this)
         createChannels()
         // a new tab appears on the panel once; removed from it, it stays removed
         graph.settings.update { s ->

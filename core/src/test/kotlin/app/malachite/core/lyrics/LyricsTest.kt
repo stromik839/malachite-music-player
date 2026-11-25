@@ -326,4 +326,26 @@ class LyricsTest {
         // words without times: no mark either
         assertEquals(null, BestMoment.guess(song.copy(synced = false)))
     }
+
+    @Test
+    fun aFasterPaceKeepsTheFirstLineAndBringsTheRestCloser() {
+        val l = Lyrics(
+            listOf(
+                LyricLine(20_000, text = "раз", words = listOf(LyricWord(20_000, 20_500, "раз"))),
+                LyricLine(120_000, endMs = 125_000, text = "два"),
+            ),
+            synced = true,
+        )
+        val faster = l.retimed(1.02f)
+        // the first line stays where it is
+        assertEquals(20_000, faster.lines[0].startMs)
+        assertEquals(20_000, faster.lines[0].words[0].startMs)
+        // 100 s after it: about 2 % sooner
+        assertEquals(118_039, faster.lines[1].startMs)
+        assertEquals(122_941, faster.lines[1].endMs)
+        // the same pace changes nothing, and lyrics without times are left alone
+        assertEquals(l, l.retimed(1f))
+        val plain = l.copy(synced = false)
+        assertEquals(plain, plain.retimed(1.1f))
+    }
 }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -206,9 +207,12 @@ private fun CoverSearchDialog(tracks: List<TrackInfo>, close: () -> Unit) {
     var writing by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf<String?>(null) }
 
+    // the search running now: it can be stopped without closing the window
+    var searchJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     fun search() {
+        searchJob?.cancel()
         busy = true; status = null
-        scope.launch {
+        searchJob = scope.launch {
             // without a connection: say so and wait for it instead of spinning
             app.malachite.player.data.Net.whenOnline({ waiting -> status = if (waiting) tr("Нет интернета. Поиск начнётся сам, как только появится связь.") else null }) {}
             results = withContext(Dispatchers.IO) {
@@ -302,8 +306,18 @@ private fun CoverSearchDialog(tracks: List<TrackInfo>, close: () -> Unit) {
                 }
             }
         },
-        confirmButton = {},
-        dismissButton = { TextButton(enabled = !writing, onClick = close) { Text(if (busy && !writing) tr("Отмена") else tr("Закрыть")) } },
+        // one row: stopping the search on the left, closing on the right
+        confirmButton = {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                if (busy && !writing) TextButton(onClick = {
+                    searchJob?.cancel()
+                    busy = false
+                    status = if (results.isNullOrEmpty()) tr("Поиск остановлен. Можно исправить данные и искать снова.") else null
+                }) { Text(tr("Остановить поиск")) }
+                Spacer(Modifier.weight(1f))
+                TextButton(enabled = !writing, onClick = close) { Text(tr("Закрыть")) }
+            }
+        },
     )
 }
 
@@ -321,17 +335,36 @@ private fun LyricsSearchDialog(t: TrackInfo, close: () -> Unit) {
     var ownText by remember { mutableStateOf("") }
 
     var offline by remember { mutableStateOf(false) }
+    // the search running now: it can be stopped, keeping what it has found so far
+    var job by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    var stopFlag by remember { mutableStateOf<java.util.concurrent.atomic.AtomicBoolean?>(null) }
     fun search() {
+        job?.cancel()
+        stopFlag?.set(true)
+        val stop = java.util.concurrent.atomic.AtomicBoolean(false)
+        stopFlag = stop
         busy = true
-        scope.launch {
+        job = scope.launch {
             app.malachite.player.data.Net.whenOnline({ offline = it }) {}
-            results = withContext(Dispatchers.IO) {
+            val found = withContext(Dispatchers.IO) {
                 runCatching {
-                    g.lyricsFinder.search(title, artist, t.album, t.durationMs, LyricsCleaner.Options(settings.lyricsRemoveAllParentheses))
+                    g.lyricsFinder.search(
+                        title, artist, t.album, t.durationMs, LyricsCleaner.Options(settings.lyricsRemoveAllParentheses),
+                        stopped = { stop.get() },
+                        // what is found so far is shown at once: one can pick it without waiting for the rest
+                        progress = { partial -> scope.launch { if (!stop.get()) results = partial } },
+                    )
                 }.getOrDefault(emptyList())
             }
+            if (!stop.get()) results = found
             busy = false
         }
+    }
+    fun stopSearch() {
+        stopFlag?.set(true)
+        job?.cancel()
+        busy = false
+        if (results == null) results = emptyList()
     }
     LaunchedEffect(Unit) { search() }
 
@@ -381,17 +414,22 @@ private fun LyricsSearchDialog(t: TrackInfo, close: () -> Unit) {
                 }
             }
         },
+        // one row: stopping the search on the left, closing (and saving) on the right
         confirmButton = {
-            if (own) TextButton(enabled = ownText.isNotBlank(), onClick = {
-                val l = Lrc.parse(ownText, tr("вручную"))
-                scope.launch {
-                    withContext(Dispatchers.IO) { g.library.saveLyrics(t, l, tr("вручную")) }
-                    nav.toast(if (l.synced) tr("Сохранён синхронизированный текст") else tr("Текст сохранён — его можно синхронизировать"))
-                    close()
-                }
-            }) { Text(tr("Сохранить")) }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                if (busy && !own) TextButton(onClick = { stopSearch() }) { Text(tr("Остановить поиск")) }
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = { if (own) own = false else close() }) { Text(if (own) tr("Назад") else tr("Закрыть")) }
+                if (own) TextButton(enabled = ownText.isNotBlank(), onClick = {
+                    val l = Lrc.parse(ownText, tr("вручную"))
+                    scope.launch {
+                        withContext(Dispatchers.IO) { g.library.saveLyrics(t, l, tr("вручную")) }
+                        nav.toast(if (l.synced) tr("Сохранён синхронизированный текст") else tr("Текст сохранён — его можно синхронизировать"))
+                        close()
+                    }
+                }) { Text(tr("Сохранить")) }
+            }
         },
-        dismissButton = { TextButton(onClick = { if (own) own = false else close() }) { Text(if (own) tr("Назад") else tr("Закрыть")) } },
     )
 }
 

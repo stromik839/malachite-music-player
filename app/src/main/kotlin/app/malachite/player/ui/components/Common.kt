@@ -27,6 +27,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.text.drawText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -208,6 +212,7 @@ fun TrackRow(
     Row(
         Modifier
             .fillMaxWidth()
+            .then(A11yGroup)
             .then(if (selected == true) Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) else Modifier)
             .combinedClickable(
                 onClick = onClick,
@@ -295,6 +300,42 @@ fun formatTime(ms: Long): String {
     val h = s / 3600
     return if (h > 0) "%d:%02d:%02d".format(h, (s % 3600) / 60, s % 60) else "%d:%02d".format(s / 60, s % 60)
 }
+
+/**
+ * A time that changes every second (where the song is). While no screen reader is on it is drawn,
+ * not composed as text: a text that changes makes every accessibility service's copy of the whole
+ * screen be built anew (any service, not only a screen reader), and that cost the main thread up
+ * to 700 ms – every second. With a screen reader on it is ordinary text, read out as usual.
+ * [longest] is the longest time it will show (its width is kept, so nothing moves).
+ */
+@Composable
+fun TickingTime(ms: () -> Long, longest: Long, style: androidx.compose.ui.text.TextStyle, modifier: Modifier = Modifier) {
+    val reader by app.malachite.player.data.A11y.screenReader
+    if (reader) {
+        Text(formatTime(ms()), style = style, modifier = modifier)
+        return
+    }
+    val measurer = androidx.compose.ui.text.rememberTextMeasurer(cacheSize = 4)
+    val color = style.color.takeOrElse { androidx.compose.material3.LocalContentColor.current }
+    val drawn = remember(style, color) { style.copy(color = color) }
+    // the widest the time can get: every digit as the widest one
+    val room = remember(measurer, drawn, longest) {
+        measurer.measure(formatTime(longest.coerceAtLeast(0)).map { if (it.isDigit()) '8' else it }.joinToString(""), drawn, maxLines = 1).size
+    }
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    androidx.compose.foundation.Canvas(modifier.size(with(density) { room.width.toDp() }, with(density) { room.height.toDp() })) {
+        drawText(measurer, formatTime(ms()), style = drawn, maxLines = 1, softWrap = false)
+    }
+}
+
+/**
+ * Marks a row, a tile or a list as one group for the phone's accessibility services. While any
+ * service is on, Compose sorts everything on the screen by position after every change, each
+ * element against the others and each comparison walking up to the window; in groups it sorts a
+ * few at a time (the reading order stays as it was: a row is read as a whole, then the next).
+ * One shared modifier, so that composing a row again does not count as a change.
+ */
+val A11yGroup: Modifier = Modifier.semantics { isTraversalGroup = true }
 
 /** Runs [block] once when [key] changes – small helper to keep screens readable. */
 @Composable

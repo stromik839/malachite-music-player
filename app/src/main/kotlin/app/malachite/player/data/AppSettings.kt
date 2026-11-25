@@ -34,6 +34,18 @@ enum class AlbumSort(val title: String) {
 }
 
 @Serializable
+enum class ArtistSort(val title: String) {
+    NAME(tr("По имени")), SONGS(tr("По числу песен")), ALBUMS(tr("По числу альбомов")),
+    PLAYS(tr("Часто слушаю")), LAST_PLAYED(tr("Недавно слушал")), ADDED(tr("Недавно добавленные")),
+}
+
+/** The albums on an artist's page. */
+@Serializable
+enum class ArtistAlbumSort(val title: String) {
+    NEWEST(tr("Сначала новые")), OLDEST(tr("Сначала старые")), TITLE(tr("По названию")), SIZE(tr("По числу песен")),
+}
+
+@Serializable
 enum class PlaylistSort(val title: String) {
     NAME(tr("По названию")), CREATED(tr("По дате создания")), UPDATED(tr("Недавно изменённые")), SIZE(tr("По числу песен")),
 }
@@ -278,6 +290,11 @@ data class AppSettings(
     val lyricsAlign: LyricsAlign = LyricsAlign.CENTER,
     val lyricsBold: Boolean = true,
     val lyricsWordFill: WordFill = WordFill.SWEEP,
+    /**
+     * "Letter by letter" with lyrics timed word by word: each word fills for as long as it is sung
+     * (a held word slowly, a quick one quickly). Off: the whole line at an even pace.
+     */
+    val lyricsWordPace: Boolean = true,
     val lyricsAnim: LyricsAnim = LyricsAnim.NORMAL,
     /** The current line is slightly bigger than the others. */
     val lyricsScaleActive: Boolean = true,
@@ -324,10 +341,14 @@ data class AppSettings(
     /** What healing did last time, remembered (names of [app.malachite.player.heal.HealStep]; empty: the usual set). */
     val healSteps: List<String> = emptyList(),
     val healStepsSongs: List<String> = emptyList(),
+    /** New songs in the main folder are healed by themselves once there is internet (see AutoHeal). */
+    val autoHealNew: Boolean = true,
     /** Ask the phone for its fastest screen refresh (90 / 120 Hz) while the app is open. */
     val highRefreshRate: Boolean = true,
     val albumSort: AlbumSort = AlbumSort.SIZE,
     val playlistSort: PlaylistSort = PlaylistSort.NAME,
+    val artistSort: ArtistSort = ArtistSort.NAME,
+    val artistAlbumSort: ArtistAlbumSort = ArtistAlbumSort.NEWEST,
     val albumGridColumns: Int = 2,
     // ---- lyrics
     val lyricsAutoSearch: Boolean = true,

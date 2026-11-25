@@ -80,6 +80,26 @@ data class Lyrics(
 
     fun withOffset(ms: Long) = copy(offsetMs = ms)
 
+    /**
+     * The lyrics running [tempo] times as fast (1.01: a hundredth faster): every time moves towards
+     * the first line (or away from it), which stays where it is – for a text that is right at the
+     * start of the song and drifts more and more towards its end.
+     */
+    fun retimed(tempo: Float): Lyrics {
+        if (tempo == 1f || tempo <= 0f || !synced || lines.isEmpty()) return this
+        val anchor = lines.first().let { it.words.firstOrNull()?.startMs ?: it.startMs }
+        fun s(t: Long): Long = kotlin.math.round(anchor + (t - anchor) / tempo.toDouble()).toLong().coerceAtLeast(0)
+        return copy(
+            lines = lines.map { l ->
+                l.copy(
+                    startMs = s(l.startMs),
+                    endMs = l.endMs?.let(::s),
+                    words = l.words.map { w -> w.copy(startMs = s(w.startMs), endMs = w.endMs?.let(::s)) },
+                )
+            },
+        )
+    }
+
     /** Bakes the offset into every timestamp (used before saving to a file). */
     fun applyOffset(): Lyrics {
         if (offsetMs == 0L) return this

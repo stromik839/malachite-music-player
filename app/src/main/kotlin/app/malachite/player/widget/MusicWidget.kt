@@ -169,9 +169,9 @@ object WidgetUpdater {
     /** "Letter by letter": the edge blends over this many letters. */
     private const val SWEEP_SOFT_LETTERS = 1.6f
     /** A swept line is renewed this often in the widget (a launcher is not a place for 20 updates a second). */
-    private const val SWEEP_FRAME_MS = 230L
+    private const val SWEEP_FRAME_MS = 160L
     /** An update needs a moment to reach the screen: colours are computed for that moment. */
-    private const val FILL_AHEAD_MS = 60L
+    private const val FILL_AHEAD_MS = 90L
 
     /**
      * The line the widget should show at [pos]: the next line already a little before it starts
@@ -246,6 +246,12 @@ object WidgetUpdater {
         )
     }
 
+    /** The lyrics of the song changed (their shift or pace): the widget reads them again. Main thread. */
+    fun lyricsChanged(context: Context) {
+        lyricsPath = null
+        requestUpdate(context)
+    }
+
     /** Full update of all widgets (track changed, play/pause, settings changed). Call on the main thread. */
     fun requestUpdate(context: Context) {
         val app = context.applicationContext
@@ -295,9 +301,17 @@ object WidgetUpdater {
             val shown = sweepText(ln)
             val reach = LineSweep.reach(
                 shown, ln, snap.position - l.offsetMs + FILL_AHEAD_MS, l.lines.getOrNull(line + 1)?.startMs, l.switchMs(line, (LEAD_MS * snap.speed).toLong()),
+                settings.lyricsWordPace,
             )
             fillKey = (reach * 2).toInt()
             filling = reach > 0f && reach < shown.length
+            // The line is shown a little before it is sung: the widget wakes exactly when its first
+            // word begins. It used to sleep up to a second there, and then coloured several words at
+            // once while the singer was already further on.
+            if (reach <= 0f) {
+                val first = (ln.words.firstOrNull()?.startMs ?: ln.startMs) + l.offsetMs - FILL_AHEAD_MS
+                if (first > snap.position) nextWord = first
+            }
         }
         if (l != null && words.isNotEmpty()) {
             val mode = fillMode
@@ -769,9 +783,10 @@ object WidgetUpdater {
         val waiting = ColorUtils.setAlphaComponent(base, 0x8C)
         val mode = widgetFill(look)
         if (mode == WordFill.SWEEP) {
-            // the whole line, letter after letter at an even pace, with a soft edge
+            // the whole line, letter after letter with a soft edge: each word at its own pace when
+            // the words are timed (and so set), else at an even pace
             val shown = sweepText(line)
-            val reach = LineSweep.reach(shown, line, posMs, l.lines.getOrNull(i + 1)?.startMs, l.switchMs(i, LEAD_MS))
+            val reach = LineSweep.reach(shown, line, posMs, l.lines.getOrNull(i + 1)?.startMs, l.switchMs(i, LEAD_MS), MalachiteApp.graph.settings.value.lyricsWordPace)
             val sb = SpannableStringBuilder(shown)
             for (j in shown.indices) {
                 val t = LineSweep.mix(j, shown.length, reach, SWEEP_SOFT_LETTERS)

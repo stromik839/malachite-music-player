@@ -86,7 +86,8 @@ class LibraryStore(val root: File) {
         writeAtomic(File(lyricsDir, "$id.lrc"), Lrc.write(lyrics, track.title, track.artist, track.album))
         val stored = StoredLyrics(track.path, track.title, track.artist, source, System.currentTimeMillis(), lyrics)
         writeAtomic(File(lyricsDir, "$id.json"), json.encodeToString(StoredLyrics.serializer(), stored))
-        updateLibrary { it.update(track.path) { u -> u.copy(lyricsId = id, lyricsSource = source, noLyrics = false, lyricsOffsetMs = lyrics.offsetMs) } }
+        // the times saved are the times shown (a tempo set before is in them now)
+        updateLibrary { it.update(track.path) { u -> u.copy(lyricsId = id, lyricsSource = source, noLyrics = false, lyricsOffsetMs = lyrics.offsetMs, lyricsTempo = 1f) } }
         return id
     }
 
@@ -97,14 +98,18 @@ class LibraryStore(val root: File) {
         val id = u.lyricsId ?: return null
         val stored = readJson(File(lyricsDir, "$id.json"), StoredLyrics.serializer())
         val l = stored?.lyrics ?: File(lyricsDir, "$id.lrc").takeIf { it.isFile }?.let { Lrc.parse(it.readText(), u.lyricsSource ?: "") }
-        return l?.withOffset(u.lyricsOffsetMs)
+        return l?.retimed(u.lyricsTempo)?.withOffset(u.lyricsOffsetMs)
     }
 
     fun deleteLyrics(track: TrackInfo) {
         val id = loadLibrary().user(track.path).lyricsId ?: return
         File(lyricsDir, "$id.lrc").delete()
         File(lyricsDir, "$id.json").delete()
-        updateLibrary { it.update(track.path) { u -> u.copy(lyricsId = null, lyricsSource = null, lyricsOffsetMs = 0) } }
+        updateLibrary { it.update(track.path) { u -> u.copy(lyricsId = null, lyricsSource = null, lyricsOffsetMs = 0, lyricsTempo = 1f) } }
+    }
+
+    fun setLyricsTempo(track: TrackInfo, tempo: Float) {
+        updateLibrary { it.update(track.path) { u -> u.copy(lyricsTempo = tempo) } }
     }
 
     fun setLyricsOffset(track: TrackInfo, offsetMs: Long) {

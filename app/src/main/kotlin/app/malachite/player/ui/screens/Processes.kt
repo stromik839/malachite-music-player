@@ -84,10 +84,11 @@ fun ProcessesScreen() {
         }
         Group(tr("Скачивание из онлайн-раздела")) {
             if (downloads.isEmpty()) Hint(tr("Сейчас ничего не скачивается."))
-            downloads.forEach { (title, progress) ->
+            downloads.forEach { (id, title, progress) ->
                 Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (progress >= 0f) LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
                 else LinearProgressIndicator(Modifier.fillMaxWidth())
+                TextButton(onClick = { stopDownload(id) }) { Text(tr("Остановить")) }
             }
         }
     }

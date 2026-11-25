@@ -236,15 +236,89 @@ object HealPlanner {
      */
     private val TITLE_NUMBER = Regex("^\\s*(\\d{1,3})(?:\\s*[.)]\\s+|\\s+[-–—]\\s+|\\s*_\\s*)(\\S.*)$")
 
-    fun titleNumbers(tracks: List<TrackInfo>): List<TitleNumberFix> = tracks.mapNotNull { t ->
-        val m = TITLE_NUMBER.matchEntire(t.title) ?: return@mapNotNull null
-        val n = m.groupValues[1].toInt()
-        val rest = m.groupValues[2].trim()
-        if (rest.length < 2 || rest.all { it.isDigit() }) return@mapNotNull null
-        // the number agrees with the tag, or there is no number in the tag yet
-        val sure = t.track == 0 || t.track == n
-        TitleNumberFix(t.path, t.title, rest, track = n.takeIf { t.track == 0 && it in 1..199 }, selected = sure)
+    /** "09 Иван Говнов": a number with a leading zero and a space – a title never starts like that. */
+    private val PADDED_NUMBER = Regex("^\\s*(0\\d{1,2})\\s+(\\S.*)$")
+
+    /**
+     * "9 Иван Говнов": a bare number and a space. A track number only when the songs of the same
+     * folder mostly start so, or the tag holds the same number ("99 Luftballons" stays).
+     */
+    private val BARE_NUMBER = Regex("^\\s*(\\d{1,3})\\s+(\\S.*)$")
+
+    private fun folderOf(t: TrackInfo) = t.path.substringBeforeLast('/', "")
+
+    fun titleNumbers(tracks: List<TrackInfo>): List<TitleNumberFix> {
+        // folders where most titles start with a number and a space: there the numbers are track numbers
+        val numbered = tracks.groupBy(::folderOf).filter { (_, ts) ->
+            ts.size >= 3 && ts.count { t -> BARE_NUMBER.matchEntire(t.title)?.groupValues?.get(2)?.any { it.isLetter() } == true } * 2 > ts.size
+        }.keys
+        return tracks.mapNotNull { t ->
+            val m = TITLE_NUMBER.matchEntire(t.title)
+                ?: PADDED_NUMBER.matchEntire(t.title)
+                ?: BARE_NUMBER.matchEntire(t.title)?.takeIf { b -> folderOf(t) in numbered || (t.track > 0 && t.track == b.groupValues[1].toInt()) }
+                ?: return@mapNotNull null
+            val n = m.groupValues[1].toInt()
+            val rest = m.groupValues[2].trim()
+            if (rest.length < 2 || rest.all { it.isDigit() } || rest.none { it.isLetter() }) return@mapNotNull null
+            // the number agrees with the tag, or there is no number in the tag yet
+            val sure = t.track == 0 || t.track == n
+            TitleNumberFix(t.path, t.title, rest, track = n.takeIf { t.track == 0 && it in 1..199 }, selected = sure)
+        }
     }
+
+    /**
+     * The number a song is called by when its title is only a number ("13"), or when it has no
+     * title and its file is named only by a number; null otherwise.
+     */
+    fun numberOnlyTitle(t: TrackInfo): Int? {
+        val title = t.title.trim()
+        val name = title.ifEmpty { t.fileName.substringBeforeLast('.').trim() }
+        if (name.isEmpty() || name.length > 3 || !name.all { it.isDigit() }) return null
+        return name.toInt().takeIf { it in 1..199 }
+    }
+
+    /**
+     * Songs called only by their number ("13"): the real title is the song at that number of the
+     * album's list in the catalogues ([lookup]: artist and album → lists, see
+     * [app.malachite.core.cover.AlbumTracks]), when the lengths agree. Chosen in advance only
+     * where the length agrees within a few seconds and most songs of the album agree.
+     */
+    fun numberTitles(
+        tracks: List<TrackInfo>,
+        lookup: (artist: String, album: String) -> List<app.malachite.core.cover.AlbumTracks.Tracklist>,
+    ): List<TitleNumberFix> {
+        val wanted = tracks.mapNotNull { t -> numberOnlyTitle(t)?.let { n -> t to (t.track.takeIf { it > 0 } ?: n) } }
+        if (wanted.isEmpty()) return emptyList()
+        fun albumOf(t: TrackInfo) = app.malachite.core.library.FolderHints.stripArtistPrefix(t.album.trim(), t.groupArtist.ifBlank { t.artist })
+        val out = ArrayList<TitleNumberFix>()
+        val groups = wanted.groupBy { (t, _) -> TextFold.strictKey(t.groupArtist.ifBlank { t.artist }) + "|" + TextFold.strictKey(albumOf(t)) }
+        for ((_, songs) in groups) {
+            val first = songs.first().first
+            val artist = first.groupArtist.ifBlank { first.artist }
+            val album = albumOf(first)
+            if (artist.isBlank() || album.isBlank()) continue
+            val lists = runCatching { lookup(artist, album) }.getOrDefault(emptyList())
+            fun agree(l: app.malachite.core.cover.AlbumTracks.Tracklist) =
+                songs.count { (t, n) -> l.tracks.firstOrNull { it.number == n }?.let { lengthsAgree(t.durationMs, it.durationMs) } == true }
+            val best = lists.maxByOrNull(::agree) ?: continue
+            val agreeing = agree(best)
+            // one song must agree in length; of several, most of them
+            if (agreeing == 0 || agreeing * 2 < songs.size) continue
+            for ((t, n) in songs) {
+                val entry = best.tracks.firstOrNull { it.number == n } ?: continue
+                if (TextFold.strictKey(entry.title) == TextFold.strictKey(t.title)) continue
+                out += TitleNumberFix(
+                    t.path, t.title.ifBlank { t.fileName.substringBeforeLast('.') }, entry.title,
+                    track = n.takeIf { t.track == 0 }, selected = lengthsAgree(t.durationMs, entry.durationMs),
+                )
+            }
+        }
+        return out
+    }
+
+    private fun lengthsAgree(a: Long, b: Long) = a > 0 && b > 0 && kotlin.math.abs(a - b) <= SAME_LENGTH_MS
+
+    private const val SAME_LENGTH_MS = 7_000L
 
     // ------------------------------------------------------------------ letter case
 
@@ -394,7 +468,24 @@ object HealPlanner {
             for (g in groups) {
                 val raws = g.variants.map { it.raw }.toSet()
                 val affected = ts.filter { it.album.trim() in raws }.map { it.path }
-                out += NameFix("album-${albumIdx++}", NameField.ALBUM, g.variants, g.canonical, g.confidence, canonicalArtist(ts.first()), affected)
+                // "Гражданская Оборона — Попс 1993" by Гражданская Оборона: the album is "Попс 1993"
+                val artistName = canonicalArtist(ts.first())
+                val bare = app.malachite.core.library.FolderHints.stripArtistPrefix(g.canonical, artistName)
+                if (bare != g.canonical && bare.isNotBlank()) {
+                    out += NameFix("album-${albumIdx++}", NameField.ALBUM, g.variants, bare, MatchConfidence.STRONG, artistName, affected)
+                } else {
+                    out += NameFix("album-${albumIdx++}", NameField.ALBUM, g.variants, g.canonical, g.confidence, artistName, affected)
+                }
+            }
+            // an album written the same way everywhere is in no group: the artist in front of it is still taken away
+            val grouped = groups.flatMap { g -> g.variants.map { it.raw } }.toSet()
+            for ((raw, count) in counts) {
+                if (raw in grouped) continue
+                val artistName = canonicalArtist(ts.first { it.album.trim() == raw })
+                val bare = app.malachite.core.library.FolderHints.stripArtistPrefix(raw, artistName)
+                if (bare == raw || bare.isBlank()) continue
+                val affected = ts.filter { it.album.trim() == raw }.map { it.path }
+                out += NameFix("album-${albumIdx++}", NameField.ALBUM, listOf(NameVariant(raw, count)), bare, MatchConfidence.STRONG, artistName, affected)
             }
         }
 

@@ -294,8 +294,9 @@ private fun NowPlayingContent(t: TrackInfo, st: PlayerUiState) {
     val marked = data.user(t.path).bestMomentMs
     val lyricsId = data.user(t.path).lyricsId
     val lyricsOffset = data.user(t.path).lyricsOffsetMs
+    val lyricsTempo = data.user(t.path).lyricsTempo
     val chorusState = remember(t.path) { mutableStateOf<Long?>(null) }
-    LaunchedEffect(t.path, lyricsId, lyricsOffset) {
+    LaunchedEffect(t.path, lyricsId, lyricsOffset, lyricsTempo) {
         chorusState.value = if (online != null) null else kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             runCatching { g.library.loadLyrics(t)?.let { app.malachite.core.lyrics.BestMoment.guess(it) } }.getOrNull()
         }
@@ -469,7 +470,19 @@ private fun SeekBar(song: String, position: () -> Long, duration: Long, best: Lo
         }
     }
     val live: () -> Float = { durationNow.value.let { d -> if (d > 0) (place().toFloat() / d).coerceIn(0f, 1f) else 0f } }
+    // read only while drawing (the time under the bar): nothing here is composed again every second
     val seconds by remember { androidx.compose.runtime.derivedStateOf { place() / 1000 } }
+    // A screen reader hears where the song is every second; any other accessibility service gets it
+    // in tenths: each change makes such a service's copy of the whole screen be built anew.
+    val a11yFraction by remember {
+        androidx.compose.runtime.derivedStateOf {
+            val d = durationNow.value
+            if (d <= 0) 0f else {
+                val f = (place().toFloat() / d).coerceIn(0f, 1f)
+                if (app.malachite.player.data.A11y.screenReader.value) ((place() / 1000) * 1000f / d).coerceIn(0f, 1f) else (f * 10).toInt() / 10f
+            }
+        }
+    }
 
     // A jump – the next song, "to the start", a seek from the notification or the headset, a tap on
     // the bar – is not shown as a jump: the thumb glides there and keeps up with the music meanwhile.
@@ -540,7 +553,7 @@ private fun SeekBar(song: String, position: () -> Long, duration: Long, best: Lo
     Column {
         SeekTrack(
             fraction = shown,
-            a11yFraction = if (duration > 0) (seconds * 1000f / duration).coerceIn(0f, 1f) else 0f,
+            a11yFraction = a11yFraction,
             enabled = duration > 0,
             animate = animate,
             onMove = { held = it },
@@ -558,7 +571,7 @@ private fun SeekBar(song: String, position: () -> Long, duration: Long, best: Lo
             notchAlpha = { notchAlpha.value },
         )
         Row(Modifier.fillMaxWidth()) {
-            Text(formatTime(seconds * 1000), style = MaterialTheme.typography.labelSmall)
+            app.malachite.player.ui.components.TickingTime({ seconds * 1000 }, duration, MaterialTheme.typography.labelSmall)
             Spacer(Modifier.weight(1f))
             Text(formatTime(duration), style = MaterialTheme.typography.labelSmall)
         }

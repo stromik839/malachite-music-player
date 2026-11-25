@@ -498,7 +498,7 @@ if step("Settings", "Настройки", desc=True, optional=True):
     if step("Settings: playback", "Воспроизведение и звук", optional=True, scroll=3):
         screen("settings playback")
         # the DJ mixer: turn LOW all the way down (KILL) and let the music play through it
-        if step("Equalizer and DJ mixer", "Эквалайзер и DJ-микшер", optional=True, scroll=6):
+        if step("Equalizer and DJ mixer", "Эквалайзер и DJ-микшер", optional=True, scroll=12):
             time.sleep(1)
             nodes = screen("equalizer and mixer")
             knob = find(nodes, regex=r"^LOW: ", desc=True)

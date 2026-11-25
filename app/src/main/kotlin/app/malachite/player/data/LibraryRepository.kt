@@ -163,8 +163,11 @@ class LibraryRepository(private val context: Context, private val settings: Sett
         _scan.value = ScanState(false, list.size, list.size, "")
     }
 
-    /** Re-reads one file after it changed. */
-    fun refreshTrack(path: String) {
+    /**
+     * Re-reads one file after it changed. [isNew]: the file has just come into the main folder (a
+     * download) – a file that only moved (tags edited, converted) is not new and is not healed again.
+     */
+    fun refreshTrack(path: String, isNew: Boolean = false) {
         val r = root ?: return
         val f = File(r, path)
         val list = _tracks.value.toMutableList()
@@ -174,8 +177,7 @@ class LibraryRepository(private val context: Context, private val settings: Sett
             if (i >= 0) list[i] = t else list += t
         } else if (i >= 0) list.removeAt(i)
         publish(list)
-        // a song downloaded into the main folder is new
-        if (i < 0 && f.isFile && list.size > 1) runCatching { onNewSongs?.invoke(listOf(path)) }
+        if (isNew && i < 0 && f.isFile) runCatching { onNewSongs?.invoke(listOf(path)) }
         store?.saveIndex(list)
         _revision.value++
     }
@@ -532,7 +534,7 @@ class LibraryRepository(private val context: Context, private val settings: Sett
             val path = target.relativeTo(r).invariantSeparatorsPath
             val at = System.currentTimeMillis()
             updateData { it.update(path) { u -> u.copy(addedAt = at, coverSource = item.source, coverChosen = false) } }
-            refreshTrack(path)
+            refreshTrack(path, isNew = true)
             notifySystem(listOf(target))
             AppLog.i("online", "Скачано из ${item.source}: $path")
             path

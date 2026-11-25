@@ -49,54 +49,103 @@ data class ListView(
     val filters: Set<Narrow> = emptySet(),
 )
 
-/** The lists that keep their own [ListView] (in the settings, so it stays after a restart). */
-enum class ListKind(val key: String, val orders: List<Order>, val narrows: List<Narrow>, val favoritesFirst: Boolean = true) {
+/**
+ * The lists that have their own [ListView]: remembered in the settings, so it stays after the app
+ * is closed – or only while it is open, for the lists switched off in the settings (see
+ * [AppSettings.forgetViews]). [default] is what «Сбросить» brings back.
+ */
+enum class ListKind(
+    val key: String,
+    val title: String,
+    val orders: List<Order>,
+    val narrows: List<Narrow>,
+    val default: ListView = ListView(order = orders.first()),
+    val favoritesFirst: Boolean = true,
+) {
     SONGS(
-        "songs",
-        listOf(Order.TITLE, Order.ARTIST, Order.ALBUM, Order.NEWEST, Order.OLDEST, Order.ADDED, Order.PLAYS, Order.LAST_PLAYED, Order.DURATION),
-        listOf(Narrow.FAVORITE, Narrow.WITH_LYRICS, Narrow.NO_LYRICS, Narrow.NO_COVER, Narrow.NO_ALBUM, Narrow.NEVER_PLAYED),
-    ),
-    /** The songs found by the search of the library. */
-    SEARCH(
-        "search",
+        "songs", tr("Песни"),
         listOf(Order.TITLE, Order.ARTIST, Order.ALBUM, Order.NEWEST, Order.OLDEST, Order.ADDED, Order.PLAYS, Order.LAST_PLAYED, Order.DURATION),
         listOf(Narrow.FAVORITE, Narrow.WITH_LYRICS, Narrow.NO_LYRICS, Narrow.NO_COVER, Narrow.NO_ALBUM, Narrow.NEVER_PLAYED),
     ),
     /** The favourite songs: all of them are favourites, so no "favourites first" and no such filter. */
     FAVORITES(
-        "favorites",
+        "favorites", tr("Избранное"),
         listOf(Order.TITLE, Order.ARTIST, Order.ALBUM, Order.NEWEST, Order.OLDEST, Order.ADDED, Order.PLAYS, Order.LAST_PLAYED, Order.DURATION),
         listOf(Narrow.WITH_LYRICS, Narrow.NO_LYRICS, Narrow.NO_COVER, Narrow.NO_ALBUM, Narrow.NEVER_PLAYED),
         favoritesFirst = false,
     ),
-    ARTIST_SONGS(
-        "artistSongs",
-        listOf(Order.ALBUM, Order.TITLE, Order.NEWEST, Order.OLDEST, Order.ADDED, Order.PLAYS, Order.LAST_PLAYED, Order.DURATION),
-        listOf(Narrow.FAVORITE, Narrow.WITH_LYRICS, Narrow.NO_LYRICS, Narrow.NO_COVER, Narrow.NO_ALBUM, Narrow.NEVER_PLAYED),
-    ),
     ALBUMS(
-        "albums",
+        "albums", tr("Альбомы"),
         listOf(Order.TITLE, Order.ARTIST, Order.NEWEST, Order.OLDEST, Order.ADDED, Order.PLAYS, Order.LAST_PLAYED, Order.SIZE, Order.DURATION),
         listOf(Narrow.FAVORITE, Narrow.PINNED, Narrow.WITH_LYRICS, Narrow.NO_LYRICS, Narrow.NO_COVER, Narrow.NEVER_PLAYED),
-    ),
-    ARTIST_ALBUMS(
-        "artistAlbums",
-        listOf(Order.NEWEST, Order.OLDEST, Order.TITLE, Order.ADDED, Order.PLAYS, Order.LAST_PLAYED, Order.SIZE, Order.DURATION),
-        listOf(Narrow.FAVORITE, Narrow.PINNED, Narrow.WITH_LYRICS, Narrow.NO_LYRICS, Narrow.NO_COVER, Narrow.NEVER_PLAYED),
+        default = ListView(order = Order.SIZE),
     ),
     ARTISTS(
-        "artists",
+        "artists", tr("Исполнители"),
         listOf(Order.TITLE, Order.ADDED, Order.PLAYS, Order.LAST_PLAYED, Order.SIZE, Order.ALBUMS, Order.DURATION),
         listOf(Narrow.FAVORITE, Narrow.WITH_LYRICS, Narrow.NO_LYRICS, Narrow.NO_COVER, Narrow.NO_ALBUM, Narrow.NEVER_PLAYED),
     ),
     PLAYLISTS(
-        "playlists",
+        "playlists", tr("Плейлисты"),
         listOf(Order.TITLE, Order.CREATED, Order.UPDATED, Order.ADDED, Order.PLAYS, Order.LAST_PLAYED, Order.SIZE, Order.DURATION),
         listOf(Narrow.FAVORITE, Narrow.PINNED, Narrow.WITH_LYRICS, Narrow.NO_LYRICS, Narrow.NO_COVER, Narrow.NEVER_PLAYED),
+    ),
+    ARTIST_ALBUMS(
+        "artistAlbums", tr("Альбомы на странице исполнителя"),
+        listOf(Order.NEWEST, Order.OLDEST, Order.TITLE, Order.ADDED, Order.PLAYS, Order.LAST_PLAYED, Order.SIZE, Order.DURATION),
+        listOf(Narrow.FAVORITE, Narrow.PINNED, Narrow.WITH_LYRICS, Narrow.NO_LYRICS, Narrow.NO_COVER, Narrow.NEVER_PLAYED),
+    ),
+    ARTIST_SONGS(
+        "artistSongs", tr("Все песни на странице исполнителя"),
+        listOf(Order.ALBUM, Order.TITLE, Order.NEWEST, Order.OLDEST, Order.ADDED, Order.PLAYS, Order.LAST_PLAYED, Order.DURATION),
+        listOf(Narrow.FAVORITE, Narrow.WITH_LYRICS, Narrow.NO_LYRICS, Narrow.NO_COVER, Narrow.NO_ALBUM, Narrow.NEVER_PLAYED),
+    ),
+    /** The songs found by the search of the library. */
+    SEARCH(
+        "search", tr("Поиск"),
+        listOf(Order.TITLE, Order.ARTIST, Order.ALBUM, Order.NEWEST, Order.OLDEST, Order.ADDED, Order.PLAYS, Order.LAST_PLAYED, Order.DURATION),
+        listOf(Narrow.FAVORITE, Narrow.WITH_LYRICS, Narrow.NO_LYRICS, Narrow.NO_COVER, Narrow.NO_ALBUM, Narrow.NEVER_PLAYED),
     );
 
     /** The name of [order] in this list ("by name" for people, "by title" for the rest). */
     fun titleOf(order: Order): String = if (this == ARTISTS && order == Order.TITLE) tr("По имени") else order.title
+}
+
+/** The views of the lists that are not remembered after the app is closed: kept here while it is open. */
+object SessionViews {
+    val views = androidx.compose.runtime.mutableStateMapOf<String, ListView>()
+}
+
+/** How [kind] is shown now: as remembered in the settings, or as set while the app is open. */
+fun AppSettings.currentView(kind: ListKind): ListView =
+    if (kind.key in forgetViews) SessionViews.views[kind.key] ?: kind.default else view(kind)
+
+/** Shows [kind] as [v]: remembered, or only until the app is closed (as the settings say). */
+fun SettingsRepository.setView(kind: ListKind, v: ListView) {
+    if (kind.key in value.forgetViews) SessionViews.views[kind.key] = v
+    else update { it.withView(kind, v) }
+}
+
+/**
+ * Whether [kind] remembers its order and filters after the app is closed. What it shows now stays
+ * either way: switched on, it is written into the settings; switched off, it is kept only for
+ * this time (and the settings forget it).
+ */
+fun SettingsRepository.rememberView(kind: ListKind, on: Boolean) {
+    val s = value
+    if (on) {
+        val now = SessionViews.views.remove(kind.key) ?: s.view(kind)
+        update { it.copy(forgetViews = it.forgetViews - kind.key).withView(kind, now) }
+    } else {
+        SessionViews.views[kind.key] = s.view(kind)
+        update { it.copy(forgetViews = it.forgetViews + kind.key, listViews = it.listViews - kind.key) }
+    }
+}
+
+/** Every list back to its usual order, no filters. */
+fun SettingsRepository.resetViews() {
+    SessionViews.views.clear()
+    update { it.copy(listViews = ListKind.entries.associate { k -> k.key to k.default }) }
 }
 
 /**

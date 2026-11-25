@@ -93,7 +93,7 @@ import app.malachite.core.library.LibraryLayout
 import app.malachite.core.library.TrackInfo
 import app.malachite.core.text.TextFold
 import app.malachite.player.MalachiteApp
-import app.malachite.player.data.view
+import app.malachite.player.data.currentView
 import app.malachite.player.data.Album
 import app.malachite.player.ui.DialogRequest
 import app.malachite.player.ui.LocalNavigator
@@ -240,7 +240,7 @@ fun SongsScreen() {
     val scan by g.library.scan.collectAsState()
     val data by g.library.data.collectAsState()
     val settings by g.settings.state.collectAsState()
-    val view = settings.view(app.malachite.player.data.ListKind.SONGS)
+    val view = settings.currentView(app.malachite.player.data.ListKind.SONGS)
     val nav = LocalNavigator.current
     if (tracks.isEmpty() && !scan.running) {
         EmptyState(Icons.Filled.LibraryMusic, tr("Главная папка пуста"), tr("Песни появятся после импорта с устройства.")) {
@@ -292,7 +292,7 @@ fun ArtistsScreen() {
         return
     }
     val settings by g.settings.state.collectAsState()
-    val view = settings.view(app.malachite.player.data.ListKind.ARTISTS)
+    val view = settings.currentView(app.malachite.player.data.ListKind.ARTISTS)
     val shelf by app.malachite.player.data.Shelf.state.collectAsState()
     androidx.compose.runtime.LaunchedEffect(Unit) { app.malachite.player.data.Shelf.ensureLoaded() }
     // only what this order reads of the player's data: after every song the data changes
@@ -411,8 +411,8 @@ fun ArtistDetailScreen(key: String) {
     androidx.compose.runtime.LaunchedEffect(Unit) { app.malachite.player.data.Shelf.ensureLoaded() }
     // the albums, or all the songs at once – each with the same row of order and filters as every list
     var songs by rememberSaveable { mutableStateOf(false) }
-    val songView = settings.view(app.malachite.player.data.ListKind.ARTIST_SONGS)
-    val albumView = settings.view(app.malachite.player.data.ListKind.ARTIST_ALBUMS)
+    val songView = settings.currentView(app.malachite.player.data.ListKind.ARTIST_SONGS)
+    val albumView = settings.currentView(app.malachite.player.data.ListKind.ARTIST_ALBUMS)
     val dataState = g.library.data.collectAsState()
     val albumKey by remember(albumView) { androidx.compose.runtime.derivedStateOf { viewDataKey(dataState.value, albumView) } }
     val albums = remember(a.albums, albumView, albumKey, shelf) {
@@ -540,7 +540,7 @@ fun PlaylistsScreen() {
     val nav = LocalNavigator.current
     var create by remember { mutableStateOf(false) }
     val settings by g.settings.state.collectAsState()
-    val view = settings.view(app.malachite.player.data.ListKind.PLAYLISTS)
+    val view = settings.currentView(app.malachite.player.data.ListKind.PLAYLISTS)
     val shelf by app.malachite.player.data.Shelf.state.collectAsState()
     androidx.compose.runtime.LaunchedEffect(Unit) { app.malachite.player.data.Shelf.ensureLoaded() }
     val dataState = g.library.data.collectAsState()
@@ -958,7 +958,7 @@ private fun FavoritesScreen() {
     val tracks by g.library.tracks.collectAsState()
     val data by g.library.data.collectAsState()
     val settings by g.settings.state.collectAsState()
-    val view = settings.view(app.malachite.player.data.ListKind.FAVORITES)
+    val view = settings.currentView(app.malachite.player.data.ListKind.FAVORITES)
     val favorites = remember(tracks, data) { tracks.filter { data.user(it.path).favorite } }
     if (favorites.isEmpty()) {
         EmptyState(Icons.Filled.Star, SmartKind.FAVORITES.title, tr("Отмечайте песни сердечком — они появятся здесь."))
@@ -1027,7 +1027,7 @@ fun SearchScreen() {
     val onlineEnabled = g.settings.state.collectAsState().value.onlineEnabled
     var scope by rememberSaveable { mutableStateOf(SearchScope.ALL) }
     // the same order and filters as every list of songs
-    val view = g.settings.state.collectAsState().value.view(app.malachite.player.data.ListKind.SEARCH)
+    val view = g.settings.state.collectAsState().value.currentView(app.malachite.player.data.ListKind.SEARCH)
     val filters = view.filters
     val showSongs = scope == SearchScope.ALL || scope == SearchScope.SONGS
     // with a filter on and nothing typed, the filter alone picks the songs ("all favourites")

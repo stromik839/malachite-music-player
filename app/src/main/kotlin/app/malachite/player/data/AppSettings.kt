@@ -366,6 +366,8 @@ data class AppSettings(
     val artistAlbumSort: ArtistAlbumSort = ArtistAlbumSort.NEWEST,
     /** The order and filters of each list (see [ListKind]); the four sorts above are where they started from. */
     val listViews: Map<String, ListView> = emptyMap(),
+    /** Lists whose order and filters last only while the app is open ([ListKind.key]); the search by default. */
+    val forgetViews: Set<String> = setOf("search"),
     val albumGridColumns: Int = 2,
     // ---- lyrics
     val lyricsAutoSearch: Boolean = true,

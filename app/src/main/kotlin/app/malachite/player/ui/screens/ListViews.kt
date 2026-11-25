@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.AssistChip
@@ -36,7 +37,7 @@ import app.malachite.player.data.ListKind
 import app.malachite.player.data.ListView
 import app.malachite.player.data.Narrow
 import app.malachite.player.data.Order
-import app.malachite.player.data.withView
+import app.malachite.player.data.setView
 
 /**
  * One row for every list: the order (a chip that opens the choice), "favourites first", and the
@@ -46,7 +47,8 @@ import app.malachite.player.data.withView
 @Composable
 fun ListViewBar(kind: ListKind, view: ListView, modifier: Modifier = Modifier, leading: @Composable () -> Unit = {}) {
     val g = MalachiteApp.graph
-    fun set(v: ListView) = g.settings.update { it.withView(kind, v) }
+    // remembered after the app is closed, or only while it is open – as set for this list
+    fun set(v: ListView) = g.settings.setView(kind, v)
     var open by remember { mutableStateOf(false) }
     Row(
         modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 4.dp),
@@ -54,6 +56,12 @@ fun ListViewBar(kind: ListKind, view: ListView, modifier: Modifier = Modifier, l
         verticalAlignment = Alignment.CenterVertically,
     ) {
         leading()
+        // back to the usual order without filters, in one tap
+        if (view != kind.default) AssistChip(
+            onClick = { set(kind.default) },
+            label = { Text(tr("Сбросить")) },
+            leadingIcon = { Icon(Icons.Filled.Close, null, Modifier.size(18.dp)) },
+        )
         Box {
             AssistChip(
                 onClick = { open = true },

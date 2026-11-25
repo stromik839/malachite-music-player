@@ -43,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import app.malachite.core.library.LibraryStore
 import app.malachite.core.library.ZipTransfer
 import app.malachite.player.MalachiteApp
+import app.malachite.player.data.rememberView
+import app.malachite.player.data.resetViews
 import app.malachite.player.data.AccentPreset
 import app.malachite.player.data.FontChoice
 import app.malachite.player.data.LyricsAlign
@@ -465,6 +467,16 @@ fun SettingsLibraryScreen() {
             SwitchRow(tr("Номер трека в имени файла"), s.trackNumberPrefix, tr("«01 - Песня.mp3» вместо «Песня.mp3»")) { v -> up { it.copy(trackNumberPrefix = v) } }
             SwitchRow(tr("Хранить копии изменённых файлов"), s.keepBackups, tr("При исцелении оригинал уходит в .malachite/backup до очистки")) { v -> up { it.copy(keepBackups = v) } }
             OutlinedButton(onClick = { g.library.rescanAsync() }) { Text(tr("Перечитать главную папку")) }
+        }
+        Group(tr("Сортировка и фильтры")) {
+            Hint(tr("Над каждым списком — строка с порядком, «Сначала избранные» и фильтрами. Отмеченные списки помнят их и после выхода из приложения, остальные — только пока оно открыто: при следующем запуске они в обычном порядке и без фильтров."))
+            app.malachite.player.data.ListKind.entries.forEach { k ->
+                SwitchRow(k.title, k.key !in s.forgetViews) { on -> g.settings.rememberView(k, on) }
+            }
+            OutlinedButton(onClick = {
+                g.settings.resetViews()
+                nav.toast(tr("Все списки — в обычном порядке, без фильтров"))
+            }) { Text(tr("Сбросить сортировку и фильтры везде")) }
         }
     }
 }

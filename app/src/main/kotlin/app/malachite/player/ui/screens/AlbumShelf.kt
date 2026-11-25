@@ -69,7 +69,7 @@ import app.malachite.player.MalachiteApp
 import app.malachite.player.data.Album
 import app.malachite.player.data.AlbumSort
 import app.malachite.player.data.Shelf
-import app.malachite.player.data.view
+import app.malachite.player.data.currentView
 import app.malachite.player.ui.DialogRequest
 import app.malachite.player.ui.LocalNavigator
 import app.malachite.player.ui.Screen
@@ -103,7 +103,7 @@ fun AlbumsScreen() {
         return
     }
     // the same order and filters as every other list; pinned albums stay at the top in any order
-    val view = settings.view(app.malachite.player.data.ListKind.ALBUMS)
+    val view = settings.currentView(app.malachite.player.data.ListKind.ALBUMS)
     val dataState = g.library.data.collectAsState()
     val dataKey by remember(view) { androidx.compose.runtime.derivedStateOf { viewDataKey(dataState.value, view) } }
     val loose = remember(all) { all.filter { it.hasNoAlbum() }.flatMap { it.tracks } }

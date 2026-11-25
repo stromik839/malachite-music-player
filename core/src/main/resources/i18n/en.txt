@@ -5356,8 +5356,8 @@ Bars — with a glow, a reflection and caps that rest at the highest point for a
 Одна сортировка и фильтры везде
 One sorting and filters everywhere
 
-Песни, избранное, альбомы, исполнители, плейлисты, страница исполнителя и поиск теперь сортируются и фильтруются одинаково, одной строкой над списком: порядок, «Сначала избранные», «Без обложки», «Без текста», «Ни разу не слушал» и другие. Выбор запоминается. В избранное можно добавить и исполнителя, и плейлист.
-Songs, favourites, albums, artists, playlists, an artist's page and the search are now sorted and filtered the same way, with one row above the list: the order, "Favourites first", "Without cover", "Without lyrics", "Never played" and more. The choice is remembered. Artists and playlists can be favourites too.
+Песни, избранное, альбомы, исполнители, плейлисты, страница исполнителя и поиск теперь сортируются и фильтруются одинаково, одной строкой над списком: порядок, «Сначала избранные», «Без обложки», «Без текста», «Ни разу не слушал» и другие, «Сбросить» возвращает обычный вид. Какие списки помнят выбор и после выхода из приложения, отмечается в настройках библиотеки. В избранное можно добавить и исполнителя, и плейлист.
+Songs, favourites, albums, artists, playlists, an artist's page and the search are now sorted and filtered the same way, with one row above the list: the order, "Favourites first", "Without cover", "Without lyrics", "Never played" and more; "Reset" brings the usual view back. Which lists keep the choice after the app is closed is set in the library settings. Artists and playlists can be favourites too.
 
 «Исцелить» в меню
 "Heal" in the menus
@@ -5391,3 +5391,21 @@ Hold a finger on a column of a chart and slide left and right: the columns switc
 
 К статистике
 To the statistics
+
+Альбомы на странице исполнителя
+Albums on an artist's page
+
+Все песни на странице исполнителя
+All songs on an artist's page
+
+Сортировка и фильтры
+Sorting and filters
+
+Над каждым списком — строка с порядком, «Сначала избранные» и фильтрами. Отмеченные списки помнят их и после выхода из приложения, остальные — только пока оно открыто: при следующем запуске они в обычном порядке и без фильтров.
+Above every list there is a row with the order, "Favourites first" and the filters. The lists switched on here keep them after the app is closed; the others only while it is open: at the next start they are in the usual order, without filters.
+
+Все списки — в обычном порядке, без фильтров
+All lists are in the usual order, without filters
+
+Сбросить сортировку и фильтры везде
+Reset sorting and filters everywhere

@@ -428,9 +428,10 @@ fun Visualizer(
                     // the bass at the top; a disc in the middle breathes with the bass
                     val cx = size.width / 2
                     val cy = size.height / 2
-                    val outer = min(size.width, size.height) / 2 - 2.dp.toPx()
+                    // never below a pixel: a gradient with a radius of 0 throws while the area is tiny
+                    val outer = max(4f, min(size.width, size.height) / 2 - 2.dp.toPx())
                     val inner = outer * 0.42f
-                    val room = outer - inner - 3.dp.toPx()
+                    val room = max(0f, outer - inner - 3.dp.toPx())
                     val count = n * 2
                     val cosA = FloatArray(count)
                     val sinA = FloatArray(count)

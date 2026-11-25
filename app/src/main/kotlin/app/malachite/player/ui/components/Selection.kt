@@ -24,6 +24,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -121,6 +123,13 @@ data class Pick(val title: String, val whenNone: (() -> String)? = null, val key
  */
 class ByName(val fields: List<Pair<String, (String) -> List<String>>>)
 
+/**
+ * "Choose by artist / album / year…": the values the items of the list have, each with the keys of
+ * the items that have it. Shown as a list with counts (and a search when it is long): a tap adds all
+ * of them to what is chosen – all the songs of one artist in two taps.
+ */
+data class GroupChoice(val title: String, val values: () -> List<Pair<String, List<String>>>)
+
 /** The panel above a list while things are being chosen: how many, quick choices, what to do with them. */
 @Composable
 fun SelectionBar(
@@ -129,12 +138,15 @@ fun SelectionBar(
     picks: List<Pick> = emptyList(),
     byName: ByName? = null,
     actions: () -> List<MenuAction>,
+    groups: List<GroupChoice> = emptyList(),
 ) {
     val nav = LocalNavigator.current
     BackHandler(enabled = sel.active && !nav.playerOpen && nav.dialog == null) { sel.close() }
     var menu by remember { mutableStateOf(false) }
     var naming by remember { mutableStateOf(false) }
+    var grouping by remember { mutableStateOf<GroupChoice?>(null) }
     if (naming && byName != null) ChooseByNameDialog(byName, all, sel) { naming = false }
+    grouping?.let { g -> ChooseGroupDialog(g, sel) { grouping = null } }
     Surface(color = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer) {
         Column(Modifier.fillMaxWidth()) {
             Row(Modifier.fillMaxWidth().padding(end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -154,6 +166,9 @@ fun SelectionBar(
                 if (sel.size < all.size) AssistChip(onClick = { sel.select(all) }, label = { Text(tr("Выбрать все")) })
                 if (sel.size > 0) AssistChip(onClick = { sel.clear() }, label = { Text(tr("Снять все")) })
                 if (sel.size > 0 && sel.size < all.size) AssistChip(onClick = { sel.select(all.filter { it !in sel }) }, label = { Text(tr("Наоборот")) })
+                groups.forEach { g ->
+                    AssistChip(onClick = { grouping = g }, label = { Text(g.title + "…") }, leadingIcon = { Icon(Icons.Filled.Search, null, Modifier.size(18.dp)) })
+                }
                 if (byName != null) AssistChip(
                     onClick = { naming = true }, label = { Text(tr("По имени…")) },
                     leadingIcon = { Icon(Icons.Filled.Search, null, Modifier.size(18.dp)) },
@@ -168,6 +183,53 @@ fun SelectionBar(
             }
         }
     }
+}
+
+/** The values of [group] to tap: each adds its items to what is chosen. */
+@Composable
+private fun ChooseGroupDialog(group: GroupChoice, sel: Selection, onDone: () -> Unit) {
+    val nav = LocalNavigator.current
+    val values = remember(group) { group.values() }
+    var query by remember { mutableStateOf("") }
+    val shown = remember(values, query) {
+        if (query.isBlank()) values else values.filter { app.malachite.core.text.NameMatch.matches(query, it.first) }
+    }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDone,
+        title = { Text(group.title) },
+        text = {
+            Column {
+                if (values.size > 8) androidx.compose.material3.OutlinedTextField(
+                    query, { query = it }, Modifier.fillMaxWidth(),
+                    placeholder = { Text(tr("Найти (можно латиницей)")) }, singleLine = true,
+                    leadingIcon = { Icon(Icons.Filled.Search, null) },
+                )
+                Text(
+                    tr("Нажмите — все такие добавятся к выбранным"),
+                    Modifier.padding(vertical = 6.dp),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                androidx.compose.foundation.lazy.LazyColumn(Modifier.heightIn(max = 380.dp)) {
+                    items(shown.size) { i ->
+                        val (name, keys) = shown[i]
+                        Row(
+                            Modifier.fillMaxWidth().clickable {
+                                sel.select(sel.keys + keys)
+                                nav.toast(tr("Выбрано: «$name» — ${keys.size}"))
+                                onDone()
+                            }.padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(name, Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Text(keys.size.toString(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDone) { Text(tr("Закрыть")) } },
+    )
 }
 
 /** What can be done with the chosen things: from the panel, and from a long press on one of them. */

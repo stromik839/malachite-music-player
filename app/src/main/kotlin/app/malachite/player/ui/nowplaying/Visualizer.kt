@@ -43,6 +43,8 @@ private const val PEAK_GRAVITY = 2.5e-6f
  * range of hills instead of flickering bar by bar.
  */
 private class Motion(val n: Int) {
+    /** How fast the bars fall: 1 like a dropped thing, less slower, more faster (a setting). */
+    var fall = 1f
     val target = FloatArray(n)
     private val spread = FloatArray(n)
     val level = FloatArray(n)
@@ -75,7 +77,7 @@ private class Motion(val n: Int) {
                 l += (t - l) * min(1f, dt / 18f)
                 falling[i] = 0f
             } else {
-                falling[i] += GRAVITY * dt
+                falling[i] += GRAVITY * fall * dt
                 l = max(t, l - falling[i] * dt)
                 if (l == t) falling[i] = 0f
             }
@@ -87,7 +89,7 @@ private class Motion(val n: Int) {
             } else if (hold[i] > 0f) {
                 hold[i] -= dt
             } else {
-                peakFalling[i] += PEAK_GRAVITY * dt
+                peakFalling[i] += PEAK_GRAVITY * fall * dt
                 p = max(l, p - peakFalling[i] * dt)
             }
             if (l != level[i] || p != peak[i]) moving = true
@@ -163,9 +165,17 @@ fun Visualizer(
     high: Color,
     tip: Color,
     alpha: () -> Float = { 1f },
+    react: app.malachite.player.data.VisualizerReact = app.malachite.player.data.VisualizerReact.BALANCED,
+    /** How high the bars go for the same sound (1: as measured). */
+    sensitivity: Float = 1f,
+    /** How fast the bars fall (1: the usual). */
+    fall: Float = 1f,
 ) {
     val n = Spectrum.BANDS
     val motion = remember { Motion(n) }
+    motion.fall = fall.coerceIn(0.2f, 4f)
+    LaunchedEffect(react) { Spectrum.react = react.ordinal }
+    val gain = androidx.compose.runtime.rememberUpdatedState(sensitivity.coerceIn(0.25f, 4f))
     val scope = remember { Scope() }
     val pulse = remember { Pulse() }
     val frame = remember { mutableIntStateOf(0) }
@@ -178,6 +188,7 @@ fun Visualizer(
         val width = when {
             order == VisualizerOrder.STRONG_CENTER || order == VisualizerOrder.STRONG_LEFT || order == VisualizerOrder.STRONG_RIGHT -> 0.15f
             style == VisualizerStyle.WAVE -> 0.7f
+            style == VisualizerStyle.CIRCLE -> 0.3f
             else -> 0.42f
         }
         val heard = FloatArray(n)
@@ -199,7 +210,11 @@ fun Visualizer(
                     VisualizerStyle.PULSE -> pulse.step(Spectrum.meter(meter), meter, t)
                     else -> {
                         val fresh = Spectrum.now(heard)
-                        if (fresh) arrange(heard, motion.target, order, sorted, fromCentre)
+                        if (fresh) {
+                            val k = gain.value
+                            if (k != 1f) for (i in 0 until n) heard[i] = (heard[i] * k).coerceIn(0f, 1f)
+                            arrange(heard, motion.target, order, sorted, fromCentre)
+                        }
                         motion.step(fresh, dt, width)
                     }
                 }
@@ -405,6 +420,55 @@ fun Visualizer(
                             val h = max(1.5.dp.toPx(), v * amp)
                             // older columns fade towards the left
                             drawRoundRect(across, Offset(c * (colW + colGap), mid - h), Size(colW, 2 * h), radius, alpha = a * (0.3f + 0.7f * c / (count - 1)))
+                        }
+                    }
+                }
+                VisualizerStyle.CIRCLE -> {
+                    // the bands around a circle, each twice (the right half and its mirror on the left),
+                    // the bass at the top; a disc in the middle breathes with the bass
+                    val cx = size.width / 2
+                    val cy = size.height / 2
+                    val outer = min(size.width, size.height) / 2 - 2.dp.toPx()
+                    val inner = outer * 0.42f
+                    val room = outer - inner - 3.dp.toPx()
+                    val count = n * 2
+                    val cosA = FloatArray(count)
+                    val sinA = FloatArray(count)
+                    for (s in 0 until count) {
+                        val angle = -Math.PI / 2 + 2 * Math.PI * (s + 0.5) / count
+                        cosA[s] = kotlin.math.cos(angle).toFloat()
+                        sinA[s] = kotlin.math.sin(angle).toFloat()
+                    }
+                    val spokeW = max(1.5.dp.toPx(), (2 * Math.PI * inner / count * 0.6).toFloat())
+                    val around = Brush.sweepGradient(listOf(low, high, low), Offset(cx, cy))
+                    val disc = Brush.radialGradient(listOf(lerp(high, tip, 0.35f).copy(alpha = 0.55f), low.copy(alpha = 0.08f)), Offset(cx, cy), inner)
+                    val edgeLine = Stroke(1.5.dp.toPx())
+                    val startGap = 2.dp.toPx()
+                    onDrawBehind {
+                        @Suppress("UNUSED_EXPRESSION") frame.intValue
+                        val a = alpha()
+                        if (a <= 0.01f) return@onDrawBehind
+                        var bass = 0f
+                        for (i in 0 until min(4, n)) bass += motion.level[i]
+                        bass /= min(4, n).coerceAtLeast(1)
+                        val r = inner * (0.82f + 0.18f * bass * a)
+                        drawCircle(disc, r, Offset(cx, cy), alpha = a)
+                        drawCircle(around, r, Offset(cx, cy), alpha = a * 0.7f, style = edgeLine)
+                        for (s in 0 until count) {
+                            val i = if (s < n) s else count - 1 - s
+                            val len = max(1.dp.toPx(), motion.level[i] * a * room)
+                            val from = inner + startGap
+                            drawLine(
+                                around,
+                                Offset(cx + cosA[s] * from, cy + sinA[s] * from),
+                                Offset(cx + cosA[s] * (from + len), cy + sinA[s] * (from + len)),
+                                spokeW, cap = StrokeCap.Round, alpha = a,
+                            )
+                            val p = motion.peak[i] * a
+                            if (p > 0.04f) {
+                                val at = from + p * room + spokeW
+                                drawCircle(tip, spokeW * 0.5f, Offset(cx + cosA[s] * at, cy + sinA[s] * at), alpha = a * 0.85f)
+                            }
                         }
                     }
                 }

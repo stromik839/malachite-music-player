@@ -131,6 +131,17 @@ fun AlbumsScreen() {
                 ))
             },
             batch,
+            // all the albums of one artist, of one year
+            groups = remember(albums) {
+                listOf(
+                    app.malachite.player.ui.components.GroupChoice(tr("Исполнитель")) {
+                        albums.groupBy { it.artist }.map { (name, als) -> name to als.map { it.key } }.sortedBy { app.malachite.core.text.TextFold.strictKey(it.first) }
+                    },
+                    app.malachite.player.ui.components.GroupChoice(tr("Год")) {
+                        albums.filter { it.year.isNotBlank() }.groupBy { it.year }.map { (y, als) -> y to als.map { it.key } }.sortedByDescending { it.first }
+                    },
+                )
+            },
         )
         val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
         var menuFor by remember { mutableStateOf<String?>(null) }
@@ -342,7 +353,10 @@ fun NoAlbumScreen() {
     val batch = { songsActions(nav, songs.filter { it.path in sel }, done = { sel.close() }) }
     Column(Modifier.fillMaxSize()) {
     val byPath = remember(songs) { songs.associateBy { it.path } }
-    if (sel.active) app.malachite.player.ui.components.SelectionBar(sel, keys, remember(songs) { songPicks(songs) }, remember(byPath) { songsByName { byPath[it] } }, batch)
+    if (sel.active) app.malachite.player.ui.components.SelectionBar(
+        sel, keys, remember(songs) { songPicks(songs) }, remember(byPath) { songsByName { byPath[it] } }, batch,
+        groups = remember(songs) { songGroups(songs) },
+    )
     val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
     var menuFor by remember { mutableStateOf<String?>(null) }
     app.malachite.player.ui.components.SelectionMenu(menuFor != null, { menuFor = null }, tr("Выбрано: ${sel.size}"), batch)

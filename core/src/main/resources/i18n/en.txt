@@ -5026,9 +5026,6 @@ Oscilloscope
 Пульс
 Pulse
 
-Полосы — со свечением, отражением и «шапочками», которые ненадолго задерживаются на самой высокой точке. Светодиоды — как индикатор на пульте. Волна — плавная, отражённая от середины. Горы — залитый график частот. Точки — круглые огоньки. Осциллограф — сама звуковая волна, а не частоты. Пульс — громкость последних секунд бежит справа налево, удары видны всплесками.
-Bars — with a glow, a reflection and caps that stay at the highest point for a moment. LEDs — like the meter of a mixing desk. Wave — smooth, mirrored around its middle. Mountains — a filled graph of the frequencies. Dots — round lights. Oscilloscope — the sound wave itself, not the frequencies. Pulse — the loudness of the last seconds runs from right to left, beats show as spikes.
-
 Визуализатор точно в такт
 The visualizer right on the beat
 
@@ -5250,3 +5247,72 @@ When lyrics are timed word by word, each word fills for exactly as long as it is
 
 Как только в главной папке появляется новая песня и есть интернет, она проходит исцеление: номера и мусор в названиях, пустые теги, обложка, текст, имя файла и папка. Ничего не удаляется, сомнительное ждёт во вкладке «Исцеление», любое изменение можно отменить.
 As soon as a new song appears in the main folder and there is internet, it goes through healing: numbers and junk in titles, empty tags, cover, lyrics, file name and folder. Nothing is deleted, doubtful cases wait in the Healing tab, and any change can be undone.
+
+Круг
+Circle
+
+Весь звук
+All the sound
+
+Баланс
+Balance
+
+Ритм
+Rhythm
+
+Найти (можно латиницей)
+Find (Latin letters work too)
+
+Нажмите — все такие добавятся к выбранным
+Tap — all of them are added to the chosen
+
+Выбрано: «{}» — {}
+Chosen: "{}" — {}
+
+Ни разу не слушал
+Never played
+
+Выбрать все найденные
+Choose all found
+
+Полосы — со свечением, отражением и «шапочками», которые ненадолго задерживаются на самой высокой точке. Светодиоды — как индикатор на пульте. Волна — плавная, отражённая от середины. Горы — залитый график частот. Точки — круглые огоньки. Осциллограф — сама звуковая волна, а не частоты. Пульс — громкость последних секунд бежит справа налево, удары видны всплесками. Круг — полосы расходятся лучами от круга, который дышит с басом.
+Bars — with a glow, a reflection and caps that rest at the highest point for a moment. LEDs — like the meter of a mixing desk. Wave — smooth, mirrored around its middle. Mountains — a filled graph of the frequencies. Dots — round lights. Oscilloscope — the sound wave itself, not the frequencies. Pulse — the loudness of the last seconds runs from right to left, beats show as spikes. Circle — the bars shoot out like rays from a circle that breathes with the bass.
+
+Что показывать
+What to show
+
+Весь звук — как раньше: протяжный голос и подложка тоже держат полосы. Баланс — у каждой полосы свой размах, а удары добавляются сверху: подходит к песням с голосом. Ритм — почти только удары: полосы прыгают в такт и падают между ударами.
+All the sound — as before: a held voice and pads hold the bars up too. Balance — every band has its own range and the hits are added on top: suits songs with singing. Rhythm — almost only the hits: the bars jump on the beat and fall in between.
+
+Чувствительность
+Sensitivity
+
+%d %%
+%d %%
+
+Скорость падения
+Falling speed
+
+медленно
+slow
+
+быстро
+fast
+
+обычно
+normal
+
+Визуализатор попадает в такт
+The visualizer follows the beat
+
+Новый режим «Баланс» (он теперь по умолчанию): у каждой полосы свой размах, а удары — то, что резко громче последних долей секунды, — добавляются сверху. Протяжный голос больше не превращает картинку в ровную стену. Есть режим «Ритм» — почти только удары, новый вид «Круг», чувствительность, скорость падения и высота.
+A new "Balance" mode (now the default): every band has its own range, and the hits — what is suddenly louder than the last fractions of a second — are added on top. A held voice no longer turns the picture into a flat wall. There is also a "Rhythm" mode with almost only the hits, a new "Circle" look, sensitivity, falling speed and height.
+
+К визуализатору
+To the visualizer
+
+Выбрать все песни исполнителя
+Choose all songs of an artist
+
+При выборе нескольких песен есть кнопки «Исполнитель…», «Альбом…», «Год…» и «Формат…»: список с количеством песен, нажатие выбирает их все. В поиске — «Выбрать все найденные», в фильтрах — «Ни разу не слушал».
+When choosing several songs there are "Artist…", "Album…", "Year…" and "Format…" buttons: a list with the number of songs, a tap chooses them all. In search — "Choose all found", among the filters — "Never played".

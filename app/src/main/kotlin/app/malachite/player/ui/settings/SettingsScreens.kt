@@ -600,7 +600,26 @@ fun SettingsPlaybackScreen() {
                         FilterChip(s.visualizerStyle == v, { up { it.copy(visualizerStyle = v) } }, label = { Text(v.title) })
                     }
                 }
-                Hint(tr("Полосы — со свечением, отражением и «шапочками», которые ненадолго задерживаются на самой высокой точке. Светодиоды — как индикатор на пульте. Волна — плавная, отражённая от середины. Горы — залитый график частот. Точки — круглые огоньки. Осциллограф — сама звуковая волна, а не частоты. Пульс — громкость последних секунд бежит справа налево, удары видны всплесками."))
+                Hint(tr("Полосы — со свечением, отражением и «шапочками», которые ненадолго задерживаются на самой высокой точке. Светодиоды — как индикатор на пульте. Волна — плавная, отражённая от середины. Горы — залитый график частот. Точки — круглые огоньки. Осциллограф — сама звуковая волна, а не частоты. Пульс — громкость последних секунд бежит справа налево, удары видны всплесками. Круг — полосы расходятся лучами от круга, который дышит с басом."))
+                if (s.visualizerStyle != app.malachite.player.data.VisualizerStyle.SCOPE && s.visualizerStyle != app.malachite.player.data.VisualizerStyle.PULSE) {
+                    Text(tr("Что показывать"), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 6.dp))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        app.malachite.player.data.VisualizerReact.entries.forEach { r ->
+                            FilterChip(s.visualizerReact == r, { up { it.copy(visualizerReact = r) } }, label = { Text(r.title) })
+                        }
+                    }
+                    Hint(tr("Весь звук — как раньше: протяжный голос и подложка тоже держат полосы. Баланс — у каждой полосы свой размах, а удары добавляются сверху: подходит к песням с голосом. Ритм — почти только удары: полосы прыгают в такт и падают между ударами."))
+                    SliderRow(
+                        tr("Чувствительность"), s.visualizerSensitivity, 0.5f..2f, { tr("%d %%").format((it * 100).toInt()) },
+                    ) { v -> up { it.copy(visualizerSensitivity = (v * 20).toInt() / 20f) } }
+                    SliderRow(
+                        tr("Скорость падения"), s.visualizerFall, 0.4f..2.5f,
+                        { v -> when { v < 0.8f -> tr("медленно"); v > 1.4f -> tr("быстро"); else -> tr("обычно") } },
+                    ) { v -> up { it.copy(visualizerFall = (v * 10).toInt() / 10f) } }
+                }
+                SliderRow(
+                    tr("Высота"), s.visualizerHeightDp.toFloat(), 64f..160f, { tr("${it.toInt()} dp") }, steps = 5,
+                ) { v -> up { it.copy(visualizerHeightDp = v.toInt()) } }
                 val byBands = s.visualizerStyle != app.malachite.player.data.VisualizerStyle.SCOPE && s.visualizerStyle != app.malachite.player.data.VisualizerStyle.PULSE
                 if (byBands) {
                     Text(tr("Расположение"), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 6.dp))

@@ -106,3 +106,29 @@ fun songsByName(track: (String) -> TrackInfo?): app.malachite.player.ui.componen
         tr("Название") to { k: String -> listOfNotNull(track(k)?.displayTitle) },
     ),
 )
+
+/**
+ * "Choose by artist / album / year / format" for a list of songs (the songs of one artist in two
+ * taps); [key] turns a song into the key of the list. Spellings of one name count as one.
+ */
+fun songGroups(tracks: List<TrackInfo>, key: (Int, TrackInfo) -> String = { _, t -> t.path }): List<app.malachite.player.ui.components.GroupChoice> {
+    fun by(title: String, newestFirst: Boolean = false, label: (TrackInfo) -> String?) = app.malachite.player.ui.components.GroupChoice(title) {
+        // one entry per name however it is written ("Кино", "КИНО"); shown as most songs write it
+        val keys = LinkedHashMap<String, MutableList<String>>()
+        val spellings = HashMap<String, HashMap<String, Int>>()
+        tracks.forEachIndexed { i, t ->
+            val name = label(t)?.trim()?.takeIf { it.isNotEmpty() } ?: return@forEachIndexed
+            val fold = app.malachite.core.text.TextFold.strictKey(name).ifEmpty { name }
+            keys.getOrPut(fold) { ArrayList() } += key(i, t)
+            spellings.getOrPut(fold) { HashMap() }.merge(name, 1, Int::plus)
+        }
+        val list = keys.map { (fold, k) -> (spellings[fold]?.maxByOrNull { it.value }?.key ?: fold) to k.toList() }
+        if (newestFirst) list.sortedByDescending { it.first } else list.sortedBy { app.malachite.core.text.TextFold.strictKey(it.first) }
+    }
+    return listOf(
+        by(tr("Исполнитель")) { it.displayArtist },
+        by(tr("Альбом")) { t -> t.album.takeIf { it.isNotBlank() }?.let { a -> if (t.groupArtist.isBlank()) a else "$a — ${t.groupArtist}" } },
+        by(tr("Год"), newestFirst = true) { t -> app.malachite.core.library.LibraryLayout.reliableYear(t.year) },
+        by(tr("Формат")) { t -> t.extension.uppercase() },
+    )
+}

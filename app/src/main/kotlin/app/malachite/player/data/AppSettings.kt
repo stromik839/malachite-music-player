@@ -114,6 +114,19 @@ enum class VisualizerStyle(val title: String) {
     SCOPE(tr("Осциллограф")),
     /** The loudness of the last seconds running across: every beat a spike. */
     PULSE(tr("Пульс")),
+    /** The bands around a circle (each twice, mirrored), a disc in the middle breathing with the bass. */
+    CIRCLE(tr("Круг")),
+}
+
+/** What the visualizer follows. */
+@Serializable
+enum class VisualizerReact(val title: String) {
+    /** All the sound as it is: steady voices and pads fill the bars too. */
+    SOUND(tr("Весь звук")),
+    /** Each band within its own range, and the hits on top: follows songs with singing well. */
+    BALANCED(tr("Баланс")),
+    /** Mostly the hits (drums, plucks): the bars jump on the beat and fall between. */
+    BEAT(tr("Ритм")),
 }
 
 /** In which order the bands stand in the visualizer. */
@@ -379,6 +392,12 @@ data class AppSettings(
     val visualizerOrder: VisualizerOrder = VisualizerOrder.FREQUENCY,
     /** How long the visualizer takes to appear when the music starts and to go when it stops (ms). */
     val visualizerFadeMs: Int = 900,
+    val visualizerReact: VisualizerReact = VisualizerReact.BALANCED,
+    /** How high the bars go for the same sound (1: as measured). */
+    val visualizerSensitivity: Float = 1f,
+    /** How fast the bars fall back (1: like a dropped thing; less: slower, more: faster). */
+    val visualizerFall: Float = 1f,
+    val visualizerHeightDp: Int = 96,
     /** The DJ mixer in front of the speaker (Equalizer screen) and where its knobs stand. */
     val mixerOn: Boolean = true,
     val mixer: app.malachite.player.playback.MixerKnobs = app.malachite.player.playback.MixerKnobs(),

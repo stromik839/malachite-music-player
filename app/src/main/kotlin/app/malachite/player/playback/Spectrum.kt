@@ -26,6 +26,12 @@ import kotlin.math.sin
  *    little room left above;
  *  - a beat – a band suddenly louder than a moment ago – kicks the bar up.
  *
+ * "Balance" and "Rhythm" ([react]) follow a song with singing far better: a voice or a pad holds a
+ * band at the same level for a long time, and against the loudest band such a wall barely moves.
+ * There every band also has its own range (its own quietest and loudest of the last seconds), and
+ * what is a hit – louder than the band's median of the last fifth of a second, which a held voice
+ * is not – is added on top, with a common kick when the bass hits.
+ *
  * The sound is decoded well before it is heard (the phone keeps a fraction of a second of it in its
  * output buffer, more or less on every phone). So every window is stamped with its place in the
  * stream (the time the player gave its sound), and the audio output says which place is coming out
@@ -59,6 +65,21 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
 
     /** The playback speed: at 2x a window is heard in half the time. */
     @Volatile var speed = 1f
+
+    /** What the bands follow: 0 all the sound, 1 balance (own ranges and hits), 2 mostly the hits. */
+    @Volatile var react = 1
+
+    /** How many past levels of a band the "is this a hit" median looks at (about 0.2 s). */
+    private const val HISTORY = 9
+    /** The bands of the bass (about 40–150 Hz): their hits kick all the bars. */
+    private const val BASS_BANDS = 8
+    private val history = Array(BANDS) { FloatArray(HISTORY) }
+    private var historyAt = 0
+    private var historyCount = 0
+    private val sorting = FloatArray(HISTORY)
+    // each band's own range: its loudest and its quietest of the last seconds (dB)
+    private val bandTop = FloatArray(BANDS) { -40f }
+    private val bandFloor = FloatArray(BANDS) { -80f }
 
     private var rate = 44_100
     private var channels = 2
@@ -122,6 +143,8 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
             monoCount = 0
             fresh = true
             written = 0L
+            historyCount = 0
+            historyAt = 0
             startUs = Long.MIN_VALUE
             framesSince = 0L
             sumL = 0.0; sumR = 0.0; peakL = 0f; peakR = 0f; counted = 0
@@ -221,6 +244,8 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
         // the power of a full-scale sine in one bin
         val ref = (SIZE / 4f) * (SIZE / 4f)
         val level = FloatArray(BANDS)
+        // the level of this very window, not smoothed: a hit is sharp
+        val raw = FloatArray(BANDS)
         var loudest = -120f
         for (k in 0 until BANDS) {
             val from = edges[k]
@@ -230,6 +255,7 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
             val power = sum / ref
             smooth[k] = if (fresh) power else 0.5f * power + 0.5f * smooth[k]
             level[k] = db(smooth[k]) + tilt[k]
+            raw[k] = db(power) + tilt[k]
             if (level[k] > loudest) loudest = level[k]
         }
         // the top follows the loudest band up at once and comes down about 6 dB in 3 s
@@ -237,13 +263,51 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
         top = if (loudest > top) loudest else top - 6f * secs / 3f
         top = max(top, -45f)
         val floor = top + HEADROOM_DB - RANGE_DB
-        for (k in 0 until BANDS) {
-            val v = ((level[k] - floor) / RANGE_DB).coerceIn(0f, 1f)
-            val beat = if (fresh) 0f else ((level[k] - previous[k] - 2f) / 10f).coerceAtLeast(0f)
-            previous[k] = level[k]
-            val value = if (level[k] < -70f) 0f else (Math.pow(v.toDouble(), 1.6).toFloat() + beat).coerceIn(0f, 1f)
-            // broken samples must not turn into NaN bars
-            out[k] = if (value.isNaN()) 0f else value
+        val mode = react
+        if (mode == 0) {
+            for (k in 0 until BANDS) {
+                val v = ((level[k] - floor) / RANGE_DB).coerceIn(0f, 1f)
+                val beat = if (fresh) 0f else ((level[k] - previous[k] - 2f) / 10f).coerceAtLeast(0f)
+                previous[k] = level[k]
+                val value = if (level[k] < -70f) 0f else (Math.pow(v.toDouble(), 1.6).toFloat() + beat).coerceIn(0f, 1f)
+                // broken samples must not turn into NaN bars
+                out[k] = if (value.isNaN()) 0f else value
+            }
+        } else {
+            val hit = FloatArray(BANDS)
+            val body = FloatArray(BANDS)
+            for (k in 0 until BANDS) {
+                // the band's own range: up at once, down slowly; never narrower than 15 dB
+                bandTop[k] = if (fresh || level[k] > bandTop[k]) level[k] else bandTop[k] - 4f * secs
+                bandFloor[k] = if (fresh || level[k] < bandFloor[k]) level[k] else bandFloor[k] + 3f * secs
+                if (bandTop[k] - bandFloor[k] < 15f) bandFloor[k] = bandTop[k] - 15f
+                val whole = ((level[k] - floor) / RANGE_DB).coerceIn(0f, 1f)
+                // a band far below the loudest is not blown up to the full height by its own range
+                val own = ((level[k] - bandFloor[k]) / (bandTop[k] - bandFloor[k])).coerceIn(0f, 1f) * (whole / 0.25f).coerceIn(0f, 1f)
+                body[k] = 0.5f * whole + 0.5f * own
+                // a hit: louder than the band's median of the last moments (a held voice is not)
+                hit[k] = if (historyCount < 4) 0f else {
+                    val n = min(historyCount, HISTORY)
+                    for (i in 0 until n) sorting[i] = history[k][i]
+                    java.util.Arrays.sort(sorting, 0, n)
+                    ((raw[k] - sorting[n / 2] - 1.5f) / 9f).coerceIn(0f, 1f) * (whole / 0.15f).coerceIn(0f, 1f)
+                }
+                history[k][historyAt] = raw[k]
+            }
+            historyAt = (historyAt + 1) % HISTORY
+            historyCount++
+            var kick = 0f
+            for (k in 0 until BASS_BANDS) kick += hit[k]
+            kick /= BASS_BANDS
+            for (k in 0 until BANDS) {
+                val value = when {
+                    level[k] < -70f -> 0f
+                    mode == 2 -> 0.2f * body[k] + 0.95f * hit[k] + 0.4f * kick
+                    else -> 0.7f * Math.pow(body[k].toDouble(), 1.3).toFloat() + 0.55f * hit[k] + 0.2f * kick
+                }.coerceIn(0f, 1f)
+                previous[k] = level[k]
+                out[k] = if (value.isNaN()) 0f else value
+            }
         }
         fresh = false
         // the meter: -48 dB … 0 dB as 0 … 1, the RMS and the peak of each channel

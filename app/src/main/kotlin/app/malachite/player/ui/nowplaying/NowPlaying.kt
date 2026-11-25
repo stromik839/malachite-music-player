@@ -270,11 +270,14 @@ private fun NowPlayingContent(t: TrackInfo, st: PlayerUiState) {
         if (settings.visualizer && !showLyrics) Visualizer(
             settings.visualizerStyle,
             settings.visualizerOrder,
-            Modifier.fillMaxWidth().height(96.dp).padding(top = 8.dp),
+            Modifier.fillMaxWidth().height(settings.visualizerHeightDp.coerceIn(48, 200).dp).padding(top = 8.dp),
             low = MaterialTheme.colorScheme.primary,
             high = MaterialTheme.colorScheme.tertiary,
             tip = androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onSurface, 0.7f),
             alpha = { barsShown },
+            react = settings.visualizerReact,
+            sensitivity = settings.visualizerSensitivity,
+            fall = settings.visualizerFall,
         )
     }
     val title: @Composable () -> Unit = {

@@ -165,7 +165,10 @@ fun TrackList(
     val batch = { songsActions(nav, chosen(), done = { sel.close() }, extra = extraActions(chosen())) }
     Column(Modifier.fillMaxSize()) {
         val byPath = remember(tracks) { tracks.associateBy { it.path } }
-        if (sel.active) app.malachite.player.ui.components.SelectionBar(sel, keys, remember(tracks) { songPicks(tracks) }, remember(byPath) { songsByName { byPath[it] } }, batch)
+        if (sel.active) app.malachite.player.ui.components.SelectionBar(
+            sel, keys, remember(tracks) { songPicks(tracks) }, remember(byPath) { songsByName { byPath[it] } }, batch,
+            groups = remember(tracks) { songGroups(tracks) },
+        )
         val listState = androidx.compose.foundation.lazy.rememberLazyListState()
         var menuFor by remember { mutableStateOf<String?>(null) }
         app.malachite.player.ui.components.SelectionMenu(menuFor != null, { menuFor = null }, tr("Выбрано: ${sel.size}"), batch)
@@ -228,9 +231,11 @@ enum class SongSort(val title: String) { TITLE(tr("По названию")), ART
 
 /** Narrowing a list of songs; several can be on at once. */
 enum class SongFilter(val title: String) {
-    FAVORITE(tr("Избранное")), WITH_LYRICS(tr("С текстом")), NO_LYRICS(tr("Без текста")), NO_COVER(tr("Без обложки")), NO_ALBUM(tr("Без альбома"));
+    FAVORITE(tr("Избранное")), WITH_LYRICS(tr("С текстом")), NO_LYRICS(tr("Без текста")), NO_COVER(tr("Без обложки")), NO_ALBUM(tr("Без альбома")),
+    NEVER_PLAYED(tr("Ни разу не слушал"));
 
     fun accepts(t: TrackInfo, u: app.malachite.core.library.TrackUserData): Boolean = when (this) {
+        NEVER_PLAYED -> u.playCount == 0
         FAVORITE -> u.favorite
         WITH_LYRICS -> u.lyricsId != null
         NO_LYRICS -> u.lyricsId == null && !u.noLyrics
@@ -246,6 +251,7 @@ fun songsDataKey(data: app.malachite.core.library.LibraryData, sort: SongSort, f
     if (sort == SongSort.ADDED) parts.add(data.tracks.mapValues { it.value.addedAt })
     if (sort == SongSort.PLAYS) parts.add(data.tracks.mapValues { it.value.playCount })
     if (SongFilter.FAVORITE in filters) parts.add(data.tracks.filterValues { it.favorite }.keys)
+    if (SongFilter.NEVER_PLAYED in filters) parts.add(data.tracks.filterValues { it.playCount > 0 }.keys)
     if (SongFilter.WITH_LYRICS in filters || SongFilter.NO_LYRICS in filters) {
         parts.add(data.tracks.mapValues { (it.value.lyricsId != null) to it.value.noLyrics })
     }
@@ -830,6 +836,7 @@ fun PlaylistDetailScreen(name: String) {
     if (sel.active) app.malachite.player.ui.components.SelectionBar(
         sel, keys, remember(list) { songPicks(list) { i, t -> "$i|${t.path}" } },
         remember(list) { songsByName { k -> list.getOrNull(k.substringBefore('|').toIntOrNull() ?: -1) } }, batch,
+        groups = remember(list) { songGroups(list) { i, t -> "$i|${t.path}" } },
     )
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     var menuFor by remember { mutableStateOf<String?>(null) }
@@ -1144,7 +1151,18 @@ fun SearchScreen() {
                         modifier = Modifier.clickable { nav.push(Screen.PlaylistDetail(p.name)) }, colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     )
                 }
-                if (songs.isNotEmpty()) SectionTitle(tr("Песни: ${songs.size}"))
+                if (songs.isNotEmpty()) {
+                    SectionTitle(tr("Песни: ${songs.size}"))
+                    // what was found can be chosen at once (then: to a playlist, healed, tagged…)
+                    val sel = app.malachite.player.ui.components.LocalListSelection.current
+                    if (sel != null && !sel.active && songs.size > 1) Row(Modifier.padding(horizontal = 12.dp)) {
+                        androidx.compose.material3.AssistChip(
+                            onClick = { sel.start(); sel.select(songs.map { it.path }) },
+                            label = { Text(tr("Выбрать все найденные")) },
+                            leadingIcon = { Icon(androidx.compose.material.icons.Icons.Filled.CheckBox, null, Modifier.size(18.dp)) },
+                        )
+                    }
+                }
                 if ((q.isNotEmpty() || filters.isNotEmpty()) && songs.isEmpty() && foundAlbums.isEmpty() && foundArtists.isEmpty() && foundPlaylists.isEmpty()) {
                     Text(tr("Ничего не найдено"), Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }

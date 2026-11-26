@@ -218,8 +218,9 @@ class HealingEngine(
         is HealTask.Compilations -> e.applyCompilations(t.list, tr("Разные исполнители"), p, c)
         is HealTask.Broken -> e.applyBroken(t.list, p, c)
         is HealTask.CoverQuality -> {
-            // light covers are made offline; better ones for small covers come from the internet
-            if (t.list.any { it.selected && !it.heavy }) waitForInternet(HealKind.COVER_QUALITY, p, c)
+            // light covers are made offline; better ones for small covers come from the internet.
+            // Personal photos never wait: without internet they are just taken out.
+            if (t.list.any { it.selected && !it.heavy && !it.photo }) waitForInternet(HealKind.COVER_QUALITY, p, c)
             e.applyCoverQuality(t.list, p, c)
         }
         is HealTask.Numbering -> e.applyTrackNumbers(t.list, p, c)
@@ -890,16 +891,50 @@ class HealingEngine(
         if (o.outWidth <= 0) return null
         // the same picture is the same bytes: a whole discography downloaded with one picture
         val crc = java.util.zip.CRC32().apply { update(bytes) }.value
-        return app.malachite.core.heal.CoverLook(o.outWidth, o.outHeight, bytes.size, "${bytes.size}-$crc")
+        return app.malachite.core.heal.CoverLook(o.outWidth, o.outHeight, bytes.size, "${bytes.size}-$crc", PicturePrint.of(bytes, o.outWidth, o.outHeight))
     }
 
-    /** Covers to fix among [tracks]: too small, too heavy, or one picture on several albums (not the ones the user picked). */
+    /**
+     * Pictures in the main folder that are the user's own photos: a camera's marks in them, or a
+     * big picture that is far from square (a photo, a page). The player itself used to copy such a
+     * photo next to the songs as "cover.jpg" (see FolderHints.coverImageIn). Playlist pictures
+     * and the player's own data are not looked at.
+     */
+    private fun personalPictures(): List<app.malachite.core.heal.PersonalPicture> {
+        val root = library.root ?: return emptyList()
+        val out = ArrayList<app.malachite.core.heal.PersonalPicture>()
+        root.walkTopDown()
+            .onEnter { d -> d == root || (!d.name.startsWith(".") && d.name != app.malachite.core.library.LibraryLayout.PLAYLISTS_DIR) }
+            .filter { it.isFile && it.extension.lowercase() in PICTURE_EXT }
+            .forEach { f ->
+                val facts = app.malachite.core.cover.ImageFacts.read(f) ?: return@forEach
+                val why = when {
+                    facts.camera -> tr("фото с камеры телефона")
+                    !facts.squarish && maxOf(facts.width, facts.height) >= 1000 -> tr("большая вытянутая картинка ${facts.width}×${facts.height} — похоже на фото или документ")
+                    else -> return@forEach
+                }
+                val rel = f.relativeTo(root).invariantSeparatorsPath
+                out += app.malachite.core.heal.PersonalPicture(rel, PicturePrint.of(f), why)
+            }
+        return out
+    }
+
+    /**
+     * Covers to fix among [tracks]: the user's own photos inside the songs (and lying in the main
+     * folder), too small, too heavy, or one picture on several albums (not the ones the user picked).
+     */
     private fun coverQualityPlan(tracks: List<app.malachite.core.library.TrackInfo>, data: app.malachite.core.library.LibraryData) =
-        HealPlanner.coverQuality(tracks, ::artworkInfo, chosen = { t ->
-            val u = data.user(t.path)
-            // before the mark existed a picked cover was known by where it came from (not a download's own picture)
-            u.coverChosen || (u.coverSource != null && u.coverSource !in DOWNLOAD_COVER_SOURCES)
-        })
+        HealPlanner.coverQuality(
+            tracks, ::artworkInfo,
+            chosen = { t ->
+                val u = data.user(t.path)
+                // before the mark existed a picked cover was known by where it came from (not a download's own picture)
+                u.coverChosen || (u.coverSource != null && u.coverSource !in DOWNLOAD_COVER_SOURCES)
+            },
+            personal = personalPictures(),
+            sameAsPhoto = { tr("личное фото — та же картинка, что ${it.path}") },
+            tallPicture = tr("вытянутая картинка — похоже на фото или документ, а не на обложку"),
+        )
 
     private val albumTracks by lazy { app.malachite.core.cover.AlbumTracks(app.malachite.player.MalachiteApp.graph.http) }
 
@@ -1099,7 +1134,7 @@ class HealingEngine(
                 // one picture on several albums is seen only among all of them, so the whole library is looked at
                 val plan = coverQualityPlan(all, data())
                     .mapNotNull { i -> if (chosen == null) i else i.paths.filter(::mine).takeIf { it.isNotEmpty() }?.let { i.copy(paths = it) } }
-                if (plan.any { !it.heavy }) waitForInternet(HealKind.COVER_QUALITY, p, c)
+                if (plan.any { !it.heavy && !it.photo }) waitForInternet(HealKind.COVER_QUALITY, p, c)
                 e.applyCoverQuality(plan, p, c)
             }
             HealKind.TRACK_NUMBERS -> {
@@ -1119,6 +1154,7 @@ class HealingEngine(
     companion object {
         /** Catalogues whose own picture comes with a downloaded song (see the online section). */
         private val DOWNLOAD_COVER_SOURCES = setOf("Internet Archive", "Audius", "Deezer")
+        private val PICTURE_EXT = setOf("jpg", "jpeg", "png", "webp", "bmp")
 
         fun title(k: HealKind) = when (k) {
             HealKind.FORMATS -> tr("форматы файлов")

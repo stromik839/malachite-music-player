@@ -55,12 +55,35 @@ data class CoverIssue(
      * with one picture, a site's logo on every file): the album's own cover is looked for online.
      */
     val sharedBy: Int = 0,
+    /**
+     * Not a cover at all: the user's own photo or a picture of a document that got into the songs
+     * (the same picture as a camera photo lying in the main folder, or a tall picture no album has).
+     * Applied: a real cover found online takes its place, otherwise the picture is taken out.
+     */
+    val photo: Boolean = false,
+    /** Why [photo]: shown next to it. */
+    val why: String = "",
+    /** Picture files inside the main folder (relative paths) that are personal photos: put into the player's trash. */
+    val files: List<String> = emptyList(),
 ) {
     val shared get() = sharedBy > 1
 }
 
 /** What a song's cover is: its size in pixels and in bytes, and a fingerprint of the picture. */
-data class CoverLook(val width: Int, val height: Int, val bytes: Int, val hash: String = "")
+data class CoverLook(
+    val width: Int,
+    val height: Int,
+    val bytes: Int,
+    val hash: String = "",
+    /** A 64-bit print of what the picture looks like (8×8, lighter or darker than its average); 0: unknown. */
+    val print: Long = 0L,
+)
+
+/** A picture file in the main folder that is a personal photo (see [app.malachite.core.cover.ImageFacts]). */
+data class PersonalPicture(val path: String, val print: Long, val why: String)
+
+/** How many of the 64 squares of two prints differ: up to about 8 it is the same picture, resized or recompressed. */
+fun printDistance(a: Long, b: Long): Int = java.lang.Long.bitCount(a xor b)
 
 /** "01 - Песня": the number belongs to the track number, not to the title. */
 @kotlinx.serialization.Serializable
@@ -381,6 +404,11 @@ object HealPlanner {
         maxSide: Int = 2000,
         maxBytes: Int = 1_000_000,
         chosen: (TrackInfo) -> Boolean = { false },
+        /** Personal photos lying in the main folder: they and the songs carrying them are fixed. */
+        personal: List<PersonalPicture> = emptyList(),
+        /** The words shown for a song carrying [personal]'s picture, and for a tall picture. */
+        sameAsPhoto: (PersonalPicture) -> String = { "same picture as ${it.path}" },
+        tallPicture: String = "a tall picture: a photo or a document, not a cover",
     ): List<CoverIssue> {
         val albums = tracks.filter { it.hasArtwork }
             .groupBy { if (it.album.isBlank()) "song|" + it.path else TextFold.strictKey(it.groupArtist) + "|" + TextFold.strictKey(it.album) }
@@ -389,9 +417,22 @@ object HealPlanner {
         val sharing = albums.filter { (_, ts, look) -> look.hash.isNotEmpty() && ts.none(chosen) }
             .groupBy { it.third.hash }
             .mapValues { (_, list) -> list.map { (_, ts, _) -> ts.first().album.let { a -> if (a.isBlank()) "song|" + ts.first().path else TextFold.strictKey(a) } }.distinct().size }
-        return albums.mapNotNull { (key, ts, look) ->
+        val songs = albums.mapNotNull { (key, ts, look) ->
             val first = ts.first()
             val (w, h, size) = Triple(look.width, look.height, look.bytes)
+            // The user's own photo inside the songs: the same picture as a camera photo in the main
+            // folder, or a picture much taller than wide (no album cover is; a photo of a page is)
+            val photoOf = if (look.print == 0L) null else personal.firstOrNull { it.print != 0L && printDistance(it.print, look.print) <= SAME_PICTURE }
+            val tall = w > 0 && h > w * TALL_RATIO
+            if (photoOf != null || (tall && ts.none(chosen))) {
+                return@mapNotNull CoverIssue(
+                    id = "cq|$key", artist = first.groupArtist, album = first.album, title = first.displayTitle,
+                    paths = ts.map { it.path }, width = w, height = h, bytes = size, heavy = false,
+                    photo = true, why = if (photoOf != null) sameAsPhoto(photoOf) else tallPicture,
+                    // a tall picture may still be a poster the user wants: they tick it themselves
+                    selected = photoOf != null,
+                )
+            }
             val small = maxOf(w, h) in 1 until minSide
             val heavy = size > maxBytes || maxOf(w, h) > maxSide
             val sharedBy = if (ts.any(chosen)) 0 else sharing[look.hash] ?: 0
@@ -402,7 +443,23 @@ object HealPlanner {
                 sharedBy = if (sharedBy >= 2) sharedBy else 0,
             )
         }
+        // the photos themselves, wherever they lie in the main folder, go to the trash
+        val files = personal.map { p ->
+            CoverIssue(
+                id = "photo|${p.path}", artist = "", album = "", title = p.path.substringAfterLast('/'),
+                paths = emptyList(), width = 0, height = 0, bytes = 0, heavy = false,
+                photo = true, why = p.why, files = listOf(p.path),
+            )
+        }
+        // the personal photos first: they are what matters most
+        return songs.filter { it.photo } + files + songs.filter { !it.photo }
     }
+
+    /** Prints this close are the same picture (resized, recompressed). */
+    const val SAME_PICTURE = 8
+
+    /** A picture this much taller than wide is not a cover. */
+    const val TALL_RATIO = 1.3
 
     // ------------------------------------------------------------------ track numbers
 
@@ -616,9 +673,10 @@ object HealPlanner {
      */
     fun covers(tracks: List<TrackInfo>, root: java.io.File? = null, data: LibraryData? = null): List<CoverJob> {
         fun imageFor(ts: List<TrackInfo>, title: String?, album: String? = null): String? {
+            // Only the songs' own folders inside the main folder. The folders they were imported
+            // from are the user's own (downloads, messengers, photos): never looked into.
             val dirs = LinkedHashSet<java.io.File>()
             ts.forEach { t -> root?.let { dirs += java.io.File(it, t.path).parentFile } }
-            ts.forEach { t -> data?.user(t.path)?.importedFrom?.let { dirs += java.io.File(it).parentFile } }
             for (d in dirs) app.malachite.core.library.FolderHints.coverImageIn(d, title, album)?.let { return it.absolutePath }
             return null
         }

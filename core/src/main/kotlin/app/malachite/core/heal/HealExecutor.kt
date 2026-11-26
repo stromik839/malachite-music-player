@@ -408,8 +408,9 @@ class HealExecutor(
         val r = loop(HealKind.COVERS, jobs, progress, cancelled, { "${it.artist} — ${it.album.ifBlank { it.title }}" }) { job ->
             var hint: TagSuggestion? = null
             val art: TagEdit.Artwork? = job.imageFile?.let { img ->
-                // a picture lying next to the songs: only from inside the main folder
-                File(img).takeIf { app.malachite.core.fs.PathGuard.inside(root, it) }
+                // a picture lying next to the songs: only from inside the main folder, and only
+                // one that is a cover (square-ish, not a camera's photo) – checked again here
+                File(img).takeIf { app.malachite.core.fs.PathGuard.inside(root, it) && app.malachite.core.cover.ImageFacts.read(it)?.coverLike == true }
                     ?.let { runCatching { it.readBytes() }.getOrNull() }?.let { imagePrep.prepare(it) }
             } ?: job.donor?.let { d ->
                 TagIO.readArtwork(file(d))?.let { imagePrep.prepare(it) }
@@ -511,6 +512,8 @@ class HealExecutor(
     fun applyCoverQuality(issues: List<CoverIssue>, progress: (HealProgress) -> Unit = {}, cancelled: () -> Boolean = { false }): HealReport {
         val r = loop(HealKind.COVER_QUALITY, issues.filter { it.selected }, progress, cancelled, { "${it.artist} — ${it.album.ifBlank { it.title }}" }) { issue ->
             val name = issue.album.ifBlank { issue.title }
+            if (issue.files.isNotEmpty()) return@loop putAwayPhotos(issue.files)
+            if (issue.photo) return@loop replacePhoto(issue, name)
             val art = if (issue.heavy) {
                 TagIO.readArtwork(file(issue.paths.first()))?.let { imagePrep.prepare(it) }
             } else {
@@ -541,6 +544,39 @@ class HealExecutor(
         }
         finish(r)
         return r
+    }
+
+    /** Personal photos that got into the main folder go to the player's trash (they can be brought back from there). */
+    private fun putAwayPhotos(files: List<String>): HealReport {
+        var rep = HealReport(HealKind.COVER_QUALITY)
+        for (rel in files) {
+            val f = File(root, rel)
+            if (!app.malachite.core.fs.PathGuard.inside(root, f)) continue
+            rep += when (val res = safe.trash(f, root)) {
+                is SafeFiles.Result.Ok -> HealReport(HealKind.COVER_QUALITY, changed = 1, log = listOf(tr("$rel: личное фото убрано из главной папки в корзину плеера")))
+                is SafeFiles.Result.Skipped -> HealReport(HealKind.COVER_QUALITY, skipped = 1, log = listOf("$rel: ${res.reason}"))
+                is SafeFiles.Result.Failed -> HealReport(HealKind.COVER_QUALITY, failed = 1, log = listOf("$rel: ${res.reason}"))
+            }
+        }
+        return rep
+    }
+
+    /**
+     * A personal photo inside songs: the album's (or the song's) real cover takes its place when
+     * one is found online with confidence; otherwise the picture is just taken out of the files.
+     */
+    private fun replacePhoto(issue: CoverIssue, name: String): HealReport {
+        val single = issue.paths.singleOrNull()
+        val dur = single?.let { index[it]?.durationMs } ?: 0L
+        val found = runCatching {
+            covers.best(issue.artist, issue.album, issue.title, dur, "")?.let { best -> covers.download(best)?.let { imagePrep.prepare(it, best.square) } }
+        }.getOrNull()
+        var rep = HealReport(HealKind.COVER_QUALITY)
+        for (p in issue.paths) {
+            rep += if (found != null) writeOne(HealKind.COVER_QUALITY, p, TagEdit(artwork = found), tr("личное фото заменено обложкой ${found.width}×${found.height}"))
+            else writeOne(HealKind.COVER_QUALITY, p, TagEdit(removeArtwork = true), tr("личное фото убрано из файла"))
+        }
+        return rep
     }
 
     /** Gives every song of the chosen compilations one album artist, so that the album is whole again. */

@@ -6,6 +6,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -139,6 +143,11 @@ fun HealScreen() {
     val st by g.healing.state.collectAsState()
     val settings by g.settings.state.collectAsState()
     var open by rememberSaveable { mutableStateOf<String?>(null) }
+    // a check asked for from elsewhere ("What's new" → check the covers): its section opens
+    val asked = HealFocus.kind.value
+    androidx.compose.runtime.LaunchedEffect(asked) {
+        if (asked != null) { open = asked.name; HealFocus.kind.value = null }
+    }
     var choose by remember { mutableStateOf(false) }
     if (choose) HealChoiceDialog(null) { choose = false }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -193,6 +202,18 @@ fun HealScreen() {
                 }
             }
         }
+    }
+}
+
+/** A section of this screen to open when it is shown next (set before switching to the tab). */
+object HealFocus {
+    val kind = mutableStateOf<HealKind?>(null)
+
+    /** Starts the check of [k] and opens its section on the healing tab. */
+    fun check(k: HealKind, nav: app.malachite.player.ui.Navigator) {
+        MalachiteApp.graph.healing.analyze(k)
+        kind.value = k
+        nav.openTab(app.malachite.player.data.Tab.HEAL)
     }
 }
 
@@ -727,7 +748,12 @@ private fun CoverQualityPlan() {
     if (plan.isEmpty()) return AllGood()
     val selected = plan.filter { it.selected }
     val shared = plan.count { it.shared }
-    Text(tr("Мелких: ${plan.count { !it.heavy && !it.shared }}, тяжёлых: ${plan.count { it.heavy }}. Мелкие заменяются, только если в интернете нашлась обложка больше."))
+    val photos = plan.count { it.photo }
+    if (photos > 0) Text(
+        tr("Похоже на личные фото и документы: $photos. Картинки из главной папки уходят в корзину плеера (их можно вернуть), из песен фото убирается — если в интернете нашлась настоящая обложка, она встаёт на его место. Проверьте отмеченное по миниатюрам. Прежние копии файлов с фото внутри лежат в корзине и копиях плеера, пока их не очистить: Настройки → «Перенос и резервные копии»."),
+        color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
+    )
+    Text(tr("Мелких: ${plan.count { !it.heavy && !it.shared && !it.photo }}, тяжёлых: ${plan.count { it.heavy }}. Мелкие заменяются, только если в интернете нашлась обложка больше."))
     if (shared > 0) Text(
         tr("Одна картинка на разные альбомы: $shared. Так бывает, когда вся дискография скачана с одной картинкой или сайт вшил свой логотип в каждый файл. Для каждого альбома ищется своя обложка — так же, как при ручной замене; если уверенной не нашлось, остаётся как есть. Обложки, выбранные вами вручную, не трогаются."),
         style = MaterialTheme.typography.bodySmall,
@@ -735,18 +761,55 @@ private fun CoverQualityPlan() {
     plan.take(200).forEachIndexed { i, c ->
         Row(verticalAlignment = Alignment.CenterVertically) {
             androidx.compose.material3.Checkbox(c.selected, { v -> g.healing.updateCoverIssues(plan.toMutableList().also { it[i] = c.copy(selected = v) }) })
+            // what will be taken away is shown: the user sees it is their photo before it goes
+            if (c.photo) {
+                if (c.files.isNotEmpty()) FilePicture(c.files.first())
+                else app.malachite.player.ui.components.CoverImage(g.library.track(c.paths.first()), size = 44.dp, corner = 6.dp)
+                Spacer(Modifier.width(8.dp))
+            }
             Column(Modifier.weight(1f)) {
-                Text("${c.artist} — ${c.album.ifBlank { c.title }}", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(if (c.files.isNotEmpty()) c.files.first() else "${c.artist} — ${c.album.ifBlank { c.title }}", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                val files = if (c.paths.isNotEmpty()) " • " + tr("файлов: ${c.paths.size}") else ""
                 Text(
-                    "${c.width}×${c.height}, %.1f МБ • ".format(c.bytes / 1_000_000.0) +
+                    if (c.photo) c.why + files
+                    else "${c.width}×${c.height}, %.1f МБ • ".format(c.bytes / 1_000_000.0) +
                         (when { c.heavy -> tr("тяжёлая — уменьшить"); c.shared -> tr("та же, что у альбомов: ${c.sharedBy} — найти свою"); else -> tr("мелкая — найти больше") }) +
-                        " • " + tr("файлов: ${c.paths.size}"),
-                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        files,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (c.photo) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
     }
     Button(enabled = selected.isNotEmpty(), onClick = { g.healing.applyCoverQuality(plan) }) { Text(tr("Исправить отмеченные (${selected.size})")) }
+}
+
+/** A small picture of a file in the main folder (read off the main thread). */
+@Composable
+private fun FilePicture(rel: String) {
+    val g = MalachiteApp.graph
+    val bmp by androidx.compose.runtime.produceState<android.graphics.Bitmap?>(null, rel) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching {
+                val f = java.io.File(g.library.root ?: return@runCatching null, rel)
+                val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                android.graphics.BitmapFactory.decodeFile(f.absolutePath, bounds)
+                var sample = 1
+                while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= 120) sample *= 2
+                android.graphics.BitmapFactory.decodeFile(f.absolutePath, android.graphics.BitmapFactory.Options().apply { inSampleSize = sample })
+            }.getOrNull()
+        }
+    }
+    androidx.compose.foundation.layout.Box(
+        Modifier.size(44.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        bmp?.let {
+            androidx.compose.foundation.Image(
+                it.asImageBitmap(), null, Modifier.matchParentSize(),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+            )
+        }
+    }
 }
 
 @Composable

@@ -5409,3 +5409,36 @@ All lists are in the usual order, without filters
 
 Сбросить сортировку и фильтры везде
 Reset sorting and filters everywhere
+
+фото с камеры телефона
+a photo from a phone camera
+
+большая вытянутая картинка {}×{} — похоже на фото или документ
+a big elongated picture {}×{} — looks like a photo or a document
+
+личное фото — та же картинка, что {}
+a personal photo — the same picture as {}
+
+вытянутая картинка — похоже на фото или документ, а не на обложку
+a tall picture — looks like a photo or a document, not a cover
+
+Похоже на личные фото и документы: {}. Картинки из главной папки уходят в корзину плеера (их можно вернуть), из песен фото убирается — если в интернете нашлась настоящая обложка, она встаёт на его место. Проверьте отмеченное по миниатюрам. Прежние копии файлов с фото внутри лежат в корзине и копиях плеера, пока их не очистить: Настройки → «Перенос и резервные копии».
+Looks like personal photos and documents: {}. Pictures in the main folder go to the player's trash (they can be brought back); the photo is taken out of the songs, and a real cover found online takes its place. Check the ticked ones by their thumbnails. Earlier copies of the files with the photo inside stay in the player's trash and backups until they are cleared: Settings → "Moving and backups".
+
+Ваши фото больше не становятся обложками
+Your photos no longer become covers
+
+Если у песни не было обложки, плеер брал картинку из папки, где песня лежала, — и мог взять фото или снимок документа с безымянным именем («IMG_…»), скопировать его в главную папку как «cover.jpg» и вшить в песни. Теперь картинка из папки становится обложкой, только если она так названа («cover», «folder», «обложка» или как альбом), почти квадратная и не снята камерой, а папки фото, загрузок и мессенджеров не просматриваются вовсе. Проверка «Качество обложек» находит уже попавшие фото: картинки — в корзину плеера, из песен — убрать или заменить настоящей обложкой.
+When a song had no cover, the player took a picture from the folder the song lay in — and could take a photo or a picture of a document with a nameless name ("IMG_…"), copy it into the main folder as "cover.jpg" and embed it into songs. Now a picture from a folder becomes a cover only when it is named so ("cover", "folder", "обложка" or like the album), is nearly square and was not taken by a camera; folders of photos, downloads and messengers are not looked into at all. The "Cover quality" check finds the photos that got in: pictures go to the player's trash, and in songs they are taken out or replaced by a real cover.
+
+Проверить сейчас
+Check now
+
+{}: личное фото убрано из главной папки в корзину плеера
+{}: a personal photo moved out of the main folder into the player's trash
+
+личное фото заменено обложкой {}×{}
+personal photo replaced by a cover {}×{}
+
+личное фото убрано из файла
+personal photo taken out of the file

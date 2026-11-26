@@ -165,28 +165,56 @@ object FolderHints {
     private val IMAGE_EXT = setOf("jpg", "jpeg", "png", "webp", "bmp")
     private val COVER_NAMES = Regex("^(cover|folder|front|albumart[a-z_]*|album|обложка)$", RegexOption.IGNORE_CASE)
 
+    /** "6439b2e9….1000x1000x1.jpg": a cover a store gave with its size in the name. */
+    private val SIZED = Regex("\\d{3,}x\\d{3,}")
+
     /**
-     * A picture lying next to the songs that is the cover: "cover.jpg", "folder.png", the only
-     * picture of an album folder, or a picture named like the song ("БудетЛучше.jpg" for
-     * "Будет лучше"). Tiny thumbnails are ignored.
+     * Folders of the phone's own pictures and documents: nothing in them is ever a cover, and they
+     * are not looked into at all.
+     */
+    private val PERSONAL_FOLDERS = setOf(
+        "dcim", "camera", "pictures", "photos", "screenshots", "screen recordings", "documents", "download", "downloads",
+        "telegram images", "telegram documents", "whatsapp images", "whatsapp documents", "vk", "bluetooth",
+        "фото", "фотографии", "скриншоты", "документы", "загрузки", "изображения",
+    )
+
+    /** Whether [dir] is (or lies in) a folder of the phone's own pictures and documents. */
+    fun isPersonalFolder(dir: java.io.File): Boolean {
+        var d: java.io.File? = dir
+        var depth = 0
+        while (d != null && depth < 4) {
+            if (d.name.lowercase().trim() in PERSONAL_FOLDERS) return true
+            d = d.parentFile
+            depth++
+        }
+        return false
+    }
+
+    /**
+     * A picture lying next to the songs that is their cover – only when its name says so
+     * ("cover.jpg", "folder.png", "front.jpg", "обложка.jpg", one named like the album or the song,
+     * one with its size in the name) AND it is what a cover is: square-ish and not a photo out
+     * of a camera. A photo of a document or of a person lying in the same folder used to become
+     * the cover of songs: any picture without a word in its name ("IMG_20251125_….jpg") was taken.
      */
     fun coverImageIn(dir: java.io.File?, songTitle: String? = null, albumName: String? = null): java.io.File? {
-        val images = dir?.listFiles { f -> f.isFile && f.extension.lowercase() in IMAGE_EXT && f.length() in 8_000..15_000_000 }
+        if (dir == null || isPersonalFolder(dir)) return null
+        val images = dir.listFiles { f -> f.isFile && f.extension.lowercase() in IMAGE_EXT && f.length() in 8_000..15_000_000 }
             ?.toList().orEmpty()
         if (images.isEmpty()) return null
+        val named = ArrayList<java.io.File>()
         if (!songTitle.isNullOrBlank()) {
             val key = TextFold.strictKey(songTitle)
-            images.firstOrNull { TextFold.strictKey(it.nameWithoutExtension) == key }?.let { return it }
+            named += images.filter { TextFold.strictKey(it.nameWithoutExtension) == key }
         }
-        images.filter { COVER_NAMES.matches(it.nameWithoutExtension) }.maxByOrNull { it.length() }?.let { return it }
+        named += images.filter { COVER_NAMES.matches(it.nameWithoutExtension) }.sortedByDescending { it.length() }
         // "ВремяВыткалоНить.jpeg" in the folder of the album "Время выткало нить"
         if (!albumName.isNullOrBlank()) {
             val key = TextFold.strictKey(albumName)
-            images.firstOrNull { TextFold.strictKey(it.nameWithoutExtension) == key }?.let { return it }
+            named += images.filter { TextFold.strictKey(it.nameWithoutExtension) == key }
         }
-        // pictures named after songs belong to those songs, not to the whole folder
-        val generic = images.filter { !Regex("\\p{L}{4,}").containsMatchIn(it.nameWithoutExtension) || it.nameWithoutExtension.contains(Regex("\\d{3,}x\\d{3,}")) }
-        return generic.maxByOrNull { it.length() }
+        named += images.filter { SIZED.containsMatchIn(it.nameWithoutExtension) }.sortedByDescending { it.length() }
+        return named.distinct().firstOrNull { app.malachite.core.cover.ImageFacts.read(it)?.coverLike == true }
     }
 
     private val YT = Regex("youtu\\.?be|youtube\\.com", RegexOption.IGNORE_CASE)
